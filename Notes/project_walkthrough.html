@@ -447,6 +447,7 @@
       <li><a href="#outputs"><span>★</span><span>What this script produces</span></a></li>
       <li><a href="#stale"><span>★</span><span>What was removed</span></a></li>
       <li><a href="#meeting"><span>—</span><span>For the meeting</span></a></li>
+      <li><a href="#sources"><span>—</span><span>References</span></a></li>
     </ol>
   </nav>
 
@@ -1899,6 +1900,103 @@
           intensity and weight change since 40 are all established and all absent here. If any are routinely
           in their notes, they are candidates for the next iteration.</li>
       </ol>
+
+      <hr class="rule">
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="sources">
+      <div class="sec-head">
+        <span class="sec-step">Sources</span>
+        <h2>References</h2>
+      </div>
+
+      <p>Prior work in this space, the benchmark this project is measured against, and the reporting
+        and competition standards it follows. Each entry records why it matters <em>here</em> rather
+        than only that it exists.</p>
+
+      <div class="kv" style="max-width:none">
+        <div>
+          <dt>1</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>Enhancing osteoporosis risk prediction using machine learning: a holistic approach integrating biomarkers and clinical data</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">Computers in Biology and Medicine, 2025. NHANES 2007–14, n = 7,924. Stacking ensemble, reported AUC 0.94.<br>
+              <a href="https://www.sciencedirect.com/science/article/pii/S0010482525006407">https://www.sciencedirect.com/science/article/pii/S0010482525006407</a></p>
+            <p style="margin-bottom:0">The highest reported AUC in this space — and the clearest cautionary case. Cases were defined using T-scores <em>combined with</em> anthropometric risk factors, which also appear among the model's top predictors. That is potential circularity in the outcome definition, and it is precisely what this project's exclusion list and coefficient alarm exist to prevent.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>2</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>PrOsteoporosis: predicting osteoporosis risk using NHANES data and machine learning</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">BMC Research Notes, 2025. n = 8,766 across 223 variables.<br>
+              <a href="https://link.springer.com/article/10.1186/s13104-025-07089-3">https://link.springer.com/article/10.1186/s13104-025-07089-3</a></p>
+            <p style="margin-bottom:0">The closest NHANES comparator. Uses MRMR + SelectKBest for feature selection and SMOTE for class balance. The authors note that important variables were lost during cleaning — the same hazard this project's exclusion-based selection creates in reverse.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>3</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>An online non-radiographic osteoporosis prediction calculator constructed using interpretable machine learning</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">BioData Mining, 2026. Korean NHANES 2008–11. AUC 0.845, specificity 0.897; temporal validation AUC 0.876.<br>
+              <a href="https://link.springer.com/article/10.1186/s13040-026-00520-w">https://link.springer.com/article/10.1186/s13040-026-00520-w</a></p>
+            <p style="margin-bottom:0">Closest in spirit to this work. Framed explicitly as a high-specificity <em>rule-in</em> tool to reduce unnecessary DXA rather than a population screener or a DXA replacement — and it includes the temporal validation this project still lacks.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>4</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>Performance of the Osteoporosis Self-Assessment Tool (OST) in predicting osteoporosis — a review</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">2018. Pooled sensitivity 83%, specificity 63% in women; AUC 0.71–0.79 across cohorts.<br>
+              <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6068473/">https://pmc.ncbi.nlm.nih.gov/articles/PMC6068473/</a></p>
+            <p style="margin-bottom:0"><strong>The benchmark.</strong> OST scores 0.747 (osteopenia) and 0.773 (osteoporosis) on this cohort — inside the published range, which independently validates the implementation rather than merely asserting it. Its high-sensitivity, moderate-specificity profile is the triage shape any new tool has to beat.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>5</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>Development and validation of an Osteoporosis Self-Assessment Tool for Taiwan (OSTAi) in postmenopausal women</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">PLOS One, 2015. n = 12,175. AUC 0.739, versus 0.618 for the NOF 2013 recommendations.<br>
+              <a href="https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0130716">https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0130716</a></p>
+            <p style="margin-bottom:0">A large single-population OST re-derivation, built by testing each FRAX risk factor as a candidate predictor against BMD T-score — the same design logic used here, at eight times the sample size.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>6</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">BMJ, 16 April 2024. doi:10.1136/bmj-2023-078378. A 27-item checklist plus a 13-item abstract checklist.<br>
+              <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11019967/">https://pmc.ncbi.nlm.nih.gov/articles/PMC11019967/</a></p>
+            <p style="margin-bottom:0">The current EQUATOR-listed standard; it supersedes TRIPOD 2015, which should no longer be used. Adherence in published ML work remains patchy — an audit of 522 orthopaedic studies found roughly 40% fully compliant on sample-size and event reporting. Reporting against it in full is a real differentiator, not a formality.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>7</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>ISEF International Rules for Pre-College Science Research — Human Participants, and ISEF Forms</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">Society for Science, 2026 rules.<br>
+              <a href="https://www.societyforscience.org/isef/international-rules/human-participants/">https://www.societyforscience.org/isef/international-rules/human-participants/</a></p>
+            <p style="margin-bottom:0">Analysing NHANES falls under the exemption for pre-existing, publicly available datasets: no IRB pre-approval and no Form 4. Forms 1, 1A and 1B are still required. <strong>If a clinician supplies non-public data the category changes</strong> — written certification of de-identification and HIPAA compliance is required, and the SRC must review it. The 2026 rules also added AI/ML requirements for the first time: a stated rationale for the model choice, and a data curation and exclusion plan.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>8</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>National Health and Nutrition Examination Survey (NHANES)</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">CDC / National Center for Health Statistics. Cycles 2005–06, 2007–08, 2009–10, 2013–14, 2017–18, 2017–20.<br>
+              <a href="https://wwwn.cdc.gov/nchs/nhanes/">https://wwwn.cdc.gov/nchs/nhanes/</a></p>
+            <p style="margin-bottom:0">The data source. Fourteen questionnaire, examination and laboratory modules per cycle, merged on the participant identifier <code>SEQN</code>. Public domain.</p>
+          </dd>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note-label">A note on entry 1</span>
+        <p>It is listed deliberately as a counter-example, not as support. Its headline AUC of 0.94 is
+          the number this project will most often be compared against, and the gap is largely a
+          label-definition difference rather than a modelling one — which is the whole argument for
+          reporting a nested, baseline-anchored result instead of a single leaderboard figure.</p>
+      </div>
 
       <hr class="rule">
     </section>

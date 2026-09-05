@@ -129,10 +129,12 @@ def table(slide, rows, x, y, w, col_w=None, size=12, head_size=11,
         c.text = str(val)
         c.fill.solid(); c.fill.fore_color.rgb = head_color
         pr = c.text_frame.paragraphs[0]
-        pr.runs[0].font.size = Pt(head_size)
-        pr.runs[0].font.bold = True
-        pr.runs[0].font.color.rgb = WHITE
-        pr.runs[0].font.name = BODY_FONT
+        # an empty header label yields no run at all, so make one to style
+        run = pr.runs[0] if pr.runs else pr.add_run()
+        run.font.size = Pt(head_size)
+        run.font.bold = True
+        run.font.color.rgb = WHITE
+        run.font.name = BODY_FONT
         c.margin_left = c.margin_right = Inches(0.07)
     for ri in range(1, nr):
         for ci in range(nc):
@@ -641,7 +643,7 @@ rows = [['Priority', 'Action', 'Why it moves the needle'],
         ['2', 'Add a calibration curve',
          'Step 13 depends on probabilities meaning what they say. The plot that demonstrates it is currently missing'],
         ['3', 'Report against TRIPOD+AI (27 items)',
-         'The BMJ 2024 reporting standard for prediction models. Adherence in published ML work is still patchy — full compliance is a differentiator'],
+         'The BMJ reporting standard for prediction models (Apr 2024); supersedes TRIPOD 2015 and is the current EQUATOR guideline. An orthopaedics audit of 522 studies found only ~40% fully compliant on sample-size and event reporting — so full compliance is a real differentiator'],
         ['4', 'Add the missing established risk factors',
          'Parental hip fracture, height loss, current smoking intensity, weight change since 40 — all established, all absent here'],
         ['5', 'Decision-curve analysis',
@@ -721,7 +723,52 @@ table(s, rows, 0.62, 1.85, 12.1, col_w=[3.1, 5.0, 4.0], size=10.5, h=4.4)
 takeaway(s, 'Every one of these is already written into the project documentation. I would rather present them than be asked about them.', y=6.5)
 
 # ===========================================================================
-# 27. CLOSING
+# 27. REFERENCES
+# ===========================================================================
+s = new('References', 'Sources')
+tf = tb(s, 0.62, 1.85, 12.1, 0.4)
+line(tf, 'Prior work in this space, the benchmark this project is measured against, '
+         'and the reporting and competition standards it follows.', size=14.5,
+     color=INK2, italic=True, first=True)
+rows = [['', 'Reference', 'Relevance here'],
+        ['1', 'Enhancing osteoporosis risk prediction using machine learning. '
+              'Comput Biol Med, 2025. NHANES 2007-14, n = 7,924. AUC 0.94',
+         'Highest reported AUC in this space. Defined cases using T-scores combined with '
+         'anthropometric factors that were also top predictors - potential circularity'],
+        ['2', 'PrOsteoporosis: predicting osteoporosis risk using NHANES data and machine '
+              'learning. BMC Res Notes, 2025. n = 8,766, 223 variables',
+         'Closest NHANES comparator. MRMR + SelectKBest selection, SMOTE balancing; authors '
+         'note important variables lost in cleaning'],
+        ['3', 'An online non-radiographic osteoporosis prediction calculator constructed using '
+              'interpretable machine learning. BioData Mining, 2026. KNHANES 2008-11. AUC 0.845',
+         'Closest in spirit - framed explicitly as a high-specificity "rule-in" tool rather than '
+         'a DXA replacement, and includes temporal validation (AUC 0.876)'],
+        ['4', 'Performance of the Osteoporosis Self-Assessment Tool (OST) in predicting '
+              'osteoporosis - a review. 2018. Pooled sens 83%, spec 63%; AUC 0.71-0.79',
+         'THE BENCHMARK. Our OST computes to 0.747 / 0.773, inside this published range, which '
+         'independently validates the implementation'],
+        ['5', 'Development and validation of an Osteoporosis Self-Assessment Tool for Taiwan '
+              '(OSTAi). PLOS One, 2015. n = 12,175. AUC 0.739',
+         'Large single-population OST validation, built by testing each FRAX risk factor against '
+         'BMD T-score - the same design logic used here'],
+        ['6', 'TRIPOD+AI statement: updated guidance for reporting clinical prediction models '
+              'that use regression or machine learning. BMJ, 2024. doi:10.1136/bmj-2023-078378',
+         '27-item reporting checklist. Supersedes TRIPOD 2015; the standard this project reports '
+         'against for publication'],
+        ['7', 'Society for Science. ISEF International Rules for Pre-College Science Research: '
+              'Human Participants; ISEF Forms. 2026',
+         'NHANES analysis is exempt from IRB pre-approval under the pre-existing publicly '
+         'available data rule. Forms 1, 1A, 1B still required'],
+        ['8', 'CDC / National Center for Health Statistics. National Health and Nutrition '
+              'Examination Survey, cycles 2005-06 through 2017-20',
+         'The data source. Fourteen modules per cycle, merged on SEQN']]
+table(s, rows, 0.62, 2.35, 12.1, col_w=[0.42, 5.28, 6.4], size=9.5, head_size=10.5, h=4.0)
+takeaway(s, 'Full URLs are in Notes/project_walkthrough.html. NHANES is public domain; '
+            'all analysis code is in OsteoporosisML.py under one fixed seed.', y=6.5)
+
+
+# ===========================================================================
+# 28. CLOSING
 # ===========================================================================
 s = prs.slides.add_slide(BLANK)
 bg(s, NAVY)
