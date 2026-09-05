@@ -693,10 +693,10 @@
 
       <p>The supplement files (<code>DSQTOT_*</code>) and the day-2 diet recalls (<code>DR2TOT_*</code>) are
         downloaded from <code>wwwn.cdc.gov</code> in NHANES's native SAS transport format and cached locally
-        as CSV. The cache test is "file exists <em>and</em> is bigger than 10 KB", which means a truncated
-        half-download gets re-fetched rather than silently used. A failed download is logged and skipped, not
-        fatal. Once the cache is warm the whole pipeline runs with no network at all — and on this run all
-        eleven files came from cache.</p>
+        as CSV. The cache test is "file exists <em>and</em> is bigger than a size floor", which means a
+        truncated half-download gets re-fetched rather than silently used. A failed download is logged and
+        skipped, not fatal. All eleven cache files are committed to the repository, so the pipeline never
+        touches the network again — not even on a fresh clone.</p>
 
       <div class="note">
         <span class="note-label">Why day 2 of the diet recall is worth a download</span>
@@ -1856,6 +1856,18 @@
         <dd>No. Everything here is internal cross-validation on one dataset. The nested-CV result is the
           closest honest estimate of out-of-sample behaviour, but external validation on a genuine clinic
           cohort has not been done and is the obvious next step.</dd>
+
+        <dt>What about calcium and vitamin D? Surely those matter for bone density.</dt>
+        <dd>They are measured here about as carefully as this dataset allows — supplement intake added to a
+          <em>two-day</em> dietary average, plus a blood 25(OH)D level — and none of the three shows an
+          association with bone density in this cohort. Calcium OR 1.01 (0.90–1.11), vitamin D intake OR
+          1.01 (0.99–1.08), serum 25(OH)D OR 0.94 (0.82–1.05); all three intervals include 1. Removing all
+          of them from the model changes cross-validated AUC by +0.004, well inside the fold-to-fold
+          variation of ±0.027 — statistically indistinguishable from no change.
+          <br><br>This is a null result, not a missing measurement, and the distinction matters: the careful
+          measurement is precisely what licenses the statement. It is also consistent with the reverse
+          causation below. What it does <em>not</em> license is any claim about supplementation
+          <em>changing</em> bone density — that needs a trial, not a cross-sectional survey.</dd>
 
         <dt>Why is vitamin D intake pointing the wrong way?</dt>
         <dd>The script flags it automatically. Higher supplemental vitamin D associates with slightly higher

@@ -43,9 +43,9 @@ not cosmetic, because the progress output uses emoji and the default Windows con
 Network: step 1 downloads dietary-supplement files (`DSQTOT_*`) and step 1b downloads day-2 dietary
 recalls (`DR2TOT_*`, cached as a 3-column extract suffixed `_calcium_vitd`), both from `wwwn.cdc.gov`,
 into the matching `data/raw/<cycle>/` folder. The cache check is "file exists AND is over a size floor",
-so a truncated download is re-fetched. Failed downloads are logged and skipped, not fatal. The
-`DSQTOT_*` caches are committed but the `DR2TOT_*` ones are not, so a fresh clone re-downloads six
-files once and then runs offline.
+so a truncated download is re-fetched. Failed downloads are logged and skipped, not fatal. All eleven
+download caches (five `DSQTOT_*`, six `DR2TOT_*`) are committed, so a fresh clone runs fully offline —
+both step 1 and step 1b hit cache.
 
 ## Pipeline architecture
 
