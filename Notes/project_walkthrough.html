@@ -447,6 +447,7 @@
       <li><a href="#outputs"><span>★</span><span>What this script produces</span></a></li>
       <li><a href="#stale"><span>★</span><span>What was removed</span></a></li>
       <li><a href="#meeting"><span>—</span><span>For the meeting</span></a></li>
+      <li><a href="#frax"><span>—</span><span>Why not FRAX?</span></a></li>
       <li><a href="#sources"><span>—</span><span>References</span></a></li>
     </ol>
   </nav>
@@ -1905,6 +1906,123 @@
     </section>
 
     <!-- ============================================================ -->
+    <section id="frax">
+      <div class="sec-head">
+        <span class="sec-step">The obvious objection</span>
+        <h2>Why the benchmark is OST and not FRAX</h2>
+      </div>
+
+      <p class="lede">FRAX runs on much the same primary-care inputs — age, sex, weight, height, prior
+        fracture, steroids, smoking, alcohol — and can be computed without a DXA. So the first question any
+        specialist will ask is why this project measures itself against a two-variable formula from 1985
+        instead of the tool everybody actually uses.</p>
+
+      <p>The answer is that they predict different things, for different decisions, at different points in
+        the care pathway.</p>
+
+      <div class="bleed">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th></th><th>FRAX</th><th>This model</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Question answered</strong></td>
+                  <td>Given these risk factors, what is the 10-year probability of fracture?</td>
+                  <td>Is this woman&rsquo;s bone density low enough to be worth measuring?</td></tr>
+              <tr><td><strong>Outcome predicted</strong></td>
+                  <td>A future <em>event</em> — major osteoporotic or hip fracture</td>
+                  <td>A present <em>test result</em> — DXA T-score category</td></tr>
+              <tr><td><strong>Time horizon</strong></td><td>10 years forward</td><td>Today</td></tr>
+              <tr><td><strong>Decision informed</strong></td>
+                  <td>Treat, or do not treat</td><td>Scan, or do not scan</td></tr>
+              <tr><td><strong>Design needed to build it</strong></td>
+                  <td>Prospective cohort with fracture follow-up</td>
+                  <td>Cross-sectional cohort with DXA</td></tr>
+              <tr class="row-hi"><td><strong>Position in the pathway</strong></td>
+                  <td>After the BMD question — FRAX performs better <em>with</em> BMD than without</td>
+                  <td>Before it — deciding who gets the BMD that FRAX then uses</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <caption>FRAX answers &ldquo;should I treat?&rdquo;; this model answers &ldquo;should I scan?&rdquo;
+          Those are sequential decisions, not competing ones.</caption>
+      </div>
+
+      <h3>Two reasons FRAX could not be the comparator here</h3>
+      <ul>
+        <li><strong>The outcome does not match.</strong> OST was built to predict low BMD. FRAX was built to
+          predict fractures. Benchmarking a BMD-prediction model against FRAX would measure it against a tool
+          designed for a different target — and would flatter or punish it for reasons that have nothing to
+          do with how well it does its own job.</li>
+        <li><strong>NHANES cannot support it anyway.</strong> FRAX requires parental hip fracture, which
+          NHANES does not record, and validating against FRAX&rsquo;s actual outcome would require fracture
+          follow-up, which a cross-sectional survey has none of. Neither the input nor the outcome is
+          available.</li>
+      </ul>
+
+      <h3>And FRAX is known to be weak at this particular job</h3>
+
+      <p>This is the part worth bringing to the meeting, because it is not a matter of opinion — using
+        FRAX-without-BMD to decide who needs a DXA has been tested directly, and in this project&rsquo;s exact
+        age band it performs poorly.</p>
+
+      <div class="bleed">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Finding</th><th>Detail</th><th>Source</th></tr></thead>
+            <tbody>
+              <tr class="row-hi">
+                <td><strong>The USPSTF FRAX strategy misses most cases under 65</strong></td>
+                <td>Among women under 65 with confirmed osteoporosis, only 45% met the FRAX-without-BMD
+                  &ge;&nbsp;9.3% MOF threshold — even though 90% had a T-score below &minus;2.5. Sensitivity
+                  was <strong>40%</strong> for T &lt; &minus;2.5. The authors conclude FRAX alone, applied per
+                  the USPSTF recommendation, &ldquo;fails to identify many women under 65 with osteoporosis
+                  needing BMD testing&rdquo;.</td>
+                <td>Endocrine Society, 2019 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6551836/">[9]</a></td></tr>
+              <tr>
+                <td>Discrimination for <em>low BMD</em> is only modest</td>
+                <td>FRAX separated osteoporosis (T &le; &minus;2.5) with AUC 0.72–0.75 among 2,991
+                  community-dwelling adults aged 60+ — below both OST (0.773 on this cohort) and this model
+                  (0.806 nested).</td>
+                <td>Thai cohort, 2025 <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11846872/">[10]</a></td></tr>
+              <tr>
+                <td>Its standard thresholds are too conservative for case-finding</td>
+                <td>A cut-off of 6.6% MOF rather than 9.3% was needed to reach 69% sensitivity and 85%
+                  specificity for detecting osteoporosis — a recurring finding that treatment thresholds do
+                  not transfer to screening decisions.</td>
+                <td>Cirrhosis cohort, 2024 <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10780144/">[11]</a></td></tr>
+              <tr>
+                <td>OST beat FRAX head-to-head for exactly this purpose</td>
+                <td>In an elderly Taiwanese cohort, OSTA reached 100% sensitivity, outperforming FRAX, GARVAN,
+                  ORAI, OSIRIS, SCORE and ABONE at identifying low BMD.</td>
+                <td>OST review, 2018 <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6068473/">[4]</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <caption>FRAX-without-BMD is not a proxy for a T-score, and the literature is explicit that its
+          performance target should be fracture risk rather than BMD classification.</caption>
+      </div>
+
+      <div class="note good">
+        <span class="note-label">The strongest framing: complementary, not competing</span>
+        <p>FRAX performs better with a BMD value than without one. So a tool that improves <em>who gets
+          scanned</em> improves the quality of the input FRAX depends on downstream. That is a coherent
+          clinical story and it requires no claim of superiority over FRAX at all — which is just as well,
+          because this project never tested fracture prediction and could not have.</p>
+      </div>
+
+      <div class="note risk">
+        <span class="note-label">Say this before anyone else does</span>
+        <p>More than 75% of people who sustain a fragility fracture do <strong>not</strong> meet the
+          T &le; &minus;2.5 threshold. Bone density is an imperfect surrogate for the thing anyone actually
+          cares about, so predicting it well bounds what this model can ever claim. That is an argument for
+          eventually predicting fractures rather than densities — which needs a prospective cohort this
+          project does not have, and is the single best reason to seek a clinical collaborator.</p>
+      </div>
+
+      <hr class="rule">
+    </section>
+
+    <!-- ============================================================ -->
     <section id="sources">
       <div class="sec-head">
         <span class="sec-step">Sources</span>
@@ -1986,6 +2104,33 @@
             <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">CDC / National Center for Health Statistics. Cycles 2005–06, 2007–08, 2009–10, 2013–14, 2017–18, 2017–20.<br>
               <a href="https://wwwn.cdc.gov/nchs/nhanes/">https://wwwn.cdc.gov/nchs/nhanes/</a></p>
             <p style="margin-bottom:0">The data source. Fourteen questionnaire, examination and laboratory modules per cycle, merged on the participant identifier <code>SEQN</code>. Public domain.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>9</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>The use of FRAX in identifying women less than 65 years needing bone mineral density testing</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">Endocrine Society (SAT-523), 2019. n = 113 women under 65 with confirmed osteoporosis.<br>
+              <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6551836/">https://pmc.ncbi.nlm.nih.gov/articles/PMC6551836/</a></p>
+            <p style="margin-bottom:0">The most directly relevant negative result for FRAX-as-triage in this project's age band: 40% sensitivity for T &lt; &minus;2.5 at the USPSTF &ge; 9.3% threshold.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>10</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>A new cut-off value of FRAX tools as an osteoporosis screening tool for the Thai geriatric population</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">2025. n = 2,991 community-dwelling adults aged 60+.<br>
+              <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11846872/">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11846872/</a></p>
+            <p style="margin-bottom:0">Gives FRAX's discrimination for low BMD specifically — AUC 0.72–0.75 — which is the number to compare against OST and against this model, rather than FRAX's fracture-prediction AUC.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>11</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>Osteoporosis and fragility fractures in patients with liver cirrhosis: usefulness of FRAX as a screening tool</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">2024. n = 92.<br>
+              <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10780144/">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10780144/</a></p>
+            <p style="margin-bottom:0">Shows the threshold problem concretely: 6.6% MOF, not the guideline 9.3%, was needed for usable case-finding sensitivity.</p>
           </dd>
         </div>
       </div>

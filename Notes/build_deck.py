@@ -146,11 +146,13 @@ def table(slide, rows, x, y, w, col_w=None, size=12, head_size=11,
             c.text = raw.replace('`', '') if isinstance(raw, str) else str(raw)
             c.fill.solid()
             c.fill.fore_color.rgb = WHITE if ri % 2 else BAND
-            pr = c.text_frame.paragraphs[0]
-            for r in pr.runs:
-                r.font.size = Pt(size)
-                r.font.color.rgb = INK
-                r.font.name = MONO_FONT if mono else BODY_FONT
+            # a newline in the cell text makes a SECOND paragraph; styling only
+            # paragraphs[0] leaves the rest at PowerPoint's 18pt default
+            for pr in c.text_frame.paragraphs:
+                for r in pr.runs:
+                    r.font.size = Pt(size)
+                    r.font.color.rgb = INK
+                    r.font.name = MONO_FONT if mono else BODY_FONT
             c.margin_left = c.margin_right = Inches(0.07)
             c.margin_top = c.margin_bottom = Inches(0.02)
     return t
@@ -433,6 +435,67 @@ for i, (t, body) in enumerate([
     line(tf, t, size=15.5, bold=True, color=NAVY, first=True, space_after=3)
     line(tf, body, size=13.5, color=INK)
 takeaway(s, 'Reported both ways on purpose. Where the two agree, the leaderboard was not flattering itself. Where they diverge, the nested number is the real one.')
+
+# ===========================================================================
+# 13. FRAX - A DIFFERENT QUESTION
+# ===========================================================================
+s = new('Why the benchmark is OST and not FRAX', 'The obvious objection')
+tf = tb(s, 0.62, 1.88, 12.1, 0.5)
+line(tf, 'FRAX uses much the same primary-care inputs, so this needs settling first. The two tools '
+         'answer different questions at different points in the care pathway.',
+     size=15, color=INK, first=True)
+rows = [['', 'FRAX', 'This model'],
+        ['Question it answers', 'Given these risk factors, what is the 10-year probability of fracture?',
+         'Is this woman\u2019s bone density low enough to be worth measuring?'],
+        ['Outcome predicted', 'A future EVENT \u2014 major osteoporotic or hip fracture',
+         'A present TEST RESULT \u2014 DXA T-score category'],
+        ['Time horizon', '10 years forward', 'Today'],
+        ['Decision it informs', 'Treat, or do not treat', 'Scan, or do not scan'],
+        ['Design needed to build it', 'Prospective cohort with fracture follow-up',
+         'Cross-sectional cohort with DXA'],
+        ['Position in the pathway', 'AFTER the BMD question \u2014 FRAX performs better WITH BMD',
+         'BEFORE it \u2014 deciding who gets the BMD that FRAX then uses']]
+table(s, rows, 0.62, 2.5, 12.1, col_w=[2.6, 4.85, 4.65], size=11.5, head_size=11.5, h=2.9)
+tf = tb(s, 0.62, 5.5, 12.1, 0.9)
+line(tf, 'NHANES could not support a FRAX comparison even if we wanted one: it records no parental hip '
+         'fracture (a required FRAX input) and, being cross-sectional, carries no fracture follow-up at all. '
+         'OST was built to predict low BMD; FRAX was built to predict fractures. Benchmarking a '
+         'BMD-prediction model against FRAX would measure it against a tool designed for a different outcome.',
+     size=14, color=INK, first=True)
+takeaway(s, 'Complementary, not competing. A better answer to "who should be scanned" improves the BMD input that FRAX itself depends on.')
+notes(s, "Expect this early. The honest line: we are not claiming to beat FRAX, and we never tested "
+         "fracture prediction. We chose the comparator that shares our outcome.")
+
+# ===========================================================================
+# 14. FRAX - THE EVIDENCE
+# ===========================================================================
+s = new('FRAX is known to be weak at this particular job', 'Evidence')
+tf = tb(s, 0.62, 1.88, 12.1, 0.45)
+line(tf, 'Using FRAX-without-BMD to decide who needs a DXA has been tested directly \u2014 and in this '
+         'project\u2019s exact age band it performs poorly.', size=15, color=INK, first=True)
+rows = [['Finding', 'Detail', 'Source'],
+        ['The USPSTF FRAX strategy misses most cases under 65',
+         'Of women < 65 with confirmed osteoporosis, only 45% met the FRAX-without-BMD \u2265 9.3% MOF '
+         'threshold, though 90% had T < \u22122.5. Sensitivity 40%. Authors conclude FRAX alone "fails to '
+         'identify many women under 65 needing BMD testing"', 'Endocrine\nSociety, 2019'],
+        ['Discrimination for LOW BMD is only modest',
+         'FRAX separated osteoporosis (T \u2264 \u22122.5) with AUC 0.72\u20130.75 in 2,991 adults aged \u2265 60 \u2014 below '
+         'both OST (0.773 on this cohort) and this model (0.806 nested)', 'Thai cohort,\n2025'],
+        ['Its standard thresholds are too conservative for case-finding',
+         'A cut-off of 6.6% MOF rather than 9.3% was needed to reach 69% sensitivity and 85% specificity '
+         'for detecting osteoporosis', 'Cirrhosis\ncohort, 2024'],
+        ['OST beat FRAX head-to-head for exactly this purpose',
+         'In an elderly Taiwanese cohort OSTA reached 100% sensitivity, outperforming FRAX, GARVAN, ORAI, '
+         'OSIRIS, SCORE and ABONE at identifying low BMD', 'OST review,\n2018'],
+        ['But BMD is an imperfect target, and that cuts against us',
+         'More than 75% of people who sustain a fragility fracture do NOT meet T \u2264 \u22122.5. Predicting BMD '
+         'means predicting a surrogate, which bounds what this model can ever claim', 'Reported across\ncohorts']]
+table(s, rows, 0.62, 2.42, 12.1, col_w=[3.15, 6.85, 2.1], size=10.5, head_size=11, h=3.45)
+tf = tb(s, 0.62, 6.02, 12.1, 0.55)
+line(tf, 'Say the last row out loud before anyone else does. It is an argument for eventually predicting '
+         'fractures rather than densities \u2014 which needs a prospective cohort this project does not have.',
+     size=13.5, color=CRIT, italic=True, first=True)
+takeaway(s, 'The claim is therefore narrow and defensible: the pre-DXA triage decision in women 50\u201365, measured against the tool actually designed for it.', y=6.6)
 
 # ===========================================================================
 # 13. LEADERBOARD
