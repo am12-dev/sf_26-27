@@ -482,7 +482,7 @@
         <li><strong>Learn.</strong> Train eight different models to predict that label from the 23 clinic
           inputs, keeping the bone-density columns strictly out of the inputs.</li>
         <li><strong>Interrogate.</strong> Refuse to take the resulting numbers at face value. Compare against
-          a two-variable formula from 1985, re-run the whole model-selection procedure in a way that cannot
+          a two-variable formula from 2001, re-run the whole model-selection procedure in a way that cannot
           flatter itself, and translate the result into the only unit a clinician cares about: how many DXA
           scans you have to order to find one case.</li>
       </ol>
@@ -1257,12 +1257,16 @@
       <p>An AUC of 0.810 sounds respectable. Two questions decide whether it means anything, and roughly half
         the script's length exists to answer them.</p>
 
-      <h3>Question one: is it better than a two-variable formula from 1985?</h3>
+      <h3>Question one: is it better than a two-variable formula from 2001?</h3>
 
       <p>The <strong>OST</strong> — Osteoporosis Self-assessment Tool — is
-        <code>0.2 × (weight in kg − age in years)</code>. That is the entire model. It needs a bathroom scale
-        and a birthdate, it has been validated in many populations, and it is the bar any machine-learning
-        model has to clear. The script computes it, plus "weight alone" as an even cruder comparator, and
+        <code>0.2 × (weight in kg − age in years)</code>. That is the entire model. It was derived by
+        <strong>Koh et al. in 2001</strong> from postmenopausal women across eight Asian countries (hence the
+        original name OSTA, &ldquo;for Asians&rdquo;), where a variable-selection procedure over the candidate
+        risk factors retained only age and body weight. It has since been externally validated in some
+        nineteen studies, with sensitivity 84–97% and specificity 34–70%, and in non-Asian populations using
+        the same algorithm with locally re-optimised cutoffs. It needs a bathroom scale and a birthdate, and
+        it is the bar any machine-learning model has to clear. The script computes it, plus "weight alone" as an even cruder comparator, and
         reports every model's AUC <em>relative to OST</em> with a paired bootstrap confidence interval on the
         difference.</p>
 
@@ -1403,7 +1407,7 @@
           0.833; nested cross-validation says 0.806. That 0.027 drop <em>is</em> the selection bias, caught
           in the act. The remaining +0.031 advantage over OST has a confidence interval spanning zero
           ([−0.013, +0.077]) and one of the five folds came out negative. With 94 events, the correct
-          statement is that we cannot show the model beats a two-variable formula from 1985.</li>
+          statement is that we cannot show the model beats a two-variable formula from 2001.</li>
       </ul>
 
       <div class="note good">
@@ -1809,7 +1813,7 @@
         clinic-available information alone, with every trace of the scan excluded from the inputs. A random
         forest reaches a cross-validated AUC of 0.810 for detecting osteopenia or worse, at 74% sensitivity
         and 73% specificity. Tested honestly — with model selection moved inside each training fold — that
-        beats the 1985 two-variable OST formula by 0.063 AUC with a confidence interval clear of zero, and it
+        beats the OST formula by 0.063 AUC with a confidence interval clear of zero, and it
         beats it in every fold. For osteoporosis specifically we cannot make that claim: the apparent
         advantage shrinks from +0.060 to +0.031 once selection bias is removed, and the interval crosses
         zero, because there are only 94 cases.</p>
@@ -1884,7 +1888,7 @@
           particular rows. For osteopenia the two agree exactly, which is itself reassuring. For osteoporosis
           they do not, and the nested one is right.</dd>
 
-        <dt>Is a two-variable formula from 1985 really the benchmark?</dt>
+        <dt>Is a two-variable formula really the benchmark?</dt>
         <dd>It is the right benchmark precisely because it is so cheap: weight minus age, times 0.2. It
           scores 0.747 here. Any model that needs 23 variables, blood work and a diet survey has to justify
           itself against that, and for osteoporosis specifically it currently cannot. If a specialist prefers
@@ -1914,7 +1918,7 @@
 
       <p class="lede">FRAX runs on much the same primary-care inputs — age, sex, weight, height, prior
         fracture, steroids, smoking, alcohol — and can be computed without a DXA. So the first question any
-        specialist will ask is why this project measures itself against a two-variable formula from 1985
+        specialist will ask is why this project measures itself against a two-variable formula from 2001
         instead of the tool everybody actually uses.</p>
 
       <p>The answer is that they predict different things, for different decisions, at different points in
@@ -2131,6 +2135,19 @@
             <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">2024. n = 92.<br>
               <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10780144/">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10780144/</a></p>
             <p style="margin-bottom:0">Shows the threshold problem concretely: 6.6% MOF, not the guideline 9.3%, was needed for usable case-finding sensitivity.</p>
+          </dd>
+        </div>
+        <div>
+          <dt>12</dt>
+          <dd>
+            <p style="margin-bottom:5px"><strong>A simple tool to identify Asian women at increased risk of osteoporosis</strong></p>
+            <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">Koh LK, Sedrine WB, Torralba TP, et al.
+              (Osteoporosis Self-Assessment Tool for Asians Research Group). Osteoporosis International, 2001;12:699–705.
+              doi:10.1007/s001980170070<br>
+              <a href="https://doi.org/10.1007/s001980170070">https://doi.org/10.1007/s001980170070</a></p>
+            <p style="margin-bottom:0">The original derivation of OST/OSTA, and the correct attribution for
+              <code>0.2 × (weight − age)</code>. Recorded here because earlier drafts of this project
+              mis-dated the formula to 1985 — an error that reached a slide title before it was caught.</p>
           </dd>
         </div>
       </div>

@@ -1275,7 +1275,7 @@ def evaluate_dual_target(X, df):
         all_tuning.append(report_rf_tuning(X, y, tname.strip(), ref=ref)
                           .assign(Target=tname.strip()))
 
-    print(f"\n{'=' * 102}\n  BOTTOM LINE — incremental value over a two-variable 1985 formula\n{'=' * 102}")
+    print(f"\n{'=' * 102}\n  BOTTOM LINE — incremental value over OST, a two-variable formula (Koh 2001)\n{'=' * 102}")
     for tname, b in summary.items():
         if b['nested_lo'] > 0:
             verdict = "BEATS OST (nested 95% CI excludes zero)"

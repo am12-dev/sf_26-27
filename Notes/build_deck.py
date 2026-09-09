@@ -420,7 +420,8 @@ for i, (t, body) in enumerate([
      'Split the 1,484 women into five groups holding case proportion equal. Train on four, test on the fifth, '
      'rotate five times. Every woman is tested exactly once, on a model that never saw her. Seed fixed at 42 throughout.'),
     ('The OST baseline — the bar to clear',
-     'OST = 0.2 × (weight_kg − age). A validated 1985 formula needing only a scale and a birthdate. '
+     'OST = 0.2 × (weight_kg − age). A validated formula (Koh et al., 2001) needing only a scale and '
+     'a birthdate. '
      'Reporting AUC without a cheap comparator is uninterpretable. Our OST scores 0.747 / 0.773 — inside the published 0.71–0.79 range, '
      'which independently validates the implementation.'),
     ('Nested cross-validation — the honest number',
@@ -500,7 +501,7 @@ takeaway(s, 'The claim is therefore narrow and defensible: the pre-DXA triage de
 # ===========================================================================
 # 13. LEADERBOARD
 # ===========================================================================
-s = new('Every model against the 1985 formula', 'Results — leaderboard')
+s = new('Every model against the OST formula', 'Results — leaderboard')
 figure(s, 'fig2_leaderboard.png', 1.15, 1.8, 8.1)
 tf = tb(s, 9.5, 2.0, 3.3, 4.3)
 line(tf, 'Reading it', size=15.5, bold=True, color=NAVY, first=True)
@@ -658,7 +659,7 @@ rows = [['Study', 'Data', 'Reported', 'How this project differs'],
         ['KNHANES calculator\n(BioData Mining, 2026)', 'Korean NHANES\n2008–11',
          'AUC 0.845\nspec 0.897',
          'Closest in spirit — explicitly framed as a high-specificity "rule-in" tool, not a DXA replacement. Includes temporal validation (AUC 0.876)'],
-        ['OST (the 1985 benchmark)', 'many cohorts,\nmeta-analysed',
+        ['OST — the benchmark\n(Koh et al., 2001)', 'derived in 8 Asian\ncountries; validated\nin 19 studies',
          'AUC 0.71–0.79\nsens 83% spec 63%',
          'Our OST computes to 0.747 / 0.773 — inside the published range, which independently validates our implementation']]
 table(s, rows, 0.62, 1.85, 12.1, col_w=[2.75, 2.2, 1.85, 5.3], size=10.5, h=3.5)
@@ -843,7 +844,7 @@ for t in ['Using six NHANES cycles we assembled 1,484 non-Hispanic White women a
           'alone, with every trace of the scan excluded from the inputs.',
           'A random forest reaches a cross-validated AUC of 0.810 for osteopenia or worse, at 74% sensitivity '
           'and 73% specificity.',
-          'Tested honestly — model selection moved inside each training fold — that beats the 1985 two-variable '
+          'Tested honestly — model selection moved inside each training fold — that beats OST, a two-variable '
           'OST formula by 0.063 AUC, with a confidence interval clear of zero, in every fold.',
           'For osteoporosis specifically we cannot make that claim: the advantage shrinks from +0.060 to +0.031 '
           'once selection bias is removed, and the interval crosses zero, because there are only 94 cases.']:
