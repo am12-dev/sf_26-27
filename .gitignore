@@ -4,3 +4,6 @@ outputs/
 __pycache__/
 *.pyc
 .env
+~$*.pptx
+~$*.docx
+~$*.xlsx
