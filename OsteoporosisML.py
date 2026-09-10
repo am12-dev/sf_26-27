@@ -316,6 +316,12 @@ def apply_filters(df):
     df = df[df['RIDRETH1'].isin([3, 3.0, 'Non-Hispanic White'])].copy()
     df = df[(df['RIDAGEYR'] >= 50) & (df['RIDAGEYR'] <= 65)].copy()
     df = df[df['DXXNKBMD'].notna()].copy()
+
+    # Deliberately NOT filtered on menopausal status. Menopause is carried as a
+    # binary PREDICTOR (postmenopausal: no period in the last 12 months), because
+    # the study question is which variables identify low bone mass - not which
+    # women to enrol. Filtering to postmenopausal women only would cut the cohort
+    # to 1,272 and raise prevalence to 59.0%, without answering that question.
     assert len(df) == 1484, f"Expected 1,484 women, got {len(df)}"
     print(f"  ✅ Verified final cohort sample: {len(df):,} women")
     return df
