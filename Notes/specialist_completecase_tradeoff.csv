@@ -1,0 +1,18 @@
+Variables required to be complete,Most-missing variable still required,Its missing %,Women retained,"% of 1,484 retained",Low bone mass in that subset,Prevalence shift vs full cohort
+22,phq9_score,80.4,0,0.0,,
+21,menopause_natural,33.6,484,32.6,57.6%,+1.3pp
+20,alcohol_drinks_day,31.7,497,33.5,57.5%,+1.2pp
+19,serum_vitd_nmol,23.0,703,47.4,58.9%,+2.6pp
+18,oophorectomy,17.0,967,65.2,59.8%,+3.4pp
+17,years_since_menopause,15.8,976,65.8,59.8%,+3.5pp
+16,total_vitd_mcg,15.5,1120,75.5,57.1%,+0.7pp
+15,total_calcium_mg,15.4,1121,75.5,57.1%,+0.8pp
+14,vigorous_activity,13.9,1130,76.1,56.9%,+0.6pp
+13,poverty_income_ratio,5.5,1317,88.7,56.3%,+0.0pp
+12,ever_used_estrogen,2.9,1390,93.7,56.6%,+0.3pp
+11,postmenopausal,2.8,1392,93.8,56.6%,+0.3pp
+10,diabetes,2.4,1431,96.4,56.7%,+0.3pp
+9,weight_kg,0.5,1466,98.8,56.5%,+0.1pp
+8,steroid_use,0.4,1472,99.2,56.5%,+0.1pp
+7,any_arthritis,0.3,1478,99.6,56.4%,+0.1pp
+6,bmi,0.1,1482,99.9,56.4%,+0.1pp
