@@ -561,6 +561,16 @@ def define_features(df):
         'prior_hip_fracture', 'prior_spine_fracture', 'prior_wrist_fracture',
         # Raw serum 25(OH)D columns, superseded by the coalesced serum_vitd_nmol.
         'LBXVIDMS', 'LBDVIDMS',
+        # Dropped on clinical advice (osteoporosis specialist, Sep 2026): hysterectomy
+        # with the ovaries retained does not induce menopause, so it has no mechanism
+        # for accelerating bone loss. The data agrees — adjusted OR 0.96 (0.68-1.42),
+        # standardised coefficient -0.01. It was also barely separable from the
+        # variables kept: bilateral oophorectomy is nested inside it (only 6 of 1,484
+        # women report oophorectomy without hysterectomy, r = 0.64), and
+        # menopause_natural is set to 0 from the same "reason periods stopped" item
+        # whenever it names a hysterectomy (r = -0.40). It stays in the saved CSV for
+        # descriptive tables.
+        'hysterectomy',
     ]
     feat_with = [c for c in df.columns if c not in exclude]
     X_with = df[feat_with].copy()

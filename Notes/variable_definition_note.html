@@ -1,0 +1,376 @@
+<title>Two Variables Needing a Clinical Decision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ink:#14181c; --ink-2:#4a545c; --ink-3:#79828a;
+    --paper:#fcfcfb; --surface:#f1f2ef; --surface-2:#e7e9e4;
+    --rule:#d5d8d2; --rule-soft:#e4e6e1;
+    --accent:#1f4e79; --accent-soft:#e6edf4;
+    --alarm:#a8332a; --alarm-soft:#f7e9e7;
+    --warn:#8a6a15;  --warn-soft:#f7f0dd;
+    --ok:#376655;    --ok-soft:#e6efeb;
+    --f-display:"Newsreader",Georgia,serif;
+    --f-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink:#e7e9e6; --ink-2:#a6afa9; --ink-3:#7d8681;
+      --paper:#13161a; --surface:#1b1f23; --surface-2:#252a2f;
+      --rule:#323a40; --rule-soft:#262c31;
+      --accent:#86b8e0; --accent-soft:#1a2b3a;
+      --alarm:#e38375; --alarm-soft:#33211f;
+      --warn:#d4ac52;  --warn-soft:#2e2716;
+      --ok:#74b39a;    --ok-soft:#1a2b25;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#e7e9e6; --ink-2:#a6afa9; --ink-3:#7d8681;
+    --paper:#13161a; --surface:#1b1f23; --surface-2:#252a2f;
+    --rule:#323a40; --rule-soft:#262c31;
+    --accent:#86b8e0; --accent-soft:#1a2b3a;
+    --alarm:#e38375; --alarm-soft:#33211f;
+    --warn:#d4ac52;  --warn-soft:#2e2716;
+    --ok:#74b39a;    --ok-soft:#1a2b25;
+  }
+  * { box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:var(--f-body);
+         font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:0 26px 90px; }
+  header.top { padding:52px 0 26px; border-bottom:2px solid var(--ink); }
+  .eyebrow { font-family:var(--f-mono); font-size:11px; letter-spacing:.14em;
+             text-transform:uppercase; color:var(--accent); margin:0 0 14px; }
+  h1 { font-family:var(--f-display); font-weight:500; font-size:clamp(2.1rem,5vw,3.1rem);
+       line-height:1.05; letter-spacing:-.02em; margin:0 0 16px; text-wrap:balance; }
+  .stand { font-family:var(--f-display); font-size:1.14rem; line-height:1.5;
+           color:var(--ink-2); max-width:62ch; margin:0; }
+  .meta { display:flex; flex-wrap:wrap; gap:6px 26px; margin-top:22px;
+          font-family:var(--f-mono); font-size:11.5px; color:var(--ink-3); }
+  .meta b { color:var(--ink); font-weight:500; }
+  section { padding-top:52px; }
+  h2 { font-family:var(--f-display); font-weight:500; font-size:clamp(1.5rem,3vw,2rem);
+       line-height:1.15; margin:0 0 6px; border-top:1px solid var(--rule); padding-top:16px; }
+  .sub { font-family:var(--f-mono); font-size:11px; letter-spacing:.1em;
+         text-transform:uppercase; color:var(--accent); margin:0 0 20px; }
+  h3 { font-size:1.02rem; font-weight:600; margin:32px 0 10px; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul,ol { margin:0 0 15px; padding-left:1.3em; max-width:70ch; }
+  li { margin-bottom:7px; }
+  code { font-family:var(--f-mono); font-size:.86em; background:var(--surface);
+         border:1px solid var(--rule-soft); border-radius:3px; padding:.08em .32em; }
+  a { color:var(--accent); text-underline-offset:2px; }
+  .tbl { overflow-x:auto; border:1px solid var(--rule); border-radius:4px; margin:20px 0; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th,td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--rule-soft);
+          vertical-align:top; }
+  thead th { font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em;
+             text-transform:uppercase; color:var(--ink-2); background:var(--surface);
+             border-bottom:1px solid var(--rule); font-weight:500; white-space:nowrap; }
+  tbody tr:last-child td { border-bottom:none; }
+  td code { background:none; border:none; padding:0; }
+  .num { text-align:right; font-family:var(--f-mono); font-variant-numeric:tabular-nums;
+         white-space:nowrap; }
+  .hi { background:var(--accent-soft); }
+  caption { caption-side:bottom; text-align:left; font-size:12.5px; color:var(--ink-3);
+            padding:9px 2px 0; }
+  .note { background:var(--surface); border:1px solid var(--rule);
+          border-left:3px solid var(--accent); border-radius:0 4px 4px 0;
+          padding:15px 18px; margin:22px 0; font-size:15px; max-width:none; }
+  .note > :last-child { margin-bottom:0; }
+  .note-l { font-family:var(--f-mono); font-size:10.5px; letter-spacing:.1em;
+            text-transform:uppercase; color:var(--accent); display:block; margin-bottom:6px; }
+  .note.bad { border-left-color:var(--alarm); background:var(--alarm-soft); }
+  .note.bad .note-l { color:var(--alarm); }
+  .note.warn { border-left-color:var(--warn); background:var(--warn-soft); }
+  .note.warn .note-l { color:var(--warn); }
+  .note.good { border-left-color:var(--ok); background:var(--ok-soft); }
+  .note.good .note-l { color:var(--ok); }
+  .ask { border:2px solid var(--accent); border-radius:5px; padding:20px 22px; margin:26px 0;
+         background:var(--accent-soft); }
+  .ask h3 { margin-top:0; }
+  .ask ol { margin-bottom:0; }
+  .pill { display:inline-block; font-family:var(--f-mono); font-size:10px;
+          letter-spacing:.04em; padding:2px 7px; border-radius:9px; white-space:nowrap;
+          border:1px solid transparent; }
+  .pill.y { background:var(--ok-soft); color:var(--ok); border-color:var(--ok); }
+  .pill.n { background:var(--surface-2); color:var(--ink-3); border-color:var(--rule); }
+  .pill.q { background:var(--warn-soft); color:var(--warn); border-color:var(--warn); }
+  footer { margin-top:60px; padding-top:18px; border-top:2px solid var(--ink);
+           font-family:var(--f-mono); font-size:11.5px; color:var(--ink-3); }
+  @media print {
+    body { font-size:11pt; } .wrap { max-width:none; padding:0; }
+    section { padding-top:26px; page-break-inside:avoid; }
+    .note,.ask,.tbl { page-break-inside:avoid; }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">NHANES osteoporosis screening study &middot; variable definition query</p>
+  <h1>Two variables needing a clinical decision</h1>
+  <p class="stand">You flagged prior fracture and alcohol as measured in ways that may not carry
+    clinical meaning. You were right about both. This note sets out exactly what the NHANES
+    questionnaire offers for each, what each candidate definition would do to the numbers, and asks
+    you to pick one.</p>
+  <div class="meta">
+    <span>Cohort <b>1,484 women</b>, non-Hispanic White, aged 50&ndash;65</span>
+    <span>Outcome <b>T-score &le; &minus;1.0</b> (osteopenia or worse), prevalence <b>56.3%</b></span>
+    <span>Six NHANES cycles, <b>2005&ndash;2020</b></span>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<section>
+  <h2>1 &nbsp;Prior fracture</h2>
+  <p class="sub">Currently in the model as <code>any_prior_fracture</code> &middot; 233 positives (15.7%)</p>
+
+  <h3>What the model uses today</h3>
+  <p>A single yes/no flag: <em>has this woman ever fractured her hip, spine or wrist, at any age</em>.
+    It is built from three questions (<code>OSQ010A</code>, <code>OSQ010B</code>, <code>OSQ010C</code>)
+    and set to 1 if any of them is yes.</p>
+
+  <p><strong>Your objection was that a childhood fracture says nothing about adult bone density, and the
+    data confirms the contamination is substantial:</strong> of 178 women reporting a spine fracture, 67
+    report their most recent one before age 18. The median age at first spine fracture in this cohort is
+    24.</p>
+
+  <h3>What NHANES actually records</h3>
+  <p>Considerably more than the model currently uses. For every fracture, at every site, in all six
+    cycles:</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Variable</th><th>What it holds</th><th>Availability</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><code>OSQ010A/B/C</code></td><td>Ever fractured hip / spine / wrist &mdash; yes/no</td>
+            <td>All 6 cycles</td><td><span class="pill y">in use</span></td></tr>
+        <tr><td><code>OSQ020A/B/C</code></td><td><strong>How many times</strong> that site was fractured
+            (values 1 or 2)</td><td>All 6 cycles</td><td><span class="pill n">unused</span></td></tr>
+        <tr class="hi"><td><code>OSD030AA&hellip;CJ</code></td>
+            <td><strong>Age at each individual fracture.</strong> Up to 5 occurrences for hip, 10 for
+              spine, 10 for wrist &mdash; one column each</td>
+            <td>All 6 cycles</td><td><span class="pill n">unused</span></td></tr>
+        <tr><td><code>OSQ040AA&hellip;</code></td>
+            <td>A follow-up per fracture, coded 1 / 2 (with 9 = don't know). Structurally this looks like
+              a <strong>mechanism or trauma</strong> question &mdash; the kind that separates a fall from
+              standing height from a vehicle accident &mdash; but I have not confirmed the wording
+              against the codebook</td>
+            <td>All 6 cycles</td><td><span class="pill q">needs confirming</span></td></tr>
+        <tr><td><code>OSD050AA&hellip;</code></td>
+            <td>A second-level follow-up, asked only of a subset, coded 1 / 2 / 3</td>
+            <td>All 6 cycles</td><td><span class="pill q">needs confirming</span></td></tr>
+      </tbody>
+    </table>
+    <caption>The age-at-fracture columns are the important find: they make any recency or adult-onset
+      rule computable, for every woman, across the whole study period.</caption>
+  </div>
+
+  <div class="note warn">
+    <span class="note-l">One thing I could not verify</span>
+    <p>If <code>OSQ040xx</code> does distinguish high-trauma from low-trauma fractures, it would let the
+      variable be restricted to <strong>fragility</strong> fractures &mdash; which is what FRAX counts and
+      presumably what you actually care about. I am not willing to assert that from the response pattern
+      alone. Could you confirm from the NHANES osteoporosis codebook whether
+      <code>OSQ040</code> asks about the cause of the fracture? If it does, that changes the
+      recommendation below.</p>
+  </div>
+
+  <h3>What each definition would give</h3>
+  <p>The right-hand columns show the crude split: the share with low bone mass among women flagged, versus
+    among those not flagged. A larger gap means the variable separates the groups better.</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Candidate definition</th><th class="num">Flagged</th>
+        <th class="num">Low bone mass<br>if flagged</th><th class="num">if not</th>
+        <th class="num">Gap</th></tr></thead>
+      <tbody>
+        <tr><td>Ever, at any age &mdash; <em>current</em></td><td class="num">233</td>
+            <td class="num">64.8%</td><td class="num">54.8%</td><td class="num">+10.1 pp</td></tr>
+        <tr><td>Fracture at age &ge; 18</td><td class="num">159</td>
+            <td class="num">68.6%</td><td class="num">54.9%</td><td class="num">+13.7 pp</td></tr>
+        <tr><td>Fracture at age &ge; 40</td><td class="num">105</td>
+            <td class="num">71.4%</td><td class="num">55.2%</td><td class="num">+16.2 pp</td></tr>
+        <tr><td>Fracture at age &ge; 50</td><td class="num">59</td>
+            <td class="num">74.6%</td><td class="num">55.6%</td><td class="num">+19.0 pp</td></tr>
+        <tr><td>Within the last <strong>10 years</strong></td><td class="num">72</td>
+            <td class="num">75.0%</td><td class="num">55.4%</td><td class="num">+19.6 pp</td></tr>
+        <tr class="hi"><td>Within the last <strong>5 years</strong></td><td class="num">46</td>
+            <td class="num">76.1%</td><td class="num">55.7%</td><td class="num">+20.4 pp</td></tr>
+      </tbody>
+    </table>
+    <caption>Every restriction improves separation, monotonically. The trade is statistical power: 46
+      women is a thin basis for an estimate, and a journal reviewer would question a confidence interval
+      built on it.</caption>
+  </div>
+
+  <div class="note">
+    <span class="note-l">The trade-off, stated plainly</span>
+    <p>The 5-year window is the strongest signal and the weakest evidence. The 10-year window keeps almost
+      all of the signal (+19.6 vs +20.4 percentage points) with <strong>57% more cases</strong> to
+      estimate from. If you have no strong clinical preference, my suggestion would be to define the
+      variable at 5 years as you asked, and additionally report the 10-year version as a sensitivity
+      analysis &mdash; that way the headline follows your clinical judgement and the robustness question
+      is answered before anyone asks it.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>2 &nbsp;Alcohol</h2>
+  <p class="sub">Currently in the model as <code>alcohol_drinks_day</code> &middot; 470 of 1,484 missing (31.7%)</p>
+
+  <h3>What the model uses today &mdash; and why it means less than it appears to</h3>
+  <p>A single variable, <code>ALQ130</code>. You raised the absence of a time frame. There is in fact a
+    12-month window on the question, so that part is covered &mdash; but the variable has a different and
+    more serious problem, and it produces the same practical result you predicted.</p>
+
+  <p><code>ALQ130</code> is the average number of drinks <strong>on the days she drank</strong>. It is not
+    average daily intake. A woman who has four glasses of wine once a month and a woman who has four
+    every single day both record <code>ALQ130 = 4</code>. The model currently cannot tell them apart.</p>
+
+  <div class="note bad">
+    <span class="note-l">Two defects, both fixable</span>
+    <p><strong>1. The denominator is missing.</strong> Frequency is recorded separately
+      (<code>ALQ120Q</code> + <code>ALQ120U</code>, or <code>ALQ121</code> in later cycles) and is
+      currently unused. Average daily intake needs frequency &times; quantity.</p>
+    <p><strong>2. Non-drinkers are being filled in with the group median.</strong> Of the 470 missing
+      values, <strong>384 are confirmed non-drinkers</strong> &mdash; women who were never asked
+      <code>ALQ130</code> because they had already said they do not drink. The model fills their blank
+      with the median of the drinkers, so several hundred non-drinkers are currently represented as
+      light drinkers. Only 86 are genuinely unknown.</p>
+  </div>
+
+  <h3>What NHANES actually records</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Variable</th><th>What it holds</th><th>Availability</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><code>ALQ101</code> / <code>ALQ111</code></td>
+            <td>Ever drank &mdash; the gate that determines who gets asked the rest</td>
+            <td>All 6 cycles (name changes in 2017)</td><td><span class="pill n">unused</span></td></tr>
+        <tr><td><code>ALQ110</code></td><td>Ever had 12 drinks in her life (asked of those who said no above)</td>
+            <td>2005&ndash;2014</td><td><span class="pill n">unused</span></td></tr>
+        <tr class="hi"><td><code>ALQ120Q</code> + <code>ALQ120U</code></td>
+            <td><strong>How often she drank in the past 12 months</strong> &mdash; a number plus a unit
+              of per week / per month / per year</td>
+            <td>2005&ndash;2014</td><td><span class="pill n">unused</span></td></tr>
+        <tr class="hi"><td><code>ALQ121</code></td>
+            <td>The same frequency question, as a single coded category</td>
+            <td>2017&ndash;2020</td><td><span class="pill n">unused</span></td></tr>
+        <tr><td><code>ALQ130</code></td><td>Average drinks on drinking days, past 12 months</td>
+            <td>All 6 cycles</td><td><span class="pill y">in use</span></td></tr>
+        <tr><td><code>ALQ141Q/U</code>, <code>ALQ142</code></td>
+            <td>How often she had 4&ndash;5 or more drinks on one occasion &mdash; binge frequency</td>
+            <td>All 6 cycles</td><td><span class="pill n">unused</span></td></tr>
+        <tr><td><code>ALQ151</code></td><td>Ever had 5 or more drinks every day</td>
+            <td>2005&ndash;2020</td><td><span class="pill n">unused</span></td></tr>
+      </tbody>
+    </table>
+    <caption>Everything needed to compute habitual daily intake, and to identify heavy and binge drinking
+      separately, is already in the downloaded files.</caption>
+  </div>
+
+  <h3>What each definition would give</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Candidate definition</th><th class="num">Usable</th><th class="num">Missing</th>
+        <th class="num">Contrast in low bone mass</th></tr></thead>
+      <tbody>
+        <tr><td><strong>A</strong> &nbsp;<code>ALQ130</code> as-is &mdash; <em>current</em></td>
+            <td class="num">1,017</td><td class="num">467</td>
+            <td class="num">54.3% vs 56.3% &nbsp; <strong>&minus;2.0 pp</strong></td></tr>
+        <tr><td><strong>B</strong> &nbsp;Average drinks per day = quantity &times; frequency &divide; 365</td>
+            <td class="num">894</td><td class="num">590</td>
+            <td class="num">56.5% vs 54.1% &nbsp; +2.4 pp</td></tr>
+        <tr><td><strong>C</strong> &nbsp;As B, non-drinkers set to 0</td>
+            <td class="num">1,278</td><td class="num">206</td>
+            <td class="num">54.5% vs 56.4% &nbsp; &minus;1.8 pp</td></tr>
+        <tr class="hi"><td><strong>D</strong> &nbsp;Binary: <strong>&ge; 3 drinks/day</strong> (the FRAX threshold)</td>
+            <td class="num">1,278</td><td class="num">206</td>
+            <td class="num"><strong>80.0%</strong> vs 55.1% &nbsp; <strong>+24.9 pp</strong> &nbsp;<span style="color:var(--ink-3)">(n = 20)</span></td></tr>
+        <tr><td><strong>E</strong> &nbsp;Binary: &ge; 2 drinks/day</td>
+            <td class="num">1,278</td><td class="num">206</td>
+            <td class="num">70.3% vs 55.0% &nbsp; +15.2 pp &nbsp;<span style="color:var(--ink-3)">(n = 37)</span></td></tr>
+        <tr><td><strong>F</strong> &nbsp;Binary: any drinking in the past 12 months</td>
+            <td class="num">1,138</td><td class="num">346</td>
+            <td class="num">55.3% vs 58.2% &nbsp; &minus;2.9 pp</td></tr>
+      </tbody>
+    </table>
+    <caption>Distribution among the 820 confirmed drinkers: median 0.16 drinks/day, 90th centile 1.42,
+      99th centile 3.99. 130 women reach 1/day, 37 reach 2/day, 20 reach 3/day.</caption>
+  </div>
+
+  <div class="note good">
+    <span class="note-l">What the numbers say</span>
+    <p>As a continuous measure, alcohol carries essentially no signal in this cohort &mdash; every version
+      sits within a couple of percentage points of nothing, in both directions. <strong>All of the signal
+      is in the tail.</strong> At the FRAX threshold of three drinks a day the contrast is +24.9
+      percentage points, the largest of any variable examined in this study &mdash; but it rests on 20
+      women.</p>
+    <p>So the variable is not useless. It is mis-specified. Averaged across everyone it measures nothing;
+      as a heavy-drinking flag it may measure something real, on very few people.</p>
+  </div>
+
+  <div class="note bad">
+    <span class="note-l">A coding bug I found while preparing this, worth knowing about</span>
+    <p>The pipeline blanks out NHANES &ldquo;refused&rdquo; and &ldquo;don't know&rdquo; codes, which
+      include the numbers 7 and 9. But <code>ALQ130</code> is a <em>count of drinks</em>, so a woman who
+      genuinely reports 7 or 9 drinks a day has her answer deleted as though she had refused. It affects
+      three women here &mdash; and they are exactly the heavy drinkers who carry whatever signal exists.
+      This will be fixed regardless of which definition you choose.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>What I need from you</h2>
+  <p class="sub">Four decisions</p>
+
+  <div class="ask">
+    <h3>Please pick one option per question</h3>
+    <ol>
+      <li><strong>Prior fracture &mdash; which window?</strong> Fracture in the last 5 years (46 women),
+        the last 10 years (72), or from age 50 onwards (59)? I will report a second window as a
+        sensitivity analysis whichever you choose.</li>
+      <li><strong>Does <code>OSQ040</code> record how the fracture happened?</strong> If it separates
+        low-trauma from high-trauma fractures, should the variable count only low-trauma ones?</li>
+      <li><strong>Alcohol &mdash; which definition?</strong> My reading is that <strong>D</strong>
+        (binary, &ge; 3 drinks/day, FRAX-aligned) is the only version with real signal, and that
+        <strong>C</strong> should be kept alongside it as the continuous measure so the null is on the
+        record. Would you define heavy use differently for bone health &mdash; 2 a day, or a binge
+        measure rather than a daily average?</li>
+      <li><strong>Is 20 women enough to report?</strong> An effect this size on 20 people will have a very
+        wide confidence interval. Should it go in the model, or be reported as a descriptive finding only?</li>
+    </ol>
+  </div>
+
+  <div class="note">
+    <span class="note-l">Already actioned from your last review</span>
+    <p><code>hysterectomy</code> has been removed from the model. Your reasoning &mdash; that hysterectomy
+      with the ovaries retained does not induce menopause &mdash; matches what the data showed
+      independently: an adjusted odds ratio of 0.96 (0.68&ndash;1.42), and near-total overlap with the two
+      variables kept, since only 6 of the 1,484 women report a bilateral oophorectomy without a
+      hysterectomy.</p>
+    <p><code>steroid_use</code> is queued for removal. NHANES records how long steroids were taken but
+      <strong>never when</strong>, so your 5-year rule cannot be applied to it. Restricted to more than
+      three months of use it flags 43 women with a contrast of +1.8 percentage points; beyond six months
+      the contrast turns negative. It carries nothing.</p>
+    <p><code>any_arthritis</code> is queued for replacement. It asks about arthritis of any type and is
+      positive in 45.8% of the cohort. Rheumatoid arthritis specifically &mdash; the FRAX risk factor
+      &mdash; can be isolated in five of the six cycles: 54 women, 3.6%, with a contrast of +8.8
+      percentage points.</p>
+  </div>
+</section>
+
+<footer>
+  <span>Prepared 10 September 2026</span> &nbsp;&middot;&nbsp;
+  <span>All counts computed on the 1,484-woman analysis cohort</span> &nbsp;&middot;&nbsp;
+  <span>Source: <code>OsteoporosisML.py</code>, fixed random seed</span>
+</footer>
+
+</div>
