@@ -1,0 +1,363 @@
+<title>One Missing Value, Traced</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ink:#14181c; --ink-2:#4a545c; --ink-3:#79828a;
+    --paper:#fcfcfb; --surface:#f1f2ef; --surface-2:#e7e9e4;
+    --rule:#d5d8d2; --rule-soft:#e4e6e1;
+    --accent:#1f4e79; --accent-soft:#e6edf4;
+    --alarm:#a8332a; --alarm-soft:#f7e9e7;
+    --warn:#8a6a15;  --warn-soft:#f7f0dd;
+    --ok:#376655;    --ok-soft:#e6efeb;
+    --f-display:"Newsreader",Georgia,serif;
+    --f-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink:#e7e9e6; --ink-2:#a6afa9; --ink-3:#7d8681;
+      --paper:#13161a; --surface:#1b1f23; --surface-2:#252a2f;
+      --rule:#323a40; --rule-soft:#262c31;
+      --accent:#86b8e0; --accent-soft:#1a2b3a;
+      --alarm:#e38375; --alarm-soft:#33211f;
+      --warn:#d4ac52;  --warn-soft:#2e2716;
+      --ok:#74b39a;    --ok-soft:#1a2b25;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#e7e9e6; --ink-2:#a6afa9; --ink-3:#7d8681;
+    --paper:#13161a; --surface:#1b1f23; --surface-2:#252a2f;
+    --rule:#323a40; --rule-soft:#262c31;
+    --accent:#86b8e0; --accent-soft:#1a2b3a;
+    --alarm:#e38375; --alarm-soft:#33211f;
+    --warn:#d4ac52;  --warn-soft:#2e2716;
+    --ok:#74b39a;    --ok-soft:#1a2b25;
+  }
+  * { box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:var(--f-body);
+         font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:900px; margin:0 auto; padding:0 26px 90px; }
+  header.top { padding:52px 0 26px; border-bottom:2px solid var(--ink); }
+  .eyebrow { font-family:var(--f-mono); font-size:11px; letter-spacing:.14em;
+             text-transform:uppercase; color:var(--accent); margin:0 0 14px; }
+  h1 { font-family:var(--f-display); font-weight:500; font-size:clamp(2.1rem,5vw,3rem);
+       line-height:1.05; letter-spacing:-.02em; margin:0 0 16px; text-wrap:balance; }
+  .stand { font-family:var(--f-display); font-size:1.13rem; line-height:1.5;
+           color:var(--ink-2); max-width:62ch; margin:0; }
+  section { padding-top:48px; }
+  h2 { font-family:var(--f-display); font-weight:500; font-size:clamp(1.45rem,3vw,1.9rem);
+       line-height:1.15; margin:0 0 18px; border-top:1px solid var(--rule); padding-top:16px; }
+  h3 { font-size:1.01rem; font-weight:600; margin:30px 0 10px; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul,ol { margin:0 0 15px; padding-left:1.3em; max-width:70ch; }
+  li { margin-bottom:8px; }
+  code { font-family:var(--f-mono); font-size:.86em; background:var(--surface);
+         border:1px solid var(--rule-soft); border-radius:3px; padding:.08em .32em; }
+  .tbl { overflow-x:auto; border:1px solid var(--rule); border-radius:4px; margin:20px 0; }
+  table { border-collapse:collapse; width:100%; font-size:14.2px; }
+  th,td { text-align:left; padding:9px 13px; border-bottom:1px solid var(--rule-soft);
+          vertical-align:top; }
+  thead th { font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em;
+             text-transform:uppercase; color:var(--ink-2); background:var(--surface);
+             border-bottom:1px solid var(--rule); font-weight:500; }
+  tbody tr:last-child td { border-bottom:none; }
+  .num { text-align:right; font-family:var(--f-mono); font-variant-numeric:tabular-nums;
+         white-space:nowrap; }
+  .hi { background:var(--accent-soft); }
+  caption { caption-side:bottom; text-align:left; font-size:12.5px; color:var(--ink-3);
+            padding:9px 2px 0; }
+  .note { background:var(--surface); border:1px solid var(--rule);
+          border-left:3px solid var(--accent); border-radius:0 4px 4px 0;
+          padding:15px 18px; margin:22px 0; font-size:15px; }
+  .note > :last-child { margin-bottom:0; }
+  .note-l { font-family:var(--f-mono); font-size:10.5px; letter-spacing:.1em;
+            text-transform:uppercase; color:var(--accent); display:block; margin-bottom:6px; }
+  .note.bad { border-left-color:var(--alarm); background:var(--alarm-soft); }
+  .note.bad .note-l { color:var(--alarm); }
+  .note.warn { border-left-color:var(--warn); background:var(--warn-soft); }
+  .note.warn .note-l { color:var(--warn); }
+  .note.good { border-left-color:var(--ok); background:var(--ok-soft); }
+  .note.good .note-l { color:var(--ok); }
+  .stage { display:grid; grid-template-columns:2.2em 1fr; gap:0 16px;
+           border-left:2px solid var(--rule); padding:0 0 4px 0; margin:0; }
+  .stage > div { padding-bottom:22px; }
+  .stage .n { font-family:var(--f-mono); font-size:12px; color:var(--accent);
+              font-weight:500; margin-left:-1.15em; background:var(--paper);
+              padding:2px 0; text-align:center; }
+  .stage h4 { margin:0 0 6px; font-size:1rem; font-weight:600; }
+  .stage p { margin:0 0 8px; font-size:15px; }
+  figure { margin:26px 0; }
+  figure svg { display:block; width:100%; max-width:820px; height:auto; color:var(--ink); }
+  figcaption { font-size:13px; color:var(--ink-3); max-width:70ch; margin-top:10px;
+               border-left:2px solid var(--rule); padding:2px 0 2px 12px; }
+  footer { margin-top:56px; padding-top:18px; border-top:2px solid var(--ink);
+           font-family:var(--f-mono); font-size:11.5px; color:var(--ink-3); }
+  @media print { body{font-size:11pt;} .wrap{max-width:none;padding:0;}
+    section{padding-top:24px;page-break-inside:avoid;} .note,.tbl{page-break-inside:avoid;} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">NHANES osteoporosis screening study &middot; methods note</p>
+  <h1>One missing value, traced end to end</h1>
+  <p class="stand">A patient has every variable recorded except her calcium intake. She is not
+    dropped from the study &mdash; her calcium is filled in with a single number. This note follows
+    exactly what that number is, where it comes from, and what it costs. The calcium chain is the
+    right example to work through, because it is the most layered one in the pipeline and because
+    the answer turns out to be wrong in an avoidable way.</p>
+</header>
+
+<!-- ============================================================ -->
+<section>
+  <h2>The short answer</h2>
+  <p>She stays in the study. Her missing <code>total_calcium_mg</code> is replaced with
+    <strong>1,030.83 mg/day</strong> &mdash; the median of every other woman's total calcium intake
+    &mdash; and the model then treats that number exactly as if it had been measured. Nothing in the
+    model records that it was invented.</p>
+
+  <p>That is the whole mechanism. The rest of this note is about why the specific number 1,030.83
+    is the wrong one to use for her, and what to do instead.</p>
+
+  <div class="note">
+    <span class="note-l">Why not simply exclude her?</span>
+    <p>Because excluding anyone with an incomplete record removes the entire cohort. All 1,484 women
+      are missing at least one of the 22 variables, so a complete-case rule retains
+      <strong>zero</strong> patients. Even relaxing it to 21 variables leaves only 484. Imputation is
+      not a convenience here; it is what makes the study possible at all.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>How calcium is assembled, in four stages</h2>
+  <p>Total calcium is not a single NHANES question. It is built from three separate sources, each
+    with its own rule for what counts as unknown.</p>
+
+  <figure>
+    <svg viewBox="0 0 820 290" role="img" aria-label="Calcium is built from two 24-hour dietary recalls averaged together, plus supplement intake, then summed into a total; a missing component makes the total missing, and the total is then median-imputed at model time.">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"></path>
+        </marker>
+        <marker id="a2" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--alarm)"></path>
+        </marker>
+      </defs>
+
+      <text x="8" y="16" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-3)" letter-spacing="0.06em">SOURCE</text>
+      <text x="272" y="16" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-3)" letter-spacing="0.06em">COMBINE</text>
+      <text x="500" y="16" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-3)" letter-spacing="0.06em">TOTAL</text>
+      <text x="668" y="16" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-3)" letter-spacing="0.06em">MODEL INPUT</text>
+
+      <rect x="8" y="30" width="150" height="42" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.1"></rect>
+      <text x="83" y="48" font-size="11.5" text-anchor="middle" fill="var(--ink)" font-family="Archivo, sans-serif">Diet recall, day 1</text>
+      <text x="83" y="63" font-size="10" text-anchor="middle" fill="var(--ink-2)" font-family="IBM Plex Mono, monospace">DR1TCALC</text>
+
+      <rect x="8" y="82" width="150" height="42" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.1"></rect>
+      <text x="83" y="100" font-size="11.5" text-anchor="middle" fill="var(--ink)" font-family="Archivo, sans-serif">Diet recall, day 2</text>
+      <text x="83" y="115" font-size="10" text-anchor="middle" fill="var(--ink-2)" font-family="IBM Plex Mono, monospace">DR2TCALC</text>
+
+      <rect x="8" y="176" width="150" height="42" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.1"></rect>
+      <text x="83" y="194" font-size="11.5" text-anchor="middle" fill="var(--ink)" font-family="Archivo, sans-serif">Supplements</text>
+      <text x="83" y="209" font-size="10" text-anchor="middle" fill="var(--ink-2)" font-family="IBM Plex Mono, monospace">DSQTCALC</text>
+
+      <path d="M 158 51 L 200 51 L 200 72 L 254 72" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></path>
+      <path d="M 158 103 L 200 103 L 200 82 L 254 82" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></path>
+
+      <rect x="254" y="52" width="164" height="50" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.1"></rect>
+      <text x="336" y="72" font-size="11.5" text-anchor="middle" fill="var(--ink)" font-family="Archivo, sans-serif">Mean of the two days</text>
+      <text x="336" y="88" font-size="9.5" text-anchor="middle" fill="var(--ink-2)" font-family="Archivo, sans-serif">one day missing &rarr; uses the other</text>
+
+      <rect x="254" y="176" width="164" height="50" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.1"></rect>
+      <text x="336" y="196" font-size="11.5" text-anchor="middle" fill="var(--ink)" font-family="Archivo, sans-serif">Scoped zero-fill</text>
+      <text x="336" y="212" font-size="9.5" text-anchor="middle" fill="var(--ink-2)" font-family="Archivo, sans-serif">asked but none taken &rarr; 0</text>
+
+      <path d="M 158 197 L 254 197" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></path>
+      <path d="M 418 77 L 448 77 L 448 125 L 480 125" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></path>
+      <path d="M 418 201 L 448 201 L 448 145 L 480 145" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></path>
+
+      <rect x="480" y="104" width="150" height="62" rx="3" fill="var(--alarm-soft)" stroke="var(--alarm)" stroke-width="1.5"></rect>
+      <text x="555" y="126" font-size="11.5" text-anchor="middle" fill="var(--ink)" font-family="Archivo, sans-serif">Plain addition</text>
+      <text x="555" y="142" font-size="10" text-anchor="middle" fill="var(--alarm)" font-family="Archivo, sans-serif">either part missing</text>
+      <text x="555" y="155" font-size="10" text-anchor="middle" fill="var(--alarm)" font-family="Archivo, sans-serif">&rarr; TOTAL missing</text>
+
+      <path d="M 630 135 L 668 135" fill="none" stroke="var(--alarm)" stroke-width="1.4" marker-end="url(#a2)"></path>
+
+      <rect x="668" y="104" width="144" height="62" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.1"></rect>
+      <text x="740" y="124" font-size="11.5" text-anchor="middle" fill="var(--ink)" font-family="Archivo, sans-serif">Median imputation</text>
+      <text x="740" y="141" font-size="12" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Mono, monospace" font-weight="500">1,030.83</text>
+      <text x="740" y="156" font-size="9.5" text-anchor="middle" fill="var(--ink-2)" font-family="Archivo, sans-serif">mg/day</text>
+
+      <text x="480" y="258" font-size="11" fill="var(--alarm)" font-family="Archivo, sans-serif">The addition is the choke point: a known dietary</text>
+      <text x="480" y="273" font-size="11" fill="var(--alarm)" font-family="Archivo, sans-serif">value is discarded along with the unknown one.</text>
+    </svg>
+    <figcaption>Each stage is more forgiving than the next. The dietary average tolerates a missing
+      day; the supplement step distinguishes &ldquo;asked and takes none&rdquo; from &ldquo;never
+      asked&rdquo;. Then the addition discards everything if any part is unknown.</figcaption>
+  </figure>
+
+  <div class="stage">
+    <div class="n">1</div>
+    <div>
+      <h4>The two dietary recalls are averaged, and one is enough</h4>
+      <p>Calcium from food comes from two separate 24-hour recalls, taken on different days. The
+        pipeline averages them, and the averaging skips missing values &mdash; so a woman with only
+        day 1 keeps day 1 rather than losing both. <strong>1,369 women have both days, 90 have one,
+        25 have neither.</strong> Two days are used rather than one because a single day measures
+        that day, not habitual intake.</p>
+    </div>
+    <div class="n">2</div>
+    <div>
+      <h4>Supplements distinguish &ldquo;takes none&rdquo; from &ldquo;never asked&rdquo;</h4>
+      <p>NHANES records a non-user as blank, not as zero, so a blank is ambiguous. The pipeline
+        resolves it by cycle: if her survey cycle ran the supplement questionnaire at all, a blank
+        means she reported no calcium supplement and becomes <strong>0</strong>. If her cycle never
+        ran it, the blank stays <strong>unknown</strong>. The 2005&ndash;2006 cycle has no supplement
+        file, so all <strong>206</strong> of its women are unknown.</p>
+    </div>
+    <div class="n">3</div>
+    <div>
+      <h4>The total is a plain sum, and this is deliberate</h4>
+      <p><code>total_calcium_mg = dietary average + supplement</code>, with no fill-in. If either
+        part is unknown the total is unknown. This is the correct choice in principle &mdash;
+        treating an unknown supplement as zero would manufacture a confident-looking total from half
+        the information. <strong>229 of 1,484 totals end up missing.</strong></p>
+    </div>
+    <div class="n">4</div>
+    <div>
+      <h4>At model time, the median fills the gap</h4>
+      <p>Every model runs through the same pipeline: median imputation, then standardisation, then
+        the estimator. Our patient's blank total becomes <strong>1,030.83 mg/day</strong>. The median
+        is computed on the training rows of each cross-validation fold only, never on the held-out
+        rows, so no information leaks from test to train.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>Why the total is missing, and why that matters</h2>
+  <p>The 229 missing totals do not have one cause, and the causes are not equally excusable.</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Reason the total is missing</th><th class="num">Women</th><th>What we actually know about her</th></tr></thead>
+      <tbody>
+        <tr class="hi"><td>Her cycle ran no supplement questionnaire</td><td class="num">204</td>
+            <td><strong>Her dietary calcium is known.</strong> Only the supplement half is missing</td></tr>
+        <tr><td>No usable 24-hour dietary recall</td><td class="num">23</td>
+            <td>Her supplement intake is known; the food half is missing</td></tr>
+        <tr><td>Neither source available</td><td class="num">2</td>
+            <td>Genuinely nothing</td></tr>
+      </tbody>
+    </table>
+    <caption>Of the 229, only 2 are genuinely uninformative. For 227 of them, half the answer is
+      sitting in the dataset.</caption>
+  </div>
+
+  <div class="note bad">
+    <span class="note-l">The avoidable problem</span>
+    <p><strong>204 of the 229 women have a measured dietary calcium intake, and it is being thrown
+      away.</strong> Their dietary intake has a median of <strong>764 mg/day</strong>. Because the
+      total is what enters the model, and the total is blank, the imputer overwrites the whole thing
+      with the cohort median of <strong>1,031 mg/day</strong>.</p>
+    <p>So a real measurement of 764 is replaced by an invented 1,031 &mdash; roughly
+      <strong>267 mg/day too high</strong>, about a third of a glass of milk, in a consistent
+      direction. A more defensible fill would be her known diet plus the median observed supplement
+      intake (53 mg), giving <strong>817 mg/day</strong>.</p>
+  </div>
+
+  <div class="note warn">
+    <span class="note-l">And the error is systematic, not scattered</span>
+    <p>206 of the 229 are the <em>entire</em> 2005&ndash;2006 cycle. This is not random noise
+      distributed across the study &mdash; it is one survey round being handed a fabricated intake
+      value, all in the same direction. The group also differs from the rest: 51.5% have low bone
+      mass against 57.2% among women whose calcium is known.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>What the model does and does not know</h2>
+  <p>Ordinarily an imputed value is indistinguishable from a measured one &mdash; the model receives
+    a number with no note attached. For calcium there is a partial exception, and it arrived by
+    accident.</p>
+
+  <p>A variable called <code>supp_data_available</code> is in the feature set, and it is 0 for
+    exactly the 206 women whose cycle ran no supplement questionnaire. It was added to record a
+    fact about the dataset, not as an imputation flag &mdash; but it functions as one, so for this
+    particular cause of missingness the model <em>can</em> tell that the calcium value is
+    synthetic.</p>
+
+  <div class="note">
+    <span class="note-l">Two consequences worth stating plainly</span>
+    <p>For the other 23 women &mdash; those with no usable dietary recall &mdash; there is no flag
+      at all, and their imputed calcium is indistinguishable from a measurement.</p>
+    <p><code>supp_data_available</code> is otherwise a poor thing to have as a predictor: it
+      describes which survey round a woman was in, not anything about her body. Its odds ratio is
+      1.00 and its predictive contribution is nil. The recommendation elsewhere in this project is
+      to remove it &mdash; which would also remove the accidental flag, so the two decisions have to
+      be taken together.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>Options, in order of how much they change</h2>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Option</th><th>What it does</th><th>Cost</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Leave it</strong></td>
+            <td>Median-impute the total, as now</td>
+            <td>204 women carry a calcium value ~267 mg/day too high, systematically</td></tr>
+        <tr class="hi"><td><strong>Impute the component, not the total</strong></td>
+            <td>Fill only the missing <em>supplement</em> figure, then add it to her known diet</td>
+            <td>Almost none. Uses the measurement we already have. My recommendation</td></tr>
+        <tr><td><strong>Add an explicit &ldquo;calcium imputed&rdquo; flag</strong></td>
+            <td>A companion 0/1 column so the model can separate measured from filled</td>
+            <td>One extra variable; makes the accidental flag deliberate</td></tr>
+        <tr><td><strong>Model diet and supplements separately</strong></td>
+            <td>Two predictors instead of one total</td>
+            <td>Each is individually weaker, but neither is destroyed by the other's gaps</td></tr>
+        <tr><td><strong>Drop the 2005&ndash;2006 cycle</strong></td>
+            <td>Remove the 206 women outright</td>
+            <td>14% of the cohort, and it changes every published number</td></tr>
+        <tr><td><strong>Multiple imputation</strong></td>
+            <td>Impute repeatedly and pool, carrying the uncertainty</td>
+            <td>The statistically standard answer, and the largest change to the code</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note good">
+    <span class="note-l">Worth noting on the current approach's behalf</span>
+    <p>The pipeline already does two things correctly that are commonly got wrong. The imputer is
+      fitted inside each cross-validation fold, so no information crosses from test to train. And
+      the bootstrap used for the odds ratios refits imputation on every replicate, so the reported
+      confidence intervals do carry imputation uncertainty rather than pretending the filled values
+      were observed. The AUC figures do not carry it.</p>
+  </div>
+
+  <h3>The question for the specialist</h3>
+  <p>Calcium has no measurable association with bone density in this cohort &mdash; odds ratio 1.01
+    (0.90&ndash;1.11), and removing it entirely changes cross-validated accuracy by less than the
+    fold-to-fold noise. So the practical question is whether it is worth fixing carefully or simply
+    dropping.</p>
+  <p>The argument for fixing it is that a well-measured null is a finding: you can only say
+    &ldquo;calcium intake showed no association&rdquo; if the measurement was sound. Right now, for
+    204 women, it is not.</p>
+</section>
+
+<footer>
+  <span>Prepared 10 September 2026</span> &nbsp;&middot;&nbsp;
+  <span>Counts computed on the 1,484-woman analysis cohort</span> &nbsp;&middot;&nbsp;
+  <span>Source: <code>OsteoporosisML.py</code></span>
+</footer>
+
+</div>
