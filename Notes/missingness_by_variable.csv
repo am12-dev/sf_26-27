@@ -1,0 +1,23 @@
+Variable,Type,Participants with a value,Participants MISSING,Missing %,Imputation band,Low bone mass among MISSING,Low bone mass among OBSERVED,Difference,Chi-square p,Missingness informative?
+phq9_score,continuous,291,1193,80.4,mostly invented (>50%),55.2%,60.8%,-5.6pp,0.098,no
+menopause_natural,binary,985,499,33.6,imputation dominates (20-50%),52.9%,58.1%,-5.2pp,0.066,no
+alcohol_drinks_day,continuous,1014,470,31.7,imputation dominates (20-50%),57.2%,55.9%,+1.3pp,0.675,no
+serum_vitd_nmol,continuous,1142,342,23.0,imputation dominates (20-50%),57.9%,55.9%,+2.0pp,0.548,no
+oophorectomy,binary,1232,252,17.0,impute with care (5-20%),53.6%,56.9%,-3.3pp,0.368,no
+years_since_menopause,continuous,1249,235,15.8,impute with care (5-20%),42.6%,58.9%,-16.4pp,0.000,YES - informative
+total_vitd_mcg,continuous,1254,230,15.5,impute with care (5-20%),51.7%,57.2%,-5.4pp,0.145,no
+total_calcium_mg,continuous,1255,229,15.4,impute with care (5-20%),51.5%,57.2%,-5.7pp,0.128,no
+vigorous_activity,binary,1278,206,13.9,impute with care (5-20%),52.9%,56.9%,-4.0pp,0.322,no
+poverty_income_ratio,continuous,1402,82,5.5,impute with care (5-20%),62.2%,56.0%,+6.2pp,0.324,no
+ever_used_estrogen,binary,1441,43,2.9,impute freely (<5%),58.1%,56.3%,+1.9pp,0.931,no
+postmenopausal,binary,1442,42,2.8,impute freely (<5%),57.1%,56.3%,+0.8pp,1.000,no
+diabetes,binary,1449,35,2.4,impute freely (<5%),48.6%,56.5%,-8.0pp,0.444,no
+weight_kg,continuous,1477,7,0.5,impute freely (<5%),42.9%,56.4%,-13.5pp,0.735,no
+steroid_use,binary,1478,6,0.4,impute freely (<5%),50.0%,56.4%,-6.4pp,1.000,no
+any_arthritis,binary,1480,4,0.3,impute freely (<5%),50.0%,56.4%,-6.4pp,1.000,no
+bmi,continuous,1482,2,0.1,impute freely (<5%),0.0%,56.4%,-56.4pp,0.371,no
+height_cm,continuous,1482,2,0.1,impute freely (<5%),0.0%,56.4%,-56.4pp,0.371,no
+age,continuous,1484,0,0.0,complete,,56.3%,,,n/a - nothing missing
+supp_data_available,binary,1484,0,0.0,complete,,56.3%,,,n/a - nothing missing
+ever_smoked,binary,1484,0,0.0,complete,,56.3%,,,n/a - nothing missing
+any_prior_fracture,binary,1484,0,0.0,complete,,56.3%,,,n/a - nothing missing
