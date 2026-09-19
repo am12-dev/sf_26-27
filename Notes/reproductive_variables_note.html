@@ -1,0 +1,327 @@
+<title>Reproductive Variables Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ink:#14181c; --ink-2:#4a545c; --ink-3:#79828a;
+    --paper:#fcfcfb; --surface:#f1f2ef; --surface-2:#e7e9e4;
+    --rule:#d5d8d2; --rule-soft:#e4e6e1;
+    --accent:#1f4e79; --accent-soft:#e6edf4;
+    --alarm:#a8332a; --alarm-soft:#f7e9e7;
+    --warn:#8a6a15;  --warn-soft:#f7f0dd;
+    --ok:#376655;    --ok-soft:#e6efeb;
+    --f-display:"Newsreader",Georgia,serif;
+    --f-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink:#e7e9e6; --ink-2:#a6afa9; --ink-3:#7d8681;
+      --paper:#13161a; --surface:#1b1f23; --surface-2:#252a2f;
+      --rule:#323a40; --rule-soft:#262c31;
+      --accent:#86b8e0; --accent-soft:#1a2b3a;
+      --alarm:#e38375; --alarm-soft:#33211f;
+      --warn:#d4ac52;  --warn-soft:#2e2716;
+      --ok:#74b39a;    --ok-soft:#1a2b25;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#e7e9e6; --ink-2:#a6afa9; --ink-3:#7d8681;
+    --paper:#13161a; --surface:#1b1f23; --surface-2:#252a2f;
+    --rule:#323a40; --rule-soft:#262c31;
+    --accent:#86b8e0; --accent-soft:#1a2b3a;
+    --alarm:#e38375; --alarm-soft:#33211f;
+    --warn:#d4ac52;  --warn-soft:#2e2716;
+    --ok:#74b39a;    --ok-soft:#1a2b25;
+  }
+  * { box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:var(--f-body);
+         font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:920px; margin:0 auto; padding:0 26px 90px; }
+  header.top { padding:52px 0 26px; border-bottom:2px solid var(--ink); }
+  .eyebrow { font-family:var(--f-mono); font-size:11px; letter-spacing:.14em;
+             text-transform:uppercase; color:var(--accent); margin:0 0 14px; }
+  h1 { font-family:var(--f-display); font-weight:500; font-size:clamp(2.1rem,5vw,3rem);
+       line-height:1.05; letter-spacing:-.02em; margin:0 0 16px; text-wrap:balance; }
+  .stand { font-family:var(--f-display); font-size:1.13rem; line-height:1.5;
+           color:var(--ink-2); max-width:62ch; margin:0; }
+  section { padding-top:48px; }
+  h2 { font-family:var(--f-display); font-weight:500; font-size:clamp(1.45rem,3vw,1.9rem);
+       line-height:1.15; margin:0 0 6px; border-top:1px solid var(--rule); padding-top:16px; }
+  .sub { font-family:var(--f-mono); font-size:11px; letter-spacing:.1em;
+         text-transform:uppercase; color:var(--accent); margin:0 0 18px; }
+  h3 { font-size:1.01rem; font-weight:600; margin:30px 0 10px; }
+  p { margin:0 0 15px; max-width:70ch; }
+  ul,ol { margin:0 0 15px; padding-left:1.3em; max-width:70ch; }
+  li { margin-bottom:8px; }
+  code { font-family:var(--f-mono); font-size:.86em; background:var(--surface);
+         border:1px solid var(--rule-soft); border-radius:3px; padding:.08em .32em; }
+  .tbl { overflow-x:auto; border:1px solid var(--rule); border-radius:4px; margin:20px 0; }
+  table { border-collapse:collapse; width:100%; font-size:14.2px; }
+  th,td { text-align:left; padding:9px 13px; border-bottom:1px solid var(--rule-soft);
+          vertical-align:top; }
+  thead th { font-family:var(--f-mono); font-size:10.5px; letter-spacing:.06em;
+             text-transform:uppercase; color:var(--ink-2); background:var(--surface);
+             border-bottom:1px solid var(--rule); font-weight:500; }
+  tbody tr:last-child td { border-bottom:none; }
+  .num { text-align:right; font-family:var(--f-mono); font-variant-numeric:tabular-nums;
+         white-space:nowrap; }
+  .hi { background:var(--accent-soft); }
+  .bad { background:var(--alarm-soft); }
+  caption { caption-side:bottom; text-align:left; font-size:12.5px; color:var(--ink-3);
+            padding:9px 2px 0; }
+  .note { background:var(--surface); border:1px solid var(--rule);
+          border-left:3px solid var(--accent); border-radius:0 4px 4px 0;
+          padding:15px 18px; margin:22px 0; font-size:15px; }
+  .note > :last-child { margin-bottom:0; }
+  .note-l { font-family:var(--f-mono); font-size:10.5px; letter-spacing:.1em;
+            text-transform:uppercase; color:var(--accent); display:block; margin-bottom:6px; }
+  .note.crit { border-left-color:var(--alarm); background:var(--alarm-soft); }
+  .note.crit .note-l { color:var(--alarm); }
+  .note.warn { border-left-color:var(--warn); background:var(--warn-soft); }
+  .note.warn .note-l { color:var(--warn); }
+  .note.good { border-left-color:var(--ok); background:var(--ok-soft); }
+  .note.good .note-l { color:var(--ok); }
+  .ask { border:2px solid var(--accent); border-radius:5px; padding:20px 22px; margin:26px 0;
+         background:var(--accent-soft); }
+  .ask h3 { margin-top:0; } .ask ol { margin-bottom:0; }
+  .funnel { max-width:64ch; margin:20px 0; }
+  .funnel div { display:grid; grid-template-columns:1fr auto; gap:12px;
+                padding:9px 14px; border-bottom:1px solid var(--rule-soft);
+                align-items:baseline; }
+  .funnel div:last-child { border-bottom:none; background:var(--accent-soft);
+                           border-radius:0 0 4px 4px; font-weight:600; }
+  .funnel .v { font-family:var(--f-mono); font-variant-numeric:tabular-nums; font-size:15px; }
+  footer { margin-top:56px; padding-top:18px; border-top:2px solid var(--ink);
+           font-family:var(--f-mono); font-size:11.5px; color:var(--ink-3); }
+  @media print { body{font-size:11pt;} .wrap{max-width:none;padding:0;}
+    section{padding-top:24px;page-break-inside:avoid;} .note,.tbl,.ask{page-break-inside:avoid;} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">NHANES osteoporosis screening study &middot; reproductive variables</p>
+  <h1>Reproductive variables: one count, and one problem</h1>
+  <p class="stand">Two things to settle. First, the cohort count if menopause is defined simply as
+    &ldquo;no menstrual period in the last 12 months&rdquo;. Second &mdash; and more important
+    &mdash; the variable <code>years_since_menopause</code> is measuring the wrong event for about a
+    third of the cohort, and the fix needs your judgement on which construct you actually want.</p>
+</header>
+
+<!-- ============================================================ -->
+<section>
+  <h2>1 &nbsp;The count</h2>
+  <p class="sub">Women aged 50&ndash;65 with no period in the last 12 months</p>
+
+  <p>Menopausal status comes from <code>RHQ031</code>: <em>&ldquo;Have you had at least one
+    menstrual period in the past 12 months?&rdquo;</em> Answering <strong>no</strong> is the
+    standard twelve-month-amenorrhoea definition.</p>
+
+  <div class="funnel">
+    <div><span>Non-Hispanic White women aged 50&ndash;65 with a femoral-neck DXA</span><span class="v">1,484</span></div>
+    <div><span>&minus; had a period in the last 12 months (still cycling)</span><span class="v">&minus;170</span></div>
+    <div><span>&minus; no answer recorded</span><span class="v">&minus;42</span></div>
+    <div><span>Confirmed postmenopausal</span><span class="v">1,272</span></div>
+  </div>
+
+  <p>If you would rather keep the 42 women whose status was never recorded &mdash; they did not say
+    they had a cycle, only that nobody asked &mdash; the count is <strong>1,314</strong>. Both give
+    the same clinical picture: 59.0% with low bone mass and a mean age of 58.</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th></th><th class="num">n</th><th class="num">Low bone mass</th>
+        <th class="num">Osteoporosis</th><th class="num">Mean age</th></tr></thead>
+      <tbody>
+        <tr><td>All women 50&ndash;65 with a DXA</td><td class="num">1,484</td>
+            <td class="num">56.3%</td><td class="num">6.3%</td><td class="num">57.6</td></tr>
+        <tr class="hi"><td><strong>Confirmed postmenopausal only</strong></td><td class="num"><strong>1,272</strong></td>
+            <td class="num">59.0%</td><td class="num">7.2%</td><td class="num">58.3</td></tr>
+        <tr><td>Postmenopausal, keeping the unrecorded</td><td class="num">1,314</td>
+            <td class="num">59.0%</td><td class="num">7.0%</td><td class="num">58.2</td></tr>
+      </tbody>
+    </table>
+    <caption>The 170 excluded women are a genuinely different group: mean age 52.3 against 58.3,
+      mean T-score &minus;0.5 against &minus;1.2, and low bone mass in 35.9% against 59.0%. They are
+      premenopausal and bone loss has not begun.</caption>
+  </div>
+
+  <div class="note warn">
+    <span class="note-l">A design point worth deciding deliberately</span>
+    <p>Menopause can be an <strong>inclusion criterion</strong> or a <strong>predictor</strong>, but
+      not both. Restricting the cohort to postmenopausal women makes the group clinically cleaner and
+      improves several variables &mdash; but it also removes the contrast that lets the model measure
+      what menopause contributes. If the study question is <em>which variables identify low bone
+      mass</em>, menopause has to stay a variable. If the question is <em>how do we screen
+      postmenopausal women</em>, it should be a filter. Both are defensible; they answer different
+      questions.</p>
+    <p>The current pipeline keeps all 1,484 and carries menopause as a binary predictor.</p>
+  </div>
+
+  <div class="note good">
+    <span class="note-l">One genuine benefit of filtering, if you choose it</span>
+    <p>Most of the missing values in <code>years_since_menopause</code> belong to women who had not
+      been through menopause and so had no age at last period to give. Filtering removes them, and
+      missingness falls from <strong>15.8% to 1.9%</strong>. <code>menopause_natural</code> improves
+      from 33.6% to 22.6%, and <code>ever_used_estrogen</code> from 2.9% to 0.2%.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>2 &nbsp;The problem with years since menopause</h2>
+  <p class="sub">It is measuring the wrong event for a third of the cohort</p>
+
+  <p>The variable is computed as <code>current age &minus; age at last menstrual period</code>, where
+    the second term is <code>RHQ060</code>: <em>&ldquo;How old were you when you had your last
+    menstrual period?&rdquo;</em></p>
+
+  <p>In a cohort capped at 65, the maximum value is <strong>42 years</strong> &mdash; implying a
+    last period at age 23. That is what prompted this note, and the explanation is mechanical:
+    <strong>a hysterectomy ends menstruation whether or not the ovaries keep working.</strong> A
+    woman whose uterus was removed at 23 but who kept her ovaries went on producing oestrogen for
+    another twenty-five years. This variable records her as forty-two years post-menopause.</p>
+
+  <h3>Every one of the twelve longest intervals is a hysterectomy</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th class="num">Age</th><th class="num">Age at &ldquo;menopause&rdquo;</th>
+        <th class="num">Years since</th><th>Hysterectomy</th><th>Ovaries removed</th>
+        <th class="num">T-score</th></tr></thead>
+      <tbody>
+        <tr class="bad"><td class="num">65</td><td class="num">23</td><td class="num">42</td><td>Yes</td><td>No</td><td class="num">&minus;1.58</td></tr>
+        <tr class="bad"><td class="num">64</td><td class="num">23</td><td class="num">41</td><td>Yes</td><td>not recorded</td><td class="num">&minus;1.59</td></tr>
+        <tr class="bad"><td class="num">63</td><td class="num">22</td><td class="num">41</td><td>Yes</td><td>Yes</td><td class="num">&minus;0.51</td></tr>
+        <tr class="bad"><td class="num">61</td><td class="num">20</td><td class="num">41</td><td>Yes</td><td>Yes</td><td class="num">&minus;0.90</td></tr>
+        <tr class="bad"><td class="num">63</td><td class="num">23</td><td class="num">40</td><td>Yes</td><td>Yes</td><td class="num">&minus;0.75</td></tr>
+        <tr class="bad"><td class="num">60</td><td class="num">21</td><td class="num">39</td><td>Yes</td><td>No</td><td class="num">&minus;2.24</td></tr>
+      </tbody>
+    </table>
+    <caption>The first six of twelve. All twelve had a hysterectomy; several kept their ovaries. Note
+      that three of these six have a T-score better than &minus;1.0, which is not what four decades of
+      oestrogen deficiency would produce.</caption>
+  </div>
+
+  <h3>Split by surgical history, the pattern is unmistakable</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Group</th><th class="num">n</th>
+        <th class="num">Median age at &ldquo;menopause&rdquo;</th>
+        <th class="num">Reported before 40</th></tr></thead>
+      <tbody>
+        <tr class="hi"><td><strong>No surgery</strong></td><td class="num">690</td>
+            <td class="num"><strong>50</strong></td><td class="num"><strong>3%</strong></td></tr>
+        <tr><td>Hysterectomy, ovaries retained</td><td class="num">176</td>
+            <td class="num">38</td><td class="num">51%</td></tr>
+        <tr><td>Hysterectomy and both ovaries removed</td><td class="num">197</td>
+            <td class="num">43</td><td class="num">31%</td></tr>
+      </tbody>
+    </table>
+    <caption>The no-surgery group lands exactly where it should &mdash; median 50, and 3% before 40,
+      consistent with the population rate of premature ovarian insufficiency. The variable is
+      trustworthy for these women.</caption>
+  </div>
+
+  <div class="note crit">
+    <span class="note-l">The scale of it</span>
+    <p>Of the <strong>224</strong> women recorded as reaching menopause before 40,
+      <strong>194 had a hysterectomy</strong> and only <strong>29</strong> had neither surgery. So
+      roughly <strong>87% of the apparent premature menopause in this dataset is a surgical
+      artefact</strong>, not early ovarian failure.</p>
+    <p>460 women &mdash; <strong>31% of the cohort</strong> &mdash; had a hysterectomy, and for all
+      of them this variable is dating the wrong event. This is not a handful of outliers.</p>
+  </div>
+
+  <div class="note warn">
+    <span class="note-l">It compounds two problems already on the table</span>
+    <p><code>years_since_menopause</code> is the <em>only</em> variable in the study whose
+      <strong>missingness</strong> is associated with the outcome &mdash; women with a missing value
+      have a 16.4 percentage point lower rate of low bone mass (p &lt; 0.001). Now its
+      <em>observed</em> values are also compromised for a third of the cohort.</p>
+    <p>And since <code>hysterectomy</code> was removed from the model on clinical advice, there is no
+      longer any variable telling the model which women are affected.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>3 &nbsp;The fix, using data already downloaded</h2>
+  <p class="sub">Three groups, three different correct answers</p>
+
+  <p>Two NHANES variables that record the age at surgery are present in five of the six cycles and
+    are currently unused. With them, each group can be dated correctly:</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Group</th><th>Correct age of oestrogen loss</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Natural menopause</td><td>Age at last period &mdash; valid as recorded</td>
+            <td><code>RHQ060</code>, all 6 cycles</td></tr>
+        <tr class="hi"><td>Bilateral oophorectomy</td>
+            <td>Age at the operation &mdash; this is when oestrogen actually stopped</td>
+            <td><code>RHQ332</code>, 5 of 6 cycles, currently unused</td></tr>
+        <tr class="bad"><td>Hysterectomy, ovaries retained</td>
+            <td><strong>Unknown.</strong> Menstruation stopped; oestrogen production did not. There
+              is no valid date</td>
+            <td>&mdash;</td></tr>
+      </tbody>
+    </table>
+    <caption><code>RHQ291</code> (age at hysterectomy) is also available and confirms the pattern:
+      it is populated for 96.6% of women reporting a hysterectomy and 0% of those who did not.</caption>
+  </div>
+
+  <p>Applying this would leave roughly <strong>179 women</strong> with an honestly missing value
+    instead of a confidently wrong one, and would give the oophorectomy group a date that reflects
+    the biology rather than the surgery type.</p>
+
+  <div class="note">
+    <span class="note-l">Also unused, and relevant to the same question</span>
+    <p><code>RHQ560Q</code> and <code>RHQ560U</code> record <strong>how long</strong> hormone therapy
+      was taken, in five of the six cycles. At present <code>ever_used_estrogen</code> is a plain
+      ever/never flag &mdash; and it is one of only five predictors in the whole study that reaches
+      statistical significance (odds ratio 0.58, protective). Six months of HRT twenty years ago and
+      fifteen years of continuous use are currently the same value.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+  <h2>What we need from you</h2>
+
+  <div class="ask">
+    <h3>Four decisions</h3>
+    <ol>
+      <li><strong>Cohort or predictor?</strong> Keep all 1,484 women and carry menopause as a binary
+        variable, or restrict to the 1,272 confirmed postmenopausal and drop it as a predictor?</li>
+      <li><strong>Which construct do you want?</strong> Is the clinically meaningful quantity
+        <em>years since the last menstrual period</em>, or <em>years since oestrogen production
+        stopped</em>? They are the same number only for women who had no surgery.</li>
+      <li><strong>The hysterectomy-with-ovaries group.</strong> For these 179 women, should the value
+        be set to missing, estimated from the population average age at menopause, or left as
+        recorded with the limitation documented?</li>
+      <li><strong>Is duration of hormone therapy worth adding?</strong> It would sharpen the
+        strongest protective predictor in the study, at the cost of one more variable with
+        incomplete coverage.</li>
+    </ol>
+  </div>
+
+  <div class="note good">
+    <span class="note-l">Already actioned from your previous review</span>
+    <p><code>hysterectomy</code> has been removed as a predictor, as you advised &mdash; a
+      hysterectomy with the ovaries retained does not induce menopause, and the data agreed
+      (adjusted odds ratio 0.96, 0.68&ndash;1.42). Note the interaction with point 3 above: removing
+      it as a predictor is right, but the pipeline still needs to <em>know</em> who had one in order
+      to date their menopause correctly.</p>
+  </div>
+</section>
+
+<footer>
+  <span>Prepared 19 September 2026</span> &nbsp;&middot;&nbsp;
+  <span>Counts on the 1,484-woman analysis cohort unless stated</span> &nbsp;&middot;&nbsp;
+  <span>Source: <code>OsteoporosisML.py</code></span>
+</footer>
+
+</div>
