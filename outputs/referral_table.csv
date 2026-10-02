@@ -1,7 +1,7 @@
 Score,Top fraction flagged,Sensitivity,DXAs ordered,Cases found,Missed,PPV,Scans per case
-Nested CV out-of-fold rank (not a probability),0.50,66.4%,561,428,217,76.3%,1.31
-Nested CV out-of-fold rank (not a probability),0.40,55.5%,445,358,287,80.4%,1.24
-Nested CV out-of-fold rank (not a probability),0.35,50.2%,390,324,321,83.1%,1.20
-Nested CV out-of-fold rank (not a probability),0.30,44.0%,335,284,361,84.8%,1.18
-Nested CV out-of-fold rank (not a probability),0.25,37.1%,278,239,406,86.0%,1.16
+Nested CV out-of-fold rank (not a probability),0.50,65.6%,556,423,222,76.1%,1.31
+Nested CV out-of-fold rank (not a probability),0.40,55.0%,445,355,290,79.8%,1.25
+Nested CV out-of-fold rank (not a probability),0.35,49.3%,390,318,327,81.5%,1.23
+Nested CV out-of-fold rank (not a probability),0.30,43.6%,335,281,364,83.9%,1.19
+Nested CV out-of-fold rank (not a probability),0.25,37.7%,280,243,402,86.8%,1.15
 Nested CV out-of-fold rank (not a probability),scan all,100.0%,1111,645,0,58.1%,1.72

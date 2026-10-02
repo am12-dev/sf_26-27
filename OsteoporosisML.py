@@ -144,7 +144,7 @@ RILEY_MIN_EPP = 10.0   # events per predictor below which a target is reported a
 # fracture risk) means a positive BMD coefficient is the expected finding, not a bug.
 EXPECTED_SIGNS = {
     'weight_kg': -1, 'bmi': -1, 'height_cm': -1, 'age': +1,
-    'years_since_menopause': +1, 'oophorectomy': +1,
+    'years_since_menopause': +1,
     'ever_used_estrogen': -1, 'any_prior_fracture': +1, 'steroid_use': +1,
     'serum_vitd_nmol': -1, 'total_calcium_mg': -1, 'total_vitd_mcg': -1,
     'family_hx_osteoporosis': +1, 'parental_hip_fracture': +1,
@@ -270,25 +270,6 @@ SPEC = {
     **{c: {'kind': 'cat', 'sentinels': [7, 9],
            'levels': {'months': ['months', '1'], 'years': ['years', '2']}}
        for c in ['RHQ560U', 'RHQ576U', 'RHQ586U']},
-    # Reason periods stopped. RHD042 (2005-2010) merges menopause and hysterectomy into
-    # ONE category, which is why menopause type cannot be read off it and has to be
-    # reconstructed from hysterectomy / oophorectomy status in block D.
-    'RHD042': {'kind': 'cat', 'sentinels': [7, 9, 77, 99], 'levels': {
-                   'pregnancy': ['pregnancy', '1'],
-                   'breastfeeding': ['breast feeding', '2'],
-                   'meno_or_hyst': ['menopause/hysterectomy', '3'],
-                   'medical': ['medical conditions/treatments', '4'],
-                   'other': ['other', '5']}},
-    # RHD043 codes in P_RHQ are NOT sequential: 3 = Hysterectomy, 7 = Menopause.
-    # Verified two ways against the labelled 2017_2018 file — frequency ratio 1.58,
-    # matching the 1.60 overall pooling ratio, and 776 of the 779 code-3 rows report
-    # RHD280 = Yes. Assuming the usual 1..7 order silently swaps the two categories.
-    'RHD043': {'kind': 'cat', 'sentinels': [77, 99], 'levels': {
-                   'pregnancy': ['pregnancy', '1'],
-                   'breastfeeding': ['breast feeding', '2'],
-                   'hysterectomy': ['hysterectomy', '3'],
-                   'menopause': ['menopause/change of life', '7'],
-                   'other': ['other', '9']}},
 }
 
 # module -> columns pulled from it
@@ -316,7 +297,7 @@ MODULE_COLS = {
     'MCQ':    ['MCQ160A', 'MCQ190', 'MCQ191', 'MCQ195'],
     'OSQ':    ['OSQ010A', 'OSQ010B', 'OSQ010C', 'OSQ130',
                'OSQ150', 'OSQ170', 'OSQ180', 'OSQ200'],
-    'RHQ':    ['RHQ031', 'RHQ060', 'RHQ074', 'RHD042', 'RHD043', 'RHD280', 'RHQ305',
+    'RHQ':    ['RHQ031', 'RHQ060', 'RHQ074', 'RHD280', 'RHQ305',
                'RHQ540', 'RHQ554', 'RHQ570',
                'RHQ560Q', 'RHQ560U', 'RHQ576Q', 'RHQ576U', 'RHQ586Q', 'RHQ586U'],
     'SLQ':    ['SLD010H', 'SLD012'],
@@ -710,48 +691,18 @@ def crosswalk_serum_vitd(df):
 # --- derived variables -------------------------------------------------------------
 
 def compute_menopause_variables(df):
-    """Menopause timing and type.
+    """Menopause timing.
 
-    menopause_natural had to be rebuilt. The previous rule pattern-matched the reason
-    text, which fails twice: RHD042 (2005-2010) merges menopause and hysterectomy into a
-    SINGLE category called "Menopause/Hysterectomy", so every woman in those cycles was
-    scored natural; and the P_ file is numeric-coded, so the whole 2017_2020 cycle
-    matched nothing and went missing. Coverage was 831 of 1,111.
-
-    The rebuild reads the unambiguous category where cycles provide one (RHD043) and
-    disambiguates the merged RHD042 category with reported hysterectomy status.
+    Menopause status is defined once, by the gate (no period in the past 12 months), and
+    no menopause-type variable is built: per the specialist, the model carries no
+    natural / surgical / hysterectomy distinction.
     """
     print_section('STEP 6: MENOPAUSE VARIABLES')
     age_men = df['RHQ060']                       # already windowed to 20-70 by SPEC
     df['age_at_menopause'] = age_men
     ysm = df['RIDAGEYR'] - age_men
     df['years_since_menopause'] = ysm.where(ysm >= 0)
-    df['hysterectomy'] = df['RHD280']
-    df['oophorectomy'] = df['RHQ305']            # not collected in 2005_2006
 
-    nat = pd.Series(np.nan, index=df.index, dtype=float)
-    nat[df['RHD043'] == 'menopause'] = 1.0
-    nat[df['RHD043'] == 'hysterectomy'] = 0.0
-    ambiguous = df['RHD042'] == 'meno_or_hyst'
-    nat[ambiguous & (df['hysterectomy'] == 0.0)] = 1.0
-    nat[ambiguous & (df['hysterectomy'] == 1.0)] = 0.0
-    df['menopause_natural'] = nat
-
-    # Four-level type (Q4, option A). Surgical menopause with the ovaries removed is a
-    # different exposure from a hysterectomy that left them in place: ovaries kept means
-    # oestrogen continued, and in this cohort that group is 19.7 years post-menopause at
-    # mean T -1.137 versus 9.0 years and -1.252 for natural menopause. Collapsing the two
-    # would confound duration of oestrogen deficiency with the surgery itself.
-    mtype = pd.Series('unknown', index=df.index, dtype=object)
-    mtype[nat == 1.0] = 'natural'
-    mtype[(nat == 0.0) & (df['oophorectomy'] == 1.0)] = 'surgical_oophorectomy'
-    mtype[(nat == 0.0) & (df['oophorectomy'] == 0.0)] = 'hysterectomy_ovaries_kept'
-    df['menopause_type'] = mtype
-
-    print(f"  menopause_natural coverage {int(nat.notna().sum()):,} of {len(df):,} "
-          f"(was 831 before the rebuild)")
-    print("  menopause_type: " + "  ".join(
-        f"{k}={v}" for k, v in df['menopause_type'].value_counts().items()))
     print(f"  years_since_menopause coverage {int(df['years_since_menopause'].notna().sum()):,}")
     print("  NOTE age = age_at_menopause + years_since_menopause exactly, so "
           "age_at_menopause is descriptive only and never enters the feature set.")
@@ -963,10 +914,6 @@ FEATURE_GROUPS = {
     'bmi':                    ['bmi'],
     'weight_kg':              ['weight_kg'],
     'years_since_menopause':  ['years_since_menopause'],
-    # Reference level is natural menopause. Surgical menopause with the ovaries removed
-    # is a different exposure from a hysterectomy that left them in place.
-    'menopause_type':         ['meno_surgical_oophorectomy',
-                               'meno_hysterectomy_ovaries_kept', 'meno_unknown'],
     'ever_used_estrogen':     ['ever_used_estrogen'],
     'diabetes':               ['diabetes'],
     'ever_smoked':            ['ever_smoked'],
@@ -1011,10 +958,6 @@ def encode_features(df):
                 'total_calcium_mg', 'total_vitd_mcg', 'serum_vitd_nmol',
                 'rheumatoid_arthritis', 'phq9_ge10']:
         out[col] = pd.to_numeric(df[col], errors='coerce') if col in df.columns else np.nan
-    mt = df['menopause_type']
-    out['meno_surgical_oophorectomy'] = (mt == 'surgical_oophorectomy').astype(float)
-    out['meno_hysterectomy_ovaries_kept'] = (mt == 'hysterectomy_ovaries_kept').astype(float)
-    out['meno_unknown'] = (mt == 'unknown').astype(float)
     return out
 
 
@@ -1518,7 +1461,7 @@ def block_ablation(X, y, t_score, groups, label):
     tests = [
         ('drop body size (bmi + weight_kg)', 'drop', ['bmi', 'weight_kg']),
         ('drop all menopause/hormone vars', 'drop',
-         ['years_since_menopause', 'menopause_type', 'ever_used_estrogen']),
+         ['years_since_menopause', 'ever_used_estrogen']),
         ('drop all lifestyle vars', 'drop',
          ['ever_smoked', 'alcohol_drinks_day', 'vigorous_activity', 'sedentary_min_day']),
         ('drop all history/family vars', 'drop',

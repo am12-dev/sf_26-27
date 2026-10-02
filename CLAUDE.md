@@ -178,13 +178,14 @@ validated two-input formula — reporting AUC without it is uninterpretable.
 
 | Target | Events | OST | Weight alone | Leaderboard | Nested | Δ vs OST | Verdict |
 |---|---|---|---|---|---|---|---|
-| Osteopenia+ (T ≤ −1.0) | 645 | 0.739 | 0.737 | 0.755 | **0.751** | +0.012 [−0.005, +0.030] | **Not separable** |
-| Osteoporosis (T ≤ −2.5) | 76 | 0.780 | 0.766 | 0.782 | **0.790** | +0.010 [−0.015, +0.035] | **Not separable**, and underpowered |
+| Osteopenia+ (T ≤ −1.0) | 645 | 0.739 | 0.737 | 0.756 | **0.751** | +0.012 [−0.005, +0.030] | **Not separable** |
+| Osteoporosis (T ≤ −2.5) | 76 | 0.780 | 0.766 | 0.787 | **0.794** | +0.014 [−0.013, +0.040] | **Not separable**, and underpowered |
 
 **The headline finding is a null, and it must be reported as one.** On the deduplicated postmenopausal
-cohort the full panel — 18 source variables, 20 model columns once `menopause_type` is one-hot expanded —
+cohort the full panel — 17 variables, one model column each (no `menopause_type`; the specialist ruled
+it out, and menopause is defined only by the no-period-in-12-months gate) —
 is not statistically separable from OST, and it is not separable from
-**weight alone** either (+0.014 [−0.003, +0.032]). The pre-rewrite claim of +0.063 [+0.046, +0.082]
+**weight alone** either (+0.014 [−0.004, +0.031]). The pre-rewrite claim of +0.063 [+0.046, +0.082]
 over OST was an artifact of the duplicated respondents.
 
 `auc_decomposition.csv` separates the two things that changed at once, holding the feature panel and
@@ -192,39 +193,39 @@ the model set fixed and varying only the cycle list and the cohort gate:
 
 | Stage | n | Best AUC | OST | Δ vs OST |
 |---|---|---|---|---|
-| A. 6 cycles, all DXA (as published) | 1,484 | 0.840 | 0.747 | +0.093 [+0.075, +0.113] |
-| B. 6 cycles, postmenopausal | 1,272 | 0.837 | 0.733 | +0.104 [+0.081, +0.126] |
-| C. 5 cycles, all DXA | 1,308 | 0.766 | 0.753 | +0.013 [−0.001, +0.026] |
+| A. 6 cycles, all DXA (as published) | 1,484 | 0.841 | 0.747 | +0.095 [+0.076, +0.114] |
+| B. 6 cycles, postmenopausal | 1,272 | 0.835 | 0.733 | +0.103 [+0.081, +0.125] |
+| C. 5 cycles, all DXA | 1,308 | 0.764 | 0.753 | +0.012 [−0.003, +0.025] |
 | D. 5 cycles, postmenopausal (shipped) | 1,111 | 0.757 | 0.739 | +0.018 [+0.001, +0.034] |
 
-**Duplicate fix alone: −0.074. Menopause gate alone: −0.003.** Do not attribute any material part of the
+**Duplicate fix alone: −0.077. Menopause gate alone (A→B): −0.006.** Do not attribute any material part of the
 drop to narrowing the cohort — it costs essentially nothing, and the "beats OST" claim already dies at
-stage C, before the menopause gate is applied. Stage A scores 0.840 rather than the published 0.810
-because it runs the *rebuilt* panel on the *old* duplicated cohort; the improved menopause coverage and
-the fingerprint-filled serum vitamin D gave the duplicate pairs even more to exploit. Stage A vs C is
+stage C, before the menopause gate is applied. Stage A scores 0.841 rather than the published 0.810
+because it runs the *rebuilt* panel on the *old* duplicated cohort; the rebuilt variables and the
+fingerprint-filled serum vitamin D gave the duplicate pairs even more to exploit. Stage A vs C is
 the valid subtraction because only the cycle list differs.
 
-One-sided p and the percentile CI can look inconsistent on these rows (e.g. p = 0.037 with a CI of
-[−0.002, +0.052]). They are not: p is the fraction of bootstrap deltas at or below zero, so any p above
+One-sided p and the percentile CI can look inconsistent on these rows (e.g. p = 0.032 with a CI of
+[−0.001, +0.059]). They are not: p is the fraction of bootstrap deltas at or below zero, so any p above
 0.025 puts the 2.5th percentile below zero. The `Verdict` column keys on the CI, which is the
 conservative choice — do not restate a row as positive because its p is under 0.05.
 
-**Optimism can come out negative** (−0.008 at T ≤ −2.5, where nested beat the leaderboard). At 76 events
+**Optimism can come out negative** (−0.007 at T ≤ −2.5, where nested beat the leaderboard). At 76 events
 that is noise, not evidence that nesting improves a model. Do not present it as a finding.
 
 **Body size is very nearly the whole model.** From `model_block_ablation_osteopenia.csv`:
 
 | Block dropped | Vars | AUC | Δ vs full panel |
 |---|---|---|---|
-| body size (`bmi` + `weight_kg`) | 16 | **0.606** | **+0.150 [+0.114, +0.184]** |
-| all menopause / hormone vars | 15 | 0.753 | +0.004 [−0.003, +0.011] |
-| all lifestyle vars | 14 | 0.756 | +0.001 [−0.005, +0.007] |
-| all history / family vars | 14 | 0.753 | +0.003 [−0.004, +0.010] |
-| *keep only* age + weight (OST inputs) | 2 | 0.739 | +0.018 [+0.001, +0.035] |
-| *keep only* age + bmi | 2 | 0.718 | +0.039 [+0.018, +0.060] |
+| body size (`bmi` + `weight_kg`) | 15 | **0.605** | **+0.151 [+0.116, +0.185]** |
+| all menopause / hormone vars | 15 | 0.753 | +0.004 [−0.002, +0.010] |
+| all lifestyle vars | 13 | 0.756 | +0.001 [−0.005, +0.006] |
+| all history / family vars | 13 | 0.754 | +0.003 [−0.004, +0.010] |
+| *keep only* age + weight (OST inputs) | 2 | 0.739 | +0.018 [+0.002, +0.035] |
+| *keep only* age + bmi | 2 | 0.718 | +0.039 [+0.018, +0.059] |
 
-Remove body size and the model falls to 0.606. Remove any other block *in its entirety* and nothing
-measurable happens. Age plus weight alone reproduces OST's AUC to three decimals, and the remaining 18
+Remove body size and the model falls to 0.605. Remove any other block *in its entirety* and nothing
+measurable happens. Age plus weight alone reproduces OST's AUC to three decimals, and the remaining 15
 columns buy +0.018 on top of it.
 
 Single-variable ablation puts `bmi` at ≈0 while permutation importance ranks it second. That is not a
@@ -233,15 +234,15 @@ model that still has weight costs little, and dropping `bmi` alone costs nothing
 it. Only dropping the pair together shows the block's true worth. **Quote the block ablation, not the
 single-variable row, when asked how much body size matters.**
 
-In the per-predictor table, six of the 20 columns have a 95% CI excluding OR = 1: `weight_kg` 0.50 (0.38–0.62) per
-10 kg, `ever_used_estrogen` 0.63 (0.45–0.83), `poverty_income_ratio` 0.90 (0.81–0.98) — protective; and
-`age` 1.24 (1.03–1.51) per 5 y, `any_prior_fracture` 1.71 (1.15–2.73), `sedentary_min_day` 1.06
-(1.01–1.11) per hour/day — risk. `steroid_use` 1.50 (1.00–2.45) sits on the boundary and is reported
-`ns`. `weight_kg` leads permutation importance by an order of magnitude (+0.2438 LR / +0.1464 RF against
-+0.0279 for the next).
+In the per-predictor table, six of the 17 columns have a 95% CI excluding OR = 1: `weight_kg` 0.50 (0.39–0.63) per
+10 kg, `ever_used_estrogen` 0.60 (0.45–0.79), `poverty_income_ratio` 0.89 (0.81–0.97) — protective; and
+`age` 1.28 (1.07–1.54) per 5 y, `any_prior_fracture` 1.72 (1.15–2.73), `sedentary_min_day` 1.06
+(1.00–1.10, lower bound only just above 1) per hour/day — risk. `steroid_use` 1.49 (0.98–2.35) is `ns`.
+`weight_kg` leads permutation importance by an order of magnitude (+0.2444 LR / +0.1509 RF against
++0.0269 for the next).
 
 **The `osteoporosis` target is underpowered and `power_gate.csv` says so in advance.** Every analysis
-cohort sits at ~2.6–3.8 events per predictor against the Riley floor of 10 (`RILEY_MIN_EPP`), so it is
+cohort sits at ~3.0–4.5 events per predictor against the Riley floor of 10 (`RILEY_MIN_EPP`), so it is
 reported as underpowered rather than as a negative finding.
 
 **All prespecified arms (C–H) are null.** Vitamin D intake, serum 25(OH)D, rheumatoid arthritis, PHQ-9

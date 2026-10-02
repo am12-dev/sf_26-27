@@ -292,17 +292,17 @@ report a hysterectomy and 206 removal of the ovaries, for whom the menopause dat
 <p><strong>No repeat run on 1,484.</strong> A limitations line records that the 212 were never used.</p>
 <p class="lab">Ruling &mdash; part B</p>
 <ul>
-  <li>Years since menopause is computed for <strong>all 1,248</strong> who have it.</li>
-  <li>A <code>menopause_type</code> categorical is added: natural / surgical&ndash;ovaries removed /
-  surgical&ndash;ovaries kept / unknown.</li>
-  <li><code>menopause_natural</code> is <strong>rebuilt</strong> &mdash; it currently flags only 242
-  of 1,272 as natural when roughly 800 should be, since only 460 had a hysterectomy.</li>
+  <li><strong>No menopause-type variable.</strong> The specialist wants no natural / surgical /
+  hysterectomy distinction in the model. Postmenopausal status is defined once, by the gate: no
+  period in the past 12 months (RHQ031), which gives the analysis cohort of <strong>1,111</strong>.</li>
+  <li>Years since menopause (age &minus; RHQ060) is kept. It is observed for 1,089 of the 1,111; the
+  other 22 receive the fold-internal median.</li>
 </ul>
-<p>The confound is real and measurable: women whose hysterectomy kept the ovaries average 19.7
-&ldquo;postmenopausal&rdquo; years yet have <em>better</em> bone density (&minus;1.137) than
-natural-menopause women at 9.0 years (&minus;1.252). Recorded as the user's ruling, verbally
-confirmed by the specialist. <strong>A date for that conversation is still needed</strong> &mdash;
-an undated verbal confirmation is the line a reviewer picks at.</p>
+<p><em>Revised 2026-10-02.</em> An earlier version of this ruling added a four-level
+<code>menopause_type</code> (3 indicator columns) and a rebuilt <code>menopause_natural</code>; both
+were removed from the pipeline. In the ablation they contributed nothing (&Delta;AUC &minus;0.000
+[&minus;0.003, +0.003]). The residual caveat stays as a stated limitation: after a hysterectomy,
+&ldquo;years since last period&rdquo; can mean years since surgery.</p>
 </div>
 </div>
 
