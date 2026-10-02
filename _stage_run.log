@@ -1,0 +1,364 @@
+
+==============================================================================
+  STEP 5: DIETARY SUPPLEMENT TOTALS (DSQTOT)
+==============================================================================
+  2007_2008: 10,149 respondents in a supplement file
+  2009_2010: 10,537 respondents in a supplement file
+  2013_2014: 10,175 respondents in a supplement file
+  2017_2020: 15,560 respondents in a supplement file
+  NOTE: 2005_2006 has no DSQTOT release, so supplement intake is unobserved — not zero — for that cycle.
+
+==============================================================================
+  STEP 5b: DAY-2 DIETARY RECALL (DR2TOT)
+==============================================================================
+  2005_2006: 9,950 day-2 recalls  (no DR2TVD in this release)
+  2007_2008: 9,762 day-2 recalls
+  2009_2010: 10,253 day-2 recalls
+  2013_2014: 9,813 day-2 recalls
+  2017_2020: 14,300 day-2 recalls
+
+==============================================================================
+  STEP 1: LOAD AND DECODE NHANES CYCLES
+==============================================================================
+  2005_2006: 10,348 respondents, 53 decoded columns
+  2007_2008: 10,149 respondents, 57 decoded columns
+  2009_2010: 10,537 respondents, 57 decoded columns
+  2013_2014: 10,175 respondents, 58 decoded columns
+  2017_2020: 15,560 respondents, 50 decoded columns
+  TOTAL   : 56,769 respondents across 5 cycles
+
+==============================================================================
+  STEP 2: COHORT FILTERS
+==============================================================================
+  respondents                   56,769
+  female                        28,644
+  non-Hispanic White            10,672
+  aged 50-65                     1,639
+  femoral-neck DXA result        1,308
+
+==============================================================================
+  STEP 2b: DUPLICATE-RESPONDENT AUDIT
+==============================================================================
+  rows with a complete physical fingerprint : 1,306
+  rows sharing a fingerprint with another   : 0
+  OK — no respondent appears twice.
+
+==============================================================================
+  STEP 3: T-SCORES AND OUTCOME LABELS
+==============================================================================
+  mean T-score -1.061   median age 58
+  T <= -1.0: 724   T <= -2.5: 79
+
+==============================================================================
+  STEP 4: MENOPAUSE GATE
+==============================================================================
+  postmenopausal (kept)              1,111   mean T -1.140   median age 59
+  still cycling (excluded)             156   mean T -0.473   median age 52
+  status undeterminable (excluded)      41   mean T -1.155   median age 58
+
+  analysis cohort n = 1,111   T <= -1.0: 645 (58.1%)   T <= -2.5: 76 (6.8%)
+  by cycle: 2005_2006=173  2007_2008=228  2009_2010=227  2013_2014=219  2017_2020=264
+
+==============================================================================
+  STEP 6: MENOPAUSE VARIABLES
+==============================================================================
+  menopause_natural coverage 1,086 of 1,111 (was 831 before the rebuild)
+  menopause_type: natural=700  surgical_oophorectomy=155  hysterectomy_ovaries_kept=152  unknown=104
+  years_since_menopause coverage 1,089
+  NOTE age = age_at_menopause + years_since_menopause exactly, so age_at_menopause is descriptive only and never enters the feature set.
+  oestrogen ever-use 485 / never 624 / unknown 2
+  duration recorded for 344 of 485 ever-users (71%), median 3.0 y. 2017_2020 records no duration quantity at all.
+
+==============================================================================
+  STEP 7: DERIVED VARIABLES
+==============================================================================
+  phq9_score coverage 1,110 of 1,111   median 2   mean 3.85   >= 10: 112 (10.1%)
+  sleep_hrs coverage 1,107   median 7.0
+  fingerprint matches 2017_2020 <-> 2017_2018 : 161
+  of those carrying a serum value             : 159
+  serum 25(OH)D coverage 815 -> 974  (missing 296 -> 137)
+  total_calcium_mg coverage 930   total_vitd_mcg 930
+  alcohol_drinks_day coverage 960 (non-drinkers set to 0, not imputed)
+  wrote data\processed\analysis_cohort_postmenopausal.csv  (1,111 x 119)
+
+==============================================================================
+  STEP 8: ANALYSIS COHORTS AND POWER GATE
+==============================================================================
+  C0 base                      n 1,111   T<=-1.0  645   T<=-2.5   76   20 columns / 18 variables
+    C0 base @ T<=-2.5                            events   76  predictors  20  EPP  3.80  UNDERPOWERED
+    C0 base @ T<=-1.0                            events  466  predictors  20  EPP 23.30  OK
+  C1 + vitamin D intake        n   930   T<=-1.0  549   T<=-2.5   67   22 columns / 20 variables
+    C1 + vitamin D intake @ T<=-2.5              events   67  predictors  22  EPP  3.05  UNDERPOWERED
+    C1 + vitamin D intake @ T<=-1.0              events  381  predictors  22  EPP 17.32  OK
+  C2 + serum 25(OH)D           n   974   T<=-1.0  566   T<=-2.5   68   21 columns / 19 variables
+    C2 + serum 25(OH)D @ T<=-2.5                 events   68  predictors  21  EPP  3.24  UNDERPOWERED
+    C2 + serum 25(OH)D @ T<=-1.0                 events  408  predictors  21  EPP 19.43  OK
+  C3 + both vitamin D          n   796   T<=-1.0  471   T<=-2.5   59   23 columns / 21 variables
+    C3 + both vitamin D @ T<=-2.5                events   59  predictors  23  EPP  2.57  UNDERPOWERED
+    C3 + both vitamin D @ T<=-1.0                events  325  predictors  23  EPP 14.13  OK
+  C4 + rheumatoid arthritis    n   988   T<=-1.0  584   T<=-2.5   72   21 columns / 19 variables
+    C4 + rheumatoid arthritis @ T<=-2.5          events   72  predictors  21  EPP  3.43  UNDERPOWERED
+    C4 + rheumatoid arthritis @ T<=-1.0          events  404  predictors  21  EPP 19.24  OK
+
+  At T <= -1.0 the minority class is the NON-events, so that is what the
+  events-per-predictor count uses. At T <= -2.5 every cohort is below the
+  conventional floor of 10, which is stated here in advance rather than
+  discovered afterwards when the nested estimate collapses.
+  [METHODS   ] power_gate.csv
+
+==============================================================================
+  STEP 8b: TABLE 1 — COHORT DESCRIPTION BY BONE STATUS
+==============================================================================
+                      Variable Missing % Normal (T > -1.0) Low bone mass (-2.5 < T <= -1.0) Osteoporosis (T <= -2.5)           All
+                             n                         466                              569                       76         1,111
+                           age       0.0        57.8 (4.5)                       58.5 (4.4)               59.5 (3.9)    58.3 (4.4)
+                           bmi       0.1        31.5 (6.3)                       27.3 (5.6)               24.4 (5.4)    28.9 (6.4)
+                     weight_kg       0.0       84.6 (17.1)                      71.8 (14.9)              62.5 (14.4)   76.5 (17.4)
+         years_since_menopause       2.0        11.5 (8.9)                       12.4 (8.4)               15.6 (9.7)    12.2 (8.7)
+    meno_surgical_oophorectomy       0.0             14.8%                            12.7%                    18.4%         14.0%
+meno_hysterectomy_ovaries_kept       0.0             13.5%                            14.2%                    10.5%         13.7%
+                  meno_unknown       0.0             11.2%                             7.2%                    14.5%          9.4%
+            ever_used_estrogen       0.2             47.7%                            41.9%                    32.9%         43.7%
+                      diabetes       0.0             13.1%                             8.1%                     6.6%         10.1%
+                   ever_smoked       0.0             49.8%                            53.1%                    71.1%         52.9%
+            alcohol_drinks_day      13.6         1.4 (1.1)                        1.5 (1.3)                1.4 (1.7)     1.5 (1.3)
+            any_prior_fracture       0.0             12.7%                            17.0%                    27.6%         15.9%
+                   steroid_use       0.5              7.3%                             9.5%                    10.5%          8.7%
+             vigorous_activity      15.6             11.4%                            14.6%                     7.5%         12.8%
+             sedentary_min_day      15.8     381.7 (195.3)                    382.3 (206.6)            391.1 (195.3) 382.7 (201.0)
+          poverty_income_ratio       5.0         3.4 (1.7)                        3.2 (1.7)                2.2 (1.6)     3.2 (1.7)
+         parental_hip_fracture       4.4             13.3%                            17.3%                    18.6%         15.7%
+        family_hx_osteoporosis       4.7             26.7%                            31.6%                    36.1%         29.8%
+                    phq9_score       0.1         3.8 (4.6)                        3.8 (4.5)                4.8 (5.9)     3.8 (4.7)
+                     sleep_hrs       0.4         7.2 (1.3)                        7.1 (1.4)                6.8 (1.8)     7.1 (1.4)
+  Continuous variables as mean (SD); binary variables as percent positive.
+  [PRESENT   ] table_one.csv
+
+==============================================================================
+  DIAGNOSTIC: COEFFICIENT SANITY CHECK — T<=-1.0
+==============================================================================
+                     Predictor  Std coef Expected sign Observed sign Flag
+                     weight_kg   -1.2140             -             -   ok
+            ever_used_estrogen   -0.2324             -             -   ok
+            any_prior_fracture    0.1961             +             +   ok
+                           age    0.1884             +             +   ok
+          poverty_income_ratio   -0.1820           n/a             -   ok
+             sedentary_min_day    0.1739           n/a             +   ok
+                           bmi    0.1705             -             + SIGN
+         years_since_menopause    0.1684             +             +   ok
+                   steroid_use    0.1145             +             +   ok
+                  meno_unknown   -0.1128           n/a             -   ok
+                     sleep_hrs   -0.1112           n/a             -   ok
+                    phq9_score    0.0704           n/a             +   ok
+        family_hx_osteoporosis    0.0677             +             +   ok
+         parental_hip_fracture    0.0566             +             +   ok
+                      diabetes   -0.0395           n/a             -   ok
+    meno_surgical_oophorectomy   -0.0390           n/a             -   ok
+                   ever_smoked    0.0380           n/a             +   ok
+             vigorous_activity    0.0328           n/a             +   ok
+meno_hysterectomy_ovaries_kept   -0.0260           n/a             -   ok
+            alcohol_drinks_day   -0.0169           n/a             -   ok
+
+  No coefficient exceeds |2.0|. No leak signature.
+  1 predictor(s) point the wrong way: bmi.
+  State these rather than hide them — a backwards vitamin D coefficient is
+  reverse causation (low intake prompts supplementation), not a bug.
+  This table is DIAGNOSTIC. Do not present it as a result.
+  [DIAGNOSTIC] coefficient_diagnostics.csv
+
+==============================================================================
+  STEP 9: MODEL LEADERBOARD — Osteopenia+ (T<=-1.0)
+==============================================================================
+  Logistic Regression (L2)           test 0.755  train 0.770
+  Elastic Net Logistic Regression    test 0.754  train 0.769
+  Random Forest                      test 0.753  train 1.000 | OOB 0.753
+  LightGBM (Aggressive Reg)          test 0.742  train 0.813
+  XGBoost (Aggressive Reg)           test 0.739  train 0.837
+  Train AUC is in-sample and inflated by design for the bagged forest, so OOB
+  is its honest in-sample figure. Do NOT rank models by the train/test gap.
+  [PRESENT   ] model_leaderboard_osteopenia.csv
+
+==============================================================================
+  STEP 12: NESTED CROSS-VALIDATION — Osteopenia+ (T<=-1.0)
+==============================================================================
+  model chosen per outer fold: ['RF -> t_score', 'Random Forest', 'Ridge -> t_score', 'Random Forest', 'Ridge -> t_score']
+  leaderboard best  Logistic Regression (L2)  AUC 0.755
+  nested estimate                    AUC 0.751   (optimism +0.003)
+  vs OST  0.2x(weight-age)    0.739   delta +0.012 [-0.005, +0.030]   not separable
+  vs Weight alone             0.737   delta +0.014 [-0.003, +0.032]   not separable
+
+  The advantage over OST spans zero at 645 events. Report this as
+  not separable. Do NOT quote the leaderboard figure (0.755) as a result for this target.
+
+==============================================================================
+  STEP 9: MODEL LEADERBOARD — Osteoporosis (T<=-2.5)
+==============================================================================
+  Logistic Regression (L2)           test 0.782  train 0.847
+  Elastic Net Logistic Regression    test 0.782  train 0.847
+  Random Forest                      test 0.778  train 1.000 | OOB 0.108
+  LightGBM (Aggressive Reg)          test 0.775  train 0.931
+  XGBoost (Aggressive Reg)           test 0.744  train 0.983
+  Train AUC is in-sample and inflated by design for the bagged forest, so OOB
+  is its honest in-sample figure. Do NOT rank models by the train/test gap.
+  [PRESENT   ] model_leaderboard_osteoporosis.csv
+
+==============================================================================
+  STEP 12: NESTED CROSS-VALIDATION — Osteoporosis (T<=-2.5)
+==============================================================================
+  model chosen per outer fold: ['RF -> t_score', 'RF -> t_score', 'Ridge -> t_score', 'Ridge -> t_score', 'RF -> t_score']
+  leaderboard best  Elastic Net Logistic Regression  AUC 0.782
+  nested estimate                    AUC 0.790   (optimism -0.008)
+  vs OST  0.2x(weight-age)    0.780   delta +0.010 [-0.015, +0.035]   not separable
+  vs Weight alone             0.766   delta +0.024 [-0.002, +0.052]   not separable
+
+  The advantage over OST spans zero at 76 events. Report this as
+  not separable. Do NOT quote the leaderboard figure (0.782) as a result for this target.
+  [PRESENT   ] nested_cv_verdict.csv
+
+==============================================================================
+  STEP 10: CLINICAL PREDICTOR TABLE — Osteopenia+ (T<=-1.0)
+==============================================================================
+  Adjusted odds ratios from penalised logistic regression, per clinically
+  meaningful unit, with stratified-bootstrap 95% CIs. Permutation importance
+  is mean AUC lost when the predictor is shuffled, measured out of fold.
+
+                     Predictor            Unit   OR      95% CI  Direction dAUC (LR) dAUC (RF) Missing %
+                     weight_kg       per 10 kg 0.50 (0.38-0.62) protective   +0.2438   +0.1464       0.0
+                           bmi     per 5 kg/m2 1.14 (0.81-1.58)         ns   +0.0003   +0.0279       0.1
+          poverty_income_ratio      per 1 unit 0.90 (0.81-0.98) protective   +0.0069   +0.0195       5.0
+                           age     per 5 years 1.24 (1.03-1.51)       risk   +0.0090   +0.0113       0.0
+            alcohol_drinks_day per 1 drink/day 0.99 (0.86-1.11)         ns   -0.0000   +0.0086      13.6
+            any_prior_fracture       yes vs no 1.71 (1.15-2.73)       risk   +0.0063   +0.0068       0.0
+         years_since_menopause     per 5 years 1.10 (0.98-1.23)         ns   +0.0063   +0.0049       2.0
+        family_hx_osteoporosis       yes vs no 1.16 (0.85-1.64)         ns   +0.0012   +0.0035       4.7
+            ever_used_estrogen       yes vs no 0.63 (0.45-0.83) protective   +0.0069   +0.0030       0.2
+                     sleep_hrs      per 1 hour 0.92 (0.83-1.02)         ns   +0.0031   +0.0023       0.4
+             sedentary_min_day      per 1 unit 1.00 (1.00-1.00)       risk   +0.0053   +0.0016      15.8
+                   steroid_use       yes vs no 1.50 (1.00-2.45)         ns   +0.0041   +0.0013       0.5
+                  meno_unknown       yes vs no 0.68 (0.40-1.11)         ns   +0.0009   +0.0009       0.0
+         parental_hip_fracture       yes vs no 1.17 (0.78-1.77)         ns   +0.0004   +0.0009       4.4
+                   ever_smoked       yes vs no 1.08 (0.82-1.37)         ns   -0.0013   -0.0000       0.0
+             vigorous_activity       yes vs no 1.11 (0.72-1.79)         ns   -0.0010   -0.0001      15.6
+                    phq9_score    per 5 points 1.08 (0.91-1.28)         ns   +0.0013   -0.0001       0.1
+meno_hysterectomy_ovaries_kept       yes vs no 0.93 (0.59-1.51)         ns   +0.0006   -0.0004       0.0
+                      diabetes       yes vs no 0.88 (0.53-1.46)         ns   +0.0005   -0.0005       0.0
+    meno_surgical_oophorectomy       yes vs no 0.89 (0.54-1.36)         ns   -0.0008   -0.0013       0.0
+
+  6 of 20 predictors have a 95% CI excluding OR = 1.
+  'ns' means the interval includes 1; do not interpret the point estimate.
+  [PRESENT   ] clinical_predictor_table.csv
+  [PRESENT   ] forest_plot_odds_ratios.png
+
+==============================================================================
+  STEP 11: VARIABLE ABLATION GRID — osteopenia
+==============================================================================
+  full-model AUCs: Logistic 0.753  Elastic 0.753  Random 0.752  LightGBM 0.740  XGBoost 0.739  Ridge 0.757  RF 0.755  LightGBM 0.748
+  primary model for the CI column: Ridge -> t_score (AUC 0.757)
+
+  age                      dAUC(primary) +0.0018  [-0.003, +0.007]  mean across models +0.0008
+  bmi                      dAUC(primary) -0.0002  [-0.001, +0.001]  mean across models +0.0008
+  weight_kg                dAUC(primary) +0.0203  [+0.009, +0.032]  mean across models +0.0258
+  years_since_menopause    dAUC(primary) +0.0006  [-0.004, +0.005]  mean across models +0.0017
+  menopause_type           dAUC(primary) -0.0000  [-0.003, +0.003]  mean across models +0.0001
+  ever_used_estrogen       dAUC(primary) +0.0033  [-0.002, +0.008]  mean across models +0.0022
+  diabetes                 dAUC(primary) -0.0004  [-0.004, +0.004]  mean across models -0.0007
+  ever_smoked              dAUC(primary) -0.0013  [-0.004, +0.001]  mean across models -0.0009
+  alcohol_drinks_day       dAUC(primary) -0.0003  [-0.002, +0.001]  mean across models +0.0018
+  any_prior_fracture       dAUC(primary) +0.0010  [-0.004, +0.006]  mean across models +0.0012
+  steroid_use              dAUC(primary) +0.0014  [-0.001, +0.003]  mean across models +0.0004
+  vigorous_activity        dAUC(primary) -0.0005  [-0.001, +0.000]  mean across models -0.0004
+  sedentary_min_day        dAUC(primary) +0.0032  [-0.002, +0.008]  mean across models +0.0021
+  poverty_income_ratio     dAUC(primary) +0.0019  [-0.002, +0.006]  mean across models +0.0044
+  parental_hip_fracture    dAUC(primary) -0.0006  [-0.004, +0.003]  mean across models -0.0005
+  family_hx_osteoporosis   dAUC(primary) +0.0004  [-0.001, +0.002]  mean across models +0.0005
+  phq9_score               dAUC(primary) -0.0004  [-0.005, +0.004]  mean across models -0.0004
+  sleep_hrs                dAUC(primary) +0.0015  [-0.002, +0.004]  mean across models +0.0012
+
+  Positive dAUC = the model is WORSE without the variable, i.e. it carries
+  signal the rest of the panel does not. Primary model: Ridge -> t_score.
+  [PRESENT   ] model_variable_ablation_osteopenia.csv
+  [PRESENT   ] calibration_curve.png   calibrated Brier 0.198 vs raw 0.199
+
+==============================================================================
+  STEP 14: SCREENING YIELD — T<=-1.0
+==============================================================================
+  How many DXA scans does each referral rule cost per case found?
+
+                                         Score Top fraction flagged Sensitivity  DXAs ordered  Cases found  Missed   PPV Scans per case
+Nested CV out-of-fold rank (not a probability)                 0.50       66.4%           561          428     217 76.3%           1.31
+Nested CV out-of-fold rank (not a probability)                 0.40       55.5%           445          358     287 80.4%           1.24
+Nested CV out-of-fold rank (not a probability)                 0.35       50.2%           390          324     321 83.1%           1.20
+Nested CV out-of-fold rank (not a probability)                 0.30       44.0%           335          284     361 84.8%           1.18
+Nested CV out-of-fold rank (not a probability)                 0.25       37.1%           278          239     406 86.0%           1.16
+Nested CV out-of-fold rank (not a probability)             scan all      100.0%          1111          645       0 58.1%           1.72
+  [PRESENT   ] referral_table.csv
+
+  Calibrated-probability version — a different model, a different axis:
+                            Model   AUC Probability Cutoff Sensitivity  DXAs ordered  Cases found  Missed   PPV Scans per case
+Random forest, sigmoid-calibrated 0.753               0.50       75.0%           681          484     161 71.1%           1.41
+Random forest, sigmoid-calibrated 0.753               0.40       89.6%           887          578      67 65.2%           1.53
+Random forest, sigmoid-calibrated 0.753               0.35       94.3%           971          608      37 62.6%           1.60
+Random forest, sigmoid-calibrated 0.753               0.30       98.0%          1039          632      13 60.8%           1.64
+Random forest, sigmoid-calibrated 0.753               0.25       99.2%          1087          640       5 58.9%           1.70
+Random forest, sigmoid-calibrated 0.753           scan all      100.0%          1111          645       0 58.1%           1.72
+  [PRESENT   ] threshold_sweep.csv
+
+==============================================================================
+  METHODS: RANDOM FOREST LEAF TUNING — Osteopenia+ (T<=-1.0)
+==============================================================================
+ min_samples_leaf Test AUC SD across folds
+                1   0.7530          0.0249
+                2   0.7535          0.0210
+                5   0.7509          0.0230
+               10   0.7491          0.0211
+               20   0.7470          0.0191
+               50   0.7437          0.0172
+
+  min_samples_leaf chosen by inner CV per outer fold: [10, 2, 1, 2, 1]
+  shipped value: RF_MIN_SAMPLES_LEAF = 1
+  best on the grid: 2. Test AUC falls from 0.753 to 0.744 across the grid, so shrinking the gap costs real discrimination.
+  [METHODS   ] rf_leaf_tuning.csv
+
+==============================================================================
+  STEP 13: PRESPECIFIED ARMS
+==============================================================================
+
+  Arms C/D — vitamin D. Intake and serum are measured on DIFFERENT subsets,
+  so they get separate arms and are never cross-compared. Vitamin D is out of
+  the headline model entirely and the null was stated in advance.
+  C: vitamin D + calcium intake  n   930  events  549  base 0.755 -> arm 0.753  delta -0.002 [-0.006, +0.001]  no detectable gain
+  D: serum 25(OH)D               n   974  events  566  base 0.746 -> arm 0.745  delta -0.001 [-0.008, +0.005]  no detectable gain
+
+  Arm E — rheumatoid arthritis. Descriptive only at T<=-2.5, and the 123
+  women whose arthritis type is unrecorded are EXCLUDED, not coded as no RA.
+  E: rheumatoid arthritis        n   988  events  584  base 0.754 -> arm 0.754  delta +0.000 [-0.001, +0.001]  no detectable gain
+    rheumatoid arthritis     n   71   mean T -1.259   T<=-2.5   5 (7.0%)
+    no rheumatoid arthritis  n  917   mean T -1.167   T<=-2.5  67 (7.3%)
+    excluded for unrecorded arthritis type: 123
+
+  Arm F — PHQ-9 as a binary. A SUBSTITUTION for the continuous score, never
+  an addition: the two are the same information and would collide.
+  F: PHQ-9 >= 10 (substitution)  n 1,110  events  644  base 0.762 -> arm 0.761  delta -0.001 [-0.002, -0.000]  no detectable gain
+
+  Arm G — diabetes. The diabetic bone paradox means type 2 diabetes raises
+  measured BMD while also raising fracture risk, so a protective coefficient
+  here is expected and is NOT evidence the model is wrong. There is
+  deliberately no EXPECTED_SIGNS entry for it. Two reclassifications:
+    G1: borderline coded as diabetic       AUC 0.757  (shipped 0.757, delta +0.000)
+    G2: diabetes dropped entirely          AUC 0.757  (shipped 0.757, delta +0.000)
+
+  Arm H — site sensitivity. The headline uses the WHO/ISCD lowest-of-two
+  rule. These refit on each site alone to show the rule is not driving the
+  result. Reported for the headline target only, and never re-ablated.
+    H1: femoral neck only      n 1,111  events  618  AUC 0.745  (Ridge -> t_score)
+    H2: total hip only         n 1,111  events  424  AUC 0.776  (RF -> t_score)
+  [PRESENT   ] prespecified_arms.csv
+
+==============================================================================
+  DONE
+==============================================================================
+  Open outputs/nested_cv_verdict.csv first — it is the bottom line.
+  Variable importance lives in two places and they answer different
+  questions: clinical_predictor_table.csv (shuffle a column inside a model
+  trained with it) and model_variable_ablation_osteopenia.csv (refit without
+  the variable at all). Where they disagree, collinearity is the reason.

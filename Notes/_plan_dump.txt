@@ -1,0 +1,1296 @@
+Osteoporosis Pipeline Rewrite
+Implementation plan · for sign-off
+Osteoporosis Pipeline Rewrite
+Rebuilding
+OsteoporosisML.py
+around the specialist’s 20-item variable set, a postmenopausal cohort of 1,272, and a with–without ablation across all eight models.
+Cohort
+n = 1,272 postmenopausal
+Models
+5 classifiers + 3 regressors
+Source
+Notes/SpecialistUpdate.docx
+Status
+awaiting sign-off
+Contents
+01
+Decisions already locked
+02
+Three defects found while profiling
+03
+Cohort derivation & decision
+04
+Variable specification
+05
+Imputation policy
+06
+The analysis cohorts
+07
+Derivations that need care
+08
+Model panel
+09
+Analysis arms
+10
+Output tables
+11
+How the code is laid out
+12
+Limitations register
+13
+Build order
+14
+Sign-off needed
+01
+Decisions already locked
+These are settled and drive everything below. Nothing here needs re-deciding — only confirming.
+Locked decisions and their consequence
+Decision
+Choice
+Consequence
+Cohort
+Postmenopausal only — no menstrual period in 12 months
+n = 1,272.
+The
+1,484
+assert is re-pinned. Every published figure is superseded.
+Model panel
+5 classifiers + 3 T-score regressors
+8 model rows in every results table. No new estimators.
+Vitamin D
+Exclude women with no serum value; run with and without serum
+Vitamin D arm holds one cohort fixed at n = 974 and varies only the feature set.
+Diabetes
+Stratified analysis, diabetic vs non-diabetic
+Descriptive + non-diabetic modelling. See
+§09
+for the power limit.
+Antidepressants, falls
+Deferred — stretch goal
+Both enter the limitations register. No new downloads.
+Code layout
+One restructured file
+python OsteoporosisML.py
+keeps working. ~2,500–3,000 lines.
+Runtime
+Tiered rigour
+Nested CV for headlines, repeated 5-fold for the ablation grid. 2–4 h per run.
+02
+Three defects found while profiling
+All three were found by auditing the specialist’s variables against the raw NHANES files. They change what the rewrite has to do, so they belong in the sign-off.
+Global refused-code replace destroys real data
+defect
+fixed by rewrite
+REFUSED = [7, 9, 77, 99, 777, 999, 7777, 9999]
+is applied to
+every
+numeric column. But 7 and 9 are legitimate values for many variables.
+508 real values inside the cohort are nulled.
+Column
+Present
+Nulled
+What is deleted
+SLD010H
+1,015
+373
+(36.7%)
+women sleeping 7 h (328) or 9 h (45)
+SLD012
+464
+115
+(24.8%)
+same, newer cycles
+DR1TVD
+1,255
+8
+7 or 9 mcg vitamin D
+BMXWT
+1,483
+6
+women weighing 77 kg or 99 kg
+ALQ130
+1,019
+3
+7 or 9 drinks per drinking day
+DR1TCALC
+1,459
+2
+777 or 999 mg calcium
+LBXVIDMS
+941
+1
+77 nmol/L serum 25(OH)D
+Consequence for sleep is large.
+True coverage is 1,479 / 1,484 — 0.3% missing. As coded it is 991, or 33.2% missing. The claim in
+CLAUDE.md
+that sleep “is sparse across cycles and was dropped for data density” describes this bug, not NHANES. The specialist’s 7–8 h reference band holds 745 women and its 7-hour half is deleted.
+Fix.
+Each variable declares its own plausible range in the spec; anything outside is missing. Nothing global.
+PHQ-9 items are text in five of six cycles
+defect
++1,007 women
+The nine
+DPQ
+items ship as labels —
+“Not at all”, “Several days”, “More than half the days”, “Nearly every day”
+— in every cycle except 2017–2020, which is numeric. The script sums them arithmetically, so five cycles silently become
+NaN
+.
+Mapping the labels to 0–3 takes PHQ-9 from
+264 to 1,271 (0.1% missing)
+, all six cycles covered. Mean 3.93, median 2, IQR 1–5, max 27, skew +1.92;
+127 women (10.0%) screen positive at ≥10
+.
+This removes the need for a PHQ-9 split
+The 264 women who previously had a PHQ-9 score were
+all
+from 2017–2020. A present-versus-absent analysis would have compared survey eras, not depression. PHQ-9 now enters as an ordinary continuous predictor, with ≥10 as a secondary binary.
+Zero written as a denormal float in the 2017–2020 files
+defect
+sanitised on load
+171 columns across the
+P_*
+CSVs encode zero as
+5.397605346934028e-79
+. It reaches
+DR2TVD
+(324 rows),
+PAD680
+(3) and the
+DPQ
+items.
+In a plain sum this is harmless, so
+current published AUCs are not affected
+. It breaks the moment anything takes a log, forms a ratio, or tests
+== 0
+— all of which the new plan does. Fix: on load, snap
+|x| < 1e-10
+to exactly 0 for these files, guarding against turning
+NaN
+into 0 in the process.
+What this means for the existing results
+None of the three invalidates a published AUC. Defects 1 and 3 touch variables that were never in the trained feature set or move only a handful of values; defect 2 touches a variable that was 80% absent. What they do invalidate is the
+decision
+to drop sleep, and they were blocking two of the specialist’s twenty items.
+03
+Cohort derivation
+The specialist’s instruction —
+“eliminate everyone who had a cycle in last 12 months”
+— is
+RHQ031
+. The filter sits after the existing inclusion chain.
+Attrition to the analysis cohort
+Step
+n
+Note
+NHANES respondents, six cycles
+66,023
+Female
+33,341
+Non-Hispanic White
+12,239
+Aged 50–65
+1,863
+Femoral-neck DXA present
+1,484
+the previously published cohort
+− still cycling (
+RHQ031
+= Yes)
+−170
+premenopausal or perimenopausal
+− menopausal status unresolvable
+−42
+whole-section reproductive nonresponders
+Analysis cohort
+1,272
+751 at T ≤ −1.0 · 91 at T ≤ −2.5
+Why the excluded 170 are genuinely different
+n
+Median age
+Mean T
+T ≤ −1.0
+T ≤ −2.5
+Still cycling
+(excluded)
+170
+52
+−0.488
+35.9%
+1.2%
+(2)
+Postmenopausal
+(kept)
+1,272
+59
+−1.162
+59.0%
+7.2%
+(91)
+They cluster at the floor of the age window — 63% are aged 50–52 — and their bone is 0.67 T-score units healthier (p ≈ 9×10
+−13
+). They carry 2 osteoporosis cases between them, so removing 212 women costs only 3 events and prevalence
+rises
+.
+Cohort by cycle: 2005–06
+173
+, 2007–08
+228
+, 2009–10
+227
+, 2013–14
+219
+, 2017–18
+161
+, 2017–20
+264
+.
+How the not-yet-postmenopausal women should be used
+The 170 women excluded by the menopause filter are those aged 50–65 who report at least one menstrual period in the preceding twelve months. By the twelve-month amenorrhoea definition they have not reached menopause.
+They cannot be classified more precisely than that:
+NHANES carries no cycle-regularity item in any of these six cycles —
+RHQ040
+is absent throughout, and the only period-timing variable that survives for them is
+RHQ010
+, age at
+menarche
+— so “perimenopausal” cannot be separated from “premenopausal” in this data. They should be described as
+not yet postmenopausal
+, which is the strongest claim the data supports, and reported as a characterised excluded group in the attrition table and in Table 1 rather than silently dropped.
+They should not enter the primary modelling cohort, and the reason is not statistical taste but a definitional one.
+Years since menopause is undefined for 100% of them — 0 of 170 have a usable
+RHQ060
+, because a woman who has not had her last period has no last period to count from. Including them therefore does not mean imputing a missing value; it means fabricating a menopause date for women who have not had menopause, for every single one of them. That pushes the undefined rate on a primary exposure from 1.9% to 15.8%. What it buys in return is
+2 of the 94 osteoporosis events
+— because at a median age of 52, with 63% aged 50–52 and a mean T-score 0.67 units healthier, this group is almost event-free on the endpoint the study exists to predict. The defensible use of the 170 is as a pre-specified sensitivity analysis and as a described subgroup, never as part of the population the headline number is computed on.
+Cohort decision — conditions side by side
+All cohort options, for sign-off
+Option
+n
+T ≤ −1.0
+T ≤ −2.5
+Years-since-menopause undefined
+What it supports
+Cost / risk
+A
+— 1,272 only
+postmenopausal, status known
+1,272
+751
+59.0%
+91
+7.2%
+24
+1.9%
+A clean postmenopausal claim. Every variable is defined for every woman.
+No answer to “what if you included them?”
+B
+— 1,272 primary
++
+1,484 sensitivity
+recommended
+1,272
++1,484
+751
+836
+91
+94
+1.9%
+15.8%
+Both at once: the defensible headline plus a pre-specified with-and-without comparison.
+One extra run. Requires the fix described below.
+C
+— 1,484 primary
+menopausal status as a covariate
+1,484
+836
+56.3%
+94
+6.3%
+235
+15.8%
+Largest n; 3 more osteoporosis events than option A.
+Fabricates a menopause date for 212 women. Contradicts the specialist’s instruction. Mixes two physiologies.
+D
+— 1,314
+drop cycling, keep unresolved
+1,314
+775
+59.0%
+92
+7.0%
+65
+4.9%
+42 more women than A, at the same prevalence.
+Those 42 are whole-section reproductive nonresponders — menopausal status asserted, not observed.
+The excluded groups, for reference
+The 170
+still cycling
+170
+61
+35.9%
+2
+1.2%
+170
+100%
+Describable subgroup; median age 52, mean T −0.488.
+Contributes 2 of 94 osteoporosis events.
+The 42
+status unresolvable
+42
+24
+57.1%
+1
+2.4%
+41
+97.6%
+—
+Blank on
+RHQ031
+, hysterectomy, oophorectomy
+and
+last-period age.
+If option B is chosen, the sensitivity run needs one fix
+A with-and-without comparison on 1,484 is only coherent if years-since-menopause is handled honestly for the 212 women for whom it does not exist. Median-imputing it would assign them 10 years since a menopause they have not had. Two workable options:
+(i)
+drop years-since-menopause from the sensitivity model and add a binary
+postmenopausal
+predictor in its place — the cleanest, though it is then not quite the same model; or
+(ii)
+set years-since-menopause to 0
+and
+carry a
+not_yet_postmenopausal
+indicator, letting the model learn the offset rather than having it smuggled in. Option (i) is the safer default.
+Open question for the specialist — surgical menopause
+Of the 1,272,
+460 had a hysterectomy
+and
+206 an oophorectomy
+.
+RHQ060
+is
+age at last menstrual period
+, which for a hysterectomy is the surgery date. If the ovaries were retained, oestrogen production continued past that date, so years-since-menopause overstates true oestrogen-deficient exposure — the quantity that drives bone loss. Needs a ruling: define the variable for natural menopause only, or compute it for everyone with the caveat stated.
+04
+Variable specification
+All figures are coverage within the 1,272, computed with the defects in
+§02
+repaired. This table is the declarative spec the code will be built from — feature selection becomes an
+allowlist
+, not the current exclusion list, which makes target leakage structurally impossible rather than a thing to remember.
+The 20 specialist items, as modelled
+#
+Variable
+Type
+NHANES source
+Avail.
+Miss
+Distribution
+Handling
+1
+age
+cont
+RIDAGEYR
+1,272
+0
+median 59, IQR 55–62, skew −0.24
+as-is
+2
+bmi
+cont
+BMXBMI
+1,271
+1
+median 28.0, skew +0.68
+impute; 6 WHO bands in Table 1
+3
+years_since_menopause
+cont
+RIDAGEYR − RHQ060
+1,248
+24
+median 10, IQR 5–17, skew +0.96
+impute median
+4
+ever_estrogen
+cat
+RHQ540
+1,270
+2
+532 yes (42%)
+impute mode
+5
+rheumatoid_arthritis
+cat
+MCQ160A + MCQ190/195
+1,173
+99
+49 yes (4%)
+no impute — see caveat
+6
+diabetes
+cat
+DIQ010
+1,239
+33
+130 yes (10%)
+stratifier, not imputed
+7
+ever_smoked
+cat
+SMQ020
+1,272
+0
+669 yes (53%)
+as-is
+8
+alcohol_cat
+cat
+ALQ101|ALQ111 + ALQ130
+1,182
+90
+zero 285 · <3 745 · 3+ 152
+impute mode
+9
+prior_fracture
+cat
+OSQ010A/B/C
+1,272
+0
+206 yes (16%)
+as-is
+10
+steroid_use
+cat
+OSQ130
+1,267
+5
+112 yes (9%)
+impute mode
+11
+met_min_week
+cont
+PAQ605–PAD675
+1,095
+177
+median 720, skew
++4.04
+, 27% zero
+no impute; log1p
+11a
+moderate_min_wk
+cont
+PAQ620/635/665
+1,096
+176
+median 150, skew +3.32
+secondary
+11b
+vigorous_min_wk
+cont
+PAQ605/650
+1,097
+175
+median
+0
+, skew +5.00, 76% zero
+secondary
+11c
+sitting_hrs_day
+cont
+PAD680
+1,095
+177
+median 6.0, skew +0.71
+secondary
+12
+total_calcium_mg
+cont
+DR1TCALC+DR2+DSQTCAL
+1,090
+182
+median 1,028, skew +1.14
+no impute; 4 bands in Table 1
+13
+vitd_intake_IU
+cont
+total_vitd_mcg × 40
+1,090
+182
+median 439, skew
++13.46
+no impute; log;
+alternative to 14
+14
+serum_vitd_ngml
+cont
+LBXVIDMS ÷ 2.496
+974
+298
+median 29.8, skew +1.20
+cohort restriction
+, never imputed
+15
+poverty_income_ratio
+cont
+INDFMPIR
+1,208
+64
+median 3.42, skew −0.24
+impute; 3 bands in Table 1
+16
+mother_hip_fx
+cat
+OSQ170
+1,247
+25
+149 yes (12%)
+impute mode
+16a
+father_hip_fx
+cat
+OSQ200
+1,213
+59
+53 yes (4%)
+impute mode
+17
+phq9_score
+cont
+DPQ010–090
+1,271
+1
+median 2, IQR 1–5, skew +1.92
+impute median; ≥10 binary secondary
+18
+antidepressant_use
+—
+RXQ_RX
+—
+—
+not downloaded
+deferred
+19
+falls
+—
+—
+—
+—
+no such question in these cycles
+unavailable
+20
+sleep_hrs
+cont
+SLD012 | SLD010H
+1,267
+5
+median 7.0, skew −0.16
+impute;
+5 bands as a model
+19 modelled features
+after excluding the deferred items and treating the activity secondaries and vitamin D alternatives as separate arms. Every remaining column is declared — no column enters the feature matrix by surviving an exclusion list.
+Rheumatoid arthritis is the awkward one
+2009–2010 asks
+neither
+MCQ190
+nor
+MCQ195
+, so RA is underivable there. That makes the 99 missing not a clean cycle drop but
+the 98 arthritis-positive women in one cycle
+— excluding them removes arthritis cases selectively and biases the RA–bone relationship. With only 49 positives against 91 osteoporosis events, RA is fragile whichever way it goes. Recommend an explicit
+unknown
+third level rather than dropping those women.
+Specialist bands, populated
+The document scopes BMI, calcium and income-ratio categories to the demographic table only — all three stay continuous in every model. Sleep is the single exception:
+“Continuous for primary analysis, categorical for secondary analysis”
+, so it gets both.
+Band counts within the 1,272
+BMI kg/m²
+n
+Calcium mg/day
+n
+Income ratio
+n
+Sleep h/night
+n
+<18.5 Underweight
+18
+<600
+184
+<1
+165
+≤5 Very short
+120
+18.5–24.9 Normal
+368
+600–999
+348
+1 to <3
+383
+6 Short
+219
+25.0–29.9 Overweight
+379
+1,000–1,199
+126
+≥3
+660
+7–8 Reference
+745
+30.0–34.9 Obesity I
+281
+≥1,200
+432
+9 Long
+108
+35.0–39.9 Obesity II
+147
+≥10 Very long
+75
+≥40 Obesity III
+78
+Every band has usable numbers; none needs collapsing.
+05
+Imputation policy
+Two things to be precise about, because they are easy to state loosely.
+Median means the 50th percentile of observed values, not the midpoint of the range
+The 24 women missing
+years_since_menopause
+receive
+10.0
+— the median of the 1,248 observed values — not 21, the midpoint of 0–42. The distinction is large for skewed variables:
+met_min_week
+would be 720 by median against roughly 21,840 by range-midpoint.
+And the median is recomputed
+inside each cross-validation fold
+, from that fold’s training rows only. Computing it once over the whole dataset leaks test information into training and inflates AUC. The existing
+_pipe
+already does this correctly and is kept.
+What gets imputed
+Imputation decisions, all 1,272
+Variable
+Missing
+%
+Method
+Nothing to impute
+age · ever_smoked · prior_fracture
+0
+0.0
+complete
+Imputed in-fold — scattered nonresponse
+bmi
+1
+0.1
+median
+(near-normal)
+phq9_score
+1
+0.1
+median
+(skew +1.92)
+ever_estrogen
+2
+0.2
+mode
+steroid_use
+5
+0.4
+mode
+sleep_hrs
+5
+0.4
+median
+(near-normal)
+years_since_menopause
+24
+1.9
+median
+mother_hip_fx
+25
+2.0
+mode
+father_hip_fx
+59
+4.6
+mode
+poverty_income_ratio
+64
+5.0
+median
+alcohol_cat
+90
+7.1
+mode
+Never imputed — the gap is a whole missing cycle
+met_min_week + 3 secondaries
+175–177
+13.9
+173 = all of 2005–06
+, pre-GPAQ instrument → drop cycle
+total_calcium_mg · vitd_intake_IU
+182
+14.3
+173 = all of 2005–06
+, no
+DSQTOT_D
+file → drop cycle
+serum_vitd_ngml
+298
+23.4
+264 = all of 2017–20
+, no lab file exists → cohort restriction
+rheumatoid_arthritis
+99
+7.8
+98 = 2009–10
+, no arthritis-type question →
+unknown
+level
+diabetes
+33
+2.6
+stratifier; the 33 sit outside both strata
+The principle:
+scattered nonresponse is imputed, structural absence is not.
+For the four structural variables, imputation would mean inventing one cycle’s values from other cycles’ women, who differ in era, instrument and population. That is missing-at-random at best and hard to defend.
+06
+The analysis cohorts
+Each model is reported on the largest cohort its variables permit, rather than forcing one strict cohort on everything.
+These cohorts branch rather than nest.
+Only C0 contains all the others: C1 and C2 are parallel restrictions that discard
+different
+cycles — C1 drops 2005–06 for want of activity and supplement data, C2 drops 2017–20 for want of a vitamin D lab file. 170 women sit in C2 but not C1, and 296 sit in C1 but not C2.
+Consequence: only within-cohort comparisons are valid
+An AUC on C1 and an AUC on C2 describe different populations and must not be read as a progression or compared to each other. Every comparison that carries a claim — the ablation grid, the vitamin D arm, the diabetes strata — holds one cohort fixed and varies only the feature set.
+C0
+Near-complete variables only — the primary cohort
+1,272
+· 751 / 91 · EPV 5.4
+C1
+branch A —
++ activity, calcium, vitamin D intake
+drops 2005–06; keeps all of 2017–20
+1,099
+· 659 / 82 · EPV 4.8
+C2
+branch B —
++ serum 25(OH)D, the vitamin D arm
+drops 2017–20; keeps 170 from 2005–06
+974
+· 566 / 68 · EPV 4.0
+C3
+C1 ∩ C2 — where branch A and branch B overlap
+803
+· 475 / 59 · EPV 3.5
+C4
++ rheumatoid arthritis resolvable
+drops 2009–10 arthritis cases
+1,173
+· 693 / 89 · EPV 5.2
+C5
+Strict — every variable observed, nothing imputed
+705
+· 417 / 57 · EPV 3.4
+Figures are n · events at T ≤ −1.0 / T ≤ −2.5 · events per predictor at 17 features. C0 is the only cohort containing every other; C1 and C2 are parallel branches, C3 their intersection, C5 the strictest subset. Counts are re-asserted on the first full run.
+The trade-off to be aware of
+Applying no-imputation to every structural variable at once collapses to
+705 women and 57 osteoporosis events
+— thinner than the cohort that produced the current results. C5 is therefore reported as a sensitivity arm, not the headline. C0, C1 and C2 carry the primary results.
+07
+Derivations that need care
+MET-min/week — validated against the specialist’s own references
+Both
+PMC9858810
+and
+PMC12851727
+agree on the convention, and it matches the prototype:
+met_min_week
+= 8 × (PAQ610 × PAD615)   vigorous work
++ 4 × (PAQ625 × PAD630)   moderate work
++ 4 × (PAQ640 × PAD645)   walk / bicycle transport
++ 8 × (PAQ655 × PAD660)   vigorous recreation
++ 4 × (PAQ670 × PAD675)   moderate recreation
+Gate-conditional zero fill.
+A sub-domain left blank while others are valid counts as zero, not missing — this is the WHO GPAQ rule, not an invention. It is what lifts coverage from 982 to 1,095.
+Validity range
+10–960 min per item, 1–7 days; the guide caps at 16 h/day per sub-domain. Replaces the prototype’s 840-min cap.
+Units.
+Both papers report MET-
+hours
+/week. Output both; ÷ 60 converts.
+Outlier rule.
+PMC12851727 drops cases above 1,000 MET-h/week. Applied as a sensitivity check — the cohort maximum is 728 MET-h/week, so nothing would drop.
+2005–06 cannot be rescued.
+PAQ_D
+uses the pre-GPAQ instrument (
+PAD020
+,
+PAD080
+,
+PAD320
+…) with no domain structure. Hence the cycle drop rather than a mapping.
+Alcohol, three levels across two instruments
+The instrument changed in 2017:
+ALQ101
+/
+ALQ120Q
+became
+ALQ111
+/
+ALQ121
+. “Zero” comes from the gate item, “<3” and “3+” from
+ALQ130
+, which is drinks per
+drinking day
+and is only asked of current drinkers — so a blank there means non-drinker, not missing. Resolves 1,182 of 1,272.
+Unit conversions the specialist asked for
+Serum 25(OH)D:
+LBXVIDMS
+nmol/L ÷ 2.496 → ng/mL. Coalesce with
+LBDVIDMS
+for 2005–06.
+Vitamin D intake: mcg × 40 → IU/day.
+Sitting:
+PAD680
+minutes ÷ 60 → hours/day.
+OST comparator, unchanged:
+0.2 × (weight_kg − age)
+.
+Transforms, driven by the measured distributions
+The specialist asked for distributions to be checked before analysis. Four variables need a transform; the rest are near-normal or binary.
+Variable
+Skew
+Zeros
+Transform
+vitd_intake_IU
++13.46
+0%
+log
+vigorous_min_wk
++5.00
+76%
+log1p
++ zero indicator
+met_min_week
++4.04
+27%
+log1p
+; log of positives is skew −0.10
+moderate_min_wk
++3.32
+29%
+log1p
+08
+Model panel
+Eight models, unchanged from the current script. All wrapped in a pipeline of impute → encode → scale → estimator, so every fitted step is learned inside the training fold. Seed 42 throughout; 5-fold
+StratifiedKFold
+.
+The eight models plus the clinical comparator
+#
+Model
+Target
+Imbalance handling
+1
+Logistic regression, L2
+binary
+class_weight='balanced'
+2
+Elastic-net logistic
+binary
+class_weight='balanced'
+3
+Random forest
+binary
+class_weight='balanced'
+, OOB on
+4
+LightGBM, regularised
+binary
+class_weight='balanced'
+5
+XGBoost, regularised
+binary
+scale_pos_weight
+6
+RidgeCV
+t_score
+n/a — never sees a label
+7
+Random forest regressor
+t_score
+n/a
+8
+LightGBM regressor
+t_score
+n/a
+—
+OST
+0.2 × (weight − age)
+comparator
+validated two-input formula
+Both boosters keep
+max_depth=2
+,
+reg_lambda=50
+— n ≈ 1,200 overfits trivially. One regressor fit serves both clinical cutoffs by thresholding the predicted T-score twice. Categorical encoding moves inside a
+ColumnTransformer
+, which is the one structural change to the pipeline.
+Carried forward from the current methodology
+The forest’s in-sample AUC is 1.000 by construction, so the leaderboard reports train, test
+and
+OOB side by side — do not rank by the train/test gap.
+RF_MIN_SAMPLES_LEAF = 1
+stays: nested CV showed raising it lowers test AUC monotonically. Tree importances stay out of reporting in favour of permutation importance.
+09
+Analysis arms
+A — Primary. Full feature set, C0 / C1 / C2
+All eight models, both cutoffs, nested cross-validation, against OST with a bootstrap ΔAUC confidence interval. This produces the defensible headline number.
+What “nested cross-validation” means here
+Fitting eight models and reporting the best is biased upward, because the test data helped pick the winner. Nested CV puts the choosing
+inside
+the scoring: an
+outer
+loop of 5 folds holds out one fold at a time, and an
+inner
+loop of 3 folds — run only on the remaining data — selects the model. The inner loop never sees the outer held-out fold, so no test row helps choose the model scored on it.
+This is what took the previous osteoporosis figure from 0.833 to 0.806. It is unrelated to the cohort structure in
+§06
+, which is about
+which women
+are analysed.
+B — Ablation. With and without each variable
+The core new deliverable, answering
+“how does each model behave with each of these variables, and for categoricals how does it behave without”
+. Leave-one-variable-out: refit the full panel with that one column removed and report the change in out-of-fold AUC. Repeated 5-fold CV, not nested, so the grid is affordable; bootstrap intervals only for variables that actually move AUC.
+C — Diabetes stratification
+The direction is inverted in this cohort, and the diabetic stratum is underpowered
+The specialist expects diabetics to show lower BMD. Unadjusted, the cohort shows the opposite — and it is entirely body weight:
+n
+Mean BMI
+Mean T
+T ≤ −2.5
+Diabetic
+130
+33.9
+−0.807
+5.4%
+(7)
+Non-diabetic
+1,109
+28.1
+−1.211
+7.5%
+(83)
+T-score on diabetes, progressively adjusted
+Model
+Diabetes β
+p
+Unadjusted
++0.405
+<0.0001
++ age
++0.418
+<0.0001
++ age + BMI
++0.022
+0.79
+Diabetics average 5.7 kg/m² more BMI (p = 1×10
+−17
+), and BMI drives BMD. Adjusted, diabetes has no independent association with T-score; within obese women only the gap is +0.17, p = 0.22. This is the documented
+type-2 diabetes bone paradox
+— normal-to-high BMD with
+higher
+fracture risk, through bone quality and falls rather than density. The specialist is right about fracture risk; DXA T-score is the wrong instrument to see it, and
+DIQ010
+cannot separate type 1 from type 2.
+So the arm is built as:
+diabetes-stratified descriptive tables, where the real finding sits; diabetes as a predictor plus a diabetes×BMI interaction test in the main models; full stratified modelling in non-diabetics only (n = 1,109, 83 events). The diabetic stratum is reported for osteopenia+ only (61 events) and flagged underpowered —
+7 osteoporosis events cannot support 17 features across 8 models
+.
+D — Vitamin D, with and without serum
+On C2 (n = 974) run the full panel twice, once with
+serum_vitd_ngml
+in the feature set and once without. Constant n, so the difference is attributable to the variable rather than the cohort.
+vitd_intake_IU
+runs as the parallel definition — never in the same model as serum, per the specialist’s instruction.
+E — Sleep, continuous and categorical
+Continuous
+sleep_hrs
+in the primary models; the five-band version as a secondary model with 7–8 h as reference, per the document.
+10
+Output tables
+Everything goes through
+save_csv(df, filename, tier)
+, keeping the existing PRESENT / METHODS / DIAGNOSTIC convention so
+outputs/
+stays self-describing.
+The main results table — model × variables × result
+model_results.csv
+PRESENT
+model          target      cohort  n     events  n_feat
+variable_set   variables_used
+auc  auc_ci_lo  auc_ci_hi   sens  spec  ppv
+ost_auc  delta_vs_ost  delta_ci_lo  delta_ci_hi  verdict
+One row per model × target × cohort × variable set, with
+variables_used
+carrying the explicit column list so any row can be reproduced from the table alone.
+The ablation table
+model_variable_ablation.csv
+PRESENT
+model  target  cohort  variable_removed  var_type
+auc_full  auc_without  delta_auc  delta_ci_lo  delta_ci_hi
+rank_within_model  n_observed  pct_imputed
+The rest
+File
+Tier
+Contents
+variable_distributions.csv
+PRESENT
+n, missing, mean, median, IQR, skew, zero-inflation, transform — the specialist’s pre-analysis check
+variable_distributions.png
+PRESENT
+small-multiple histograms, one panel per continuous variable
+table1_demographics.csv
+PRESENT
+the specialist’s bands: BMI ×6, calcium ×4, income ×3, sleep ×5, alcohol ×3
+nested_cv_verdict.csv
+PRESENT
+the two-row bottom line — open this first
+limitations_table.csv
+PRESENT
+one row per variable, its caveat and severity
+cohort_attrition.csv
+PRESENT
+the cohort structure in
+§06
+, with events per cohort
+diabetes_stratified.csv
+PRESENT
+descriptive + adjusted, both strata
+clinical_predictor_table.csv
+PRESENT
+permutation importance, odds ratios, forest plot
+referral_table.csv
+PRESENT
+quantile-flagged, leads with top fraction flagged
+threshold_sweep.csv
+PRESENT
+calibrated probabilities —
+never merged with the referral table
+calibration_curve.png
+PRESENT
+closes the known gap left when
+SF_new1.py
+was removed
+baseline_comparison.csv
+METHODS
+OST and simpler baselines
+missingness_by_variable.csv
+METHODS
+with the structural-vs-scattered split
+coefficient_diagnostics.csv
+DIAGNOSTIC
+leak and sign-error detector.
+Not a findings table
+11
+How the code is laid out
+One file, run the same way. Internally reorganised into seven blocks, with the variable spec as a declarative table at the top so the whole contract is readable in one screen.
+OsteoporosisML.py
+A  CONFIG
+CYCLES, seeds, thresholds, reference means/SDs
+B  VARIABLE SPEC
+the allowlist: name, source, type, valid range,
+derivation, transform, impute rule, cohort tier
+C  LOAD
+per-cycle read, denormal sanitise, range-based
+missing codes, dual string/numeric decode
+D  DERIVE
+MET, alcohol, RA, PHQ-9, calcium, unit conversions
+E  QC
+distributions, normality, cohort definitions, Table 1
+F  MODEL
+panel, nested CV, ablation grid, strata
+G  REPORT
+save_csv by tier, figures, limitations
+Three structural changes
+Inclusion, not exclusion.
+define_features
+currently subtracts a hand-maintained
+exclude
+list from every column, so anything BMD-derived leaks unless remembered. The spec in block B is an allowlist — leakage becomes impossible rather than guarded against.
+Per-variable missing codes.
+Each variable declares its valid range;
+recode_refused
+’s global replace goes away.
+Encoding inside the pipeline.
+A
+ColumnTransformer
+joins imputation and scaling, so categorical encoding is fold-local too.
+Dependencies
+statsmodels
+is
+not installed
+;
+scipy
+is. The adjusted regressions use a numpy least-squares implementation rather than adding a dependency. Nothing new to install, so a fresh clone still runs offline on the committed download caches.
+12
+Limitations register
+Shipped as
+limitations_table.csv
+and required reading alongside any result. The specialist asked for these to be listed explicitly.
+Variable
+Limitation
+Severity
+falls
+No falls or balance question exists in any of these six cycles. Not obtainable.
+blocking
+antidepressant_use
+Obtainable from
+RXQ_RX
++
+RXQ_DRUG
+, not yet pulled. Deferred.
+deferred
+serum_vitd_ngml
+No lab file for 2017–20: 264 women permanently without a value. Varies with season and sun exposure.
+high
+met_min_week
+2005–06 uses the pre-GPAQ instrument; 173 women unusable. Self-reported.
+high
+rheumatoid_arthritis
+2009–10 asks no arthritis-type question. Only 49 positives; self-reported, not serology.
+high
+diabetes
+DIQ010
+cannot separate type 1 from type 2. Association with T-score is fully confounded by BMI.
+high
+prior_fracture
+Age at fracture known for only 224 respondents, so fragility cannot be distinguished from trauma.
+moderate
+steroid_use
+Duration available for 126 users via
+OSQ140Q
+/
+OSQ140U
+—
+more than the specialist assumed
+; dose never recorded.
+moderate
+ever_estrogen
+Timing only partial:
+RHQ570
+is 70% missing, so “when” is unanswerable for most.
+moderate
+years_since_menopause
+460 hysterectomies and 206 oophorectomies; last-period date is the surgery, not ovarian failure.
+moderate
+alcohol_cat
+Instrument changed in 2017.
+ALQ130
+is drinks per
+drinking day
+, not per day.
+moderate
+father_hip_fx
+183 “don’t know” responses cycle-wide; recall for paternal history is weaker than maternal.
+moderate
+total_calcium_mg
+Two-day dietary average plus supplements; no
+DSQTOT
+file for 2005–06.
+moderate
+sleep_hrs
+Whole hours in older cycles, half hours from 2017; self-reported.
+low
+phq9_score
+Screening instrument, not a diagnosis. Reverse causation plausible.
+low
+cohort
+Non-Hispanic White women 50–65 only. Cross-sectional — no incident fractures, so no fracture-risk claim.
+design
+13
+Build order
+Sequential, because each step’s output is the next step’s input. Steps 1–5 are verifiable against the numbers in this document before any model runs.
+Variable spec and loader
+Block B as a declarative table; per-variable ranges replace the global refused list; denormal sanitising on the
+P_*
+files; dual string/numeric decode.
+Checkpoint:
+sleep reaches 1,267 and PHQ-9 reaches 1,271.
+Cohort filter and assert
+Menopause filter after the existing chain; re-pin the assert at 1,272 and emit the attrition table.
+Checkpoint:
+751 and 91 events, cycle counts as in §03.
+Derivations
+MET with the GPAQ rules, alcohol across both instruments, RA with the
+unknown
+level, unit conversions.
+Checkpoint:
+MET reaches 1,095 with median 720.
+Distribution QC
+The specialist’s pre-analysis requirement: per-variable distributions, skew, zero-inflation, histogram panel, recommended transform.
+Checkpoint:
+matches §04.
+Cohort definitions and Table 1
+C0–C5 with events per cohort; demographic table in the specialist’s bands.
+Checkpoint:
+cohort sizes match §06.
+Pipeline and model panel
+ColumnTransformer
+for impute/encode/scale; the eight models; OST comparator. Leaderboard with train, test and OOB.
+Nested CV headline
+Arm A on C0, C1, C2, both cutoffs, with bootstrap ΔAUC against OST. This is the number that gets quoted.
+Ablation grid
+Arm B: leave-one-variable-out across all eight models, repeated 5-fold, bootstrap intervals only where AUC moves.
+Stratified and paired arms
+Arms C, D, E — diabetes strata with the interaction test, vitamin D with and without serum on C2, sleep continuous and banded.
+Reporting
+All tables via
+save_csv
+with tiers, forest plot, calibration curve, limitations register.
+Documentation
+Update
+CLAUDE.md
+for the new cohort, spec and defect fixes; update
+Notes/project_walkthrough.html
+so the explainer matches the results.
+14
+Sign-off needed
+Everything above is specified and buildable. These are the points where a ruling changes what gets built, rather than how.
+Specialist
+Diabetes and the T-score direction.
+Adjusted for BMI, diabetes has no independent association with T-score here (β = +0.022, p = 0.79), and the diabetic stratum holds 7 osteoporosis events. Confirm the arm should be descriptive plus non-diabetic modelling, rather than a full split.
+Specialist
+Years since menopause with surgical menopause.
+460 hysterectomies among 1,272. Define for natural menopause only, or for everyone with the caveat stated?
+Specialist
+Rheumatoid arthritis.
+49 positives, and 2009–10 cannot type arthritis at all. Keep RA as a modelled predictor with an
+unknown
+level, or demote it to a descriptive row?
+Specialist
+Imputation method per variable.
+The proposal in
+§05
+is median for continuous, mode for categorical, in-fold. Mean versus median only changes four variables materially — the skewed activity and vitamin D intake measures.
+Specialist
+Cohort: option A or option B.
+See the decision table in
+§03
+. Recommendation is
+option B
+— 1,272 as the primary cohort, 1,484 as a pre-specified sensitivity run — because it answers “what if the not-yet-postmenopausal women were included?” at the cost of one extra run, without letting a fabricated menopause date into the headline figure.
+You
+Superseding the published cohort.
+Re-pinning at 1,272 means every figure in the manuscript, walkthrough and decks is replaced. Confirm before step 2 lands.
+You
+Third reference.
+PubMed 37454096 sits behind a cookie wall — send the PDF if you want its MET method checked against the other two.
+Sources:
+Notes/SpecialistUpdate.docx
+·
+Notes/specialist_variable_decisions.csv
+· regenerate with
+python Notes/build_variable_decisions.py
+. MET convention from PMC9858810, PMC12851727 and the WHO GPAQ Analysis Guide. All coverage figures computed on the 1,272 cohort with the §02 defects repaired.

@@ -1,0 +1,992 @@
+<title>Osteoporosis Pipeline Rewrite</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper:      #fbfcfd;
+    --surface:    #ffffff;
+    --surface-2:  #f3f6f8;
+    --ink:        #12171f;
+    --ink-2:      #39424e;
+    --slate:      #5a6572;
+    --rule:       #dde3ea;
+    --rule-2:     #eaeff3;
+    --accent:     #0e6b78;
+    --accent-2:   #e2f0f2;
+    --rust:       #9a3412;
+    --rust-bg:    #fbeee8;
+    --green:      #1a6b4a;
+    --green-bg:   #e8f2ec;
+    --amber:      #7c5410;
+    --amber-bg:   #fbf2df;
+
+    --ff-display: "Newsreader", Georgia, "Times New Roman", serif;
+    --ff-body:    "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --ff-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    --measure: 68ch;
+    --s1: 0.375rem; --s2: 0.75rem; --s3: 1.125rem;
+    --s4: 1.75rem;  --s5: 2.5rem;  --s6: 4rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:     #0e1216;
+      --surface:   #151b21;
+      --surface-2: #1b2329;
+      --ink:       #e8edf1;
+      --ink-2:     #bcc7d1;
+      --slate:     #8d9aa7;
+      --rule:      #2a343d;
+      --rule-2:    #212a32;
+      --accent:    #58b6c2;
+      --accent-2:  #17323a;
+      --rust:      #e8a184;
+      --rust-bg:   #2e1c14;
+      --green:     #7cc4a0;
+      --green-bg:  #14281f;
+      --amber:     #dcb469;
+      --amber-bg:  #2a2113;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:     #0e1216;
+    --surface:   #151b21;
+    --surface-2: #1b2329;
+    --ink:       #e8edf1;
+    --ink-2:     #bcc7d1;
+    --slate:     #8d9aa7;
+    --rule:      #2a343d;
+    --rule-2:    #212a32;
+    --accent:    #58b6c2;
+    --accent-2:  #17323a;
+    --rust:      #e8a184;
+    --rust-bg:   #2e1c14;
+    --green:     #7cc4a0;
+    --green-bg:  #14281f;
+    --amber:     #dcb469;
+    --amber-bg:  #2a2113;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--ff-body);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 61rem; margin: 0 auto; padding: var(--s5) var(--s3) var(--s6); }
+
+  /* ---------- masthead ---------- */
+  .masthead { border-bottom: 2px solid var(--ink); padding-bottom: var(--s3); margin-bottom: var(--s4); }
+  .eyebrow {
+    font-family: var(--ff-mono); font-size: 0.7rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 var(--s2);
+  }
+  h1 {
+    font-family: var(--ff-display); font-weight: 500; font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 var(--s2); text-wrap: balance;
+  }
+  .standfirst {
+    font-family: var(--ff-display); font-size: 1.1rem; color: var(--ink-2);
+    max-width: var(--measure); margin: 0;
+  }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4);
+    font-family: var(--ff-mono); font-size: 0.72rem; color: var(--slate);
+    margin-top: var(--s3); padding-top: var(--s2); border-top: 1px solid var(--rule-2);
+  }
+  .meta b { color: var(--ink-2); font-weight: 500; }
+
+  /* ---------- contents ---------- */
+  nav.toc {
+    background: var(--surface-2); border: 1px solid var(--rule);
+    padding: var(--s3); margin-bottom: var(--s5);
+  }
+  nav.toc h2 {
+    font-family: var(--ff-mono); font-size: 0.68rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--slate); margin: 0 0 var(--s2); font-weight: 500;
+  }
+  nav.toc ol {
+    margin: 0; padding: 0; list-style: none;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--s1) var(--s3);
+  }
+  nav.toc li { display: flex; gap: var(--s2); align-items: baseline; }
+  nav.toc .num { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); min-width: 1.4rem; }
+  nav.toc a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid transparent; }
+  nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ---------- sections ---------- */
+  section { margin-bottom: var(--s6); scroll-margin-top: var(--s3); }
+  h2 {
+    font-family: var(--ff-display); font-weight: 500; font-size: 1.6rem; line-height: 1.2;
+    letter-spacing: -0.01em; margin: 0 0 var(--s3); padding-bottom: var(--s2);
+    border-bottom: 1px solid var(--rule); text-wrap: balance;
+    display: flex; align-items: baseline; gap: var(--s2);
+  }
+  h2 .sn {
+    font-family: var(--ff-mono); font-size: 0.78rem; color: var(--accent);
+    font-weight: 500; flex-shrink: 0;
+  }
+  h3 {
+    font-family: var(--ff-body); font-weight: 600; font-size: 0.93rem;
+    letter-spacing: 0.01em; margin: var(--s4) 0 var(--s2); color: var(--ink);
+  }
+  h4 {
+    font-family: var(--ff-mono); font-weight: 500; font-size: 0.72rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate);
+    margin: var(--s3) 0 var(--s2);
+  }
+  p, ul, ol { max-width: var(--measure); }
+  p { margin: 0 0 var(--s2); }
+  ul, ol { margin: 0 0 var(--s2); padding-left: 1.25rem; }
+  li { margin-bottom: var(--s1); }
+  code {
+    font-family: var(--ff-mono); font-size: 0.855em;
+    background: var(--surface-2); padding: 0.1em 0.34em;
+    border: 1px solid var(--rule-2); border-radius: 2px; white-space: nowrap;
+  }
+  strong { font-weight: 600; }
+  a { color: var(--accent); }
+
+  /* ---------- chips ---------- */
+  .chip {
+    display: inline-block; font-family: var(--ff-mono); font-size: 0.66rem;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15em 0.5em;
+    border: 1px solid currentColor; border-radius: 2px; white-space: nowrap; font-weight: 500;
+  }
+  .chip.locked  { color: var(--green); background: var(--green-bg); }
+  .chip.open    { color: var(--amber); background: var(--amber-bg); }
+  .chip.defect  { color: var(--rust);  background: var(--rust-bg); }
+  .chip.recover { color: var(--green); background: var(--green-bg); }
+
+  /* ---------- tables ---------- */
+  .tscroll { overflow-x: auto; margin: var(--s3) 0; border: 1px solid var(--rule); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.815rem; min-width: 34rem; }
+  caption {
+    text-align: left; font-family: var(--ff-mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate);
+    padding: var(--s2) var(--s2) var(--s1);
+  }
+  th {
+    text-align: left; font-family: var(--ff-body); font-weight: 600; font-size: 0.72rem;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--slate);
+    padding: var(--s2); border-bottom: 1.5px solid var(--rule); vertical-align: bottom;
+    background: var(--surface-2); white-space: nowrap;
+  }
+  td { padding: var(--s2); border-bottom: 1px solid var(--rule-2); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  .num, td.n, th.n { font-family: var(--ff-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  td.vname { font-family: var(--ff-mono); font-size: 0.78rem; white-space: nowrap; }
+  tr.tot td { border-top: 1.5px solid var(--rule); font-weight: 600; background: var(--surface-2); }
+  tr.hl td { background: var(--accent-2); }
+  .sub { color: var(--slate); font-size: 0.92em; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    border-left: 3px solid var(--accent); background: var(--surface);
+    padding: var(--s3); margin: var(--s3) 0; max-width: var(--measure);
+  }
+  .note.warn { border-left-color: var(--rust); background: var(--rust-bg); }
+  .note.ok   { border-left-color: var(--green); background: var(--green-bg); }
+  .note > :last-child { margin-bottom: 0; }
+  .note h4 { margin-top: 0; }
+
+  /* ---------- defect blocks ---------- */
+  .defect {
+    border: 1px solid var(--rule); background: var(--surface);
+    padding: var(--s3); margin-bottom: var(--s3);
+  }
+  .defect header { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: baseline; margin-bottom: var(--s2); }
+  .defect h3 { margin: 0; font-size: 1rem; }
+
+  /* ---------- cohort ladder ---------- */
+  .ladder { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: var(--s3) 0; }
+  .rung {
+    background: var(--surface); padding: var(--s2) var(--s3);
+    display: grid; grid-template-columns: 3.2rem 1fr auto; gap: var(--s3); align-items: baseline;
+  }
+  .rung .id { font-family: var(--ff-mono); font-weight: 500; color: var(--accent); font-size: 0.85rem; }
+  .rung .def { font-size: 0.86rem; color: var(--ink-2); }
+  .rung .fig { font-family: var(--ff-mono); font-variant-numeric: tabular-nums; font-size: 0.82rem; white-space: nowrap; text-align: right; }
+  .rung .fig b { font-size: 1.02rem; color: var(--ink); }
+  .rung.primary { background: var(--accent-2); }
+  .rung.thin .fig b { color: var(--rust); }
+
+  /* ---------- schema blocks ---------- */
+  .schema {
+    font-family: var(--ff-mono); font-size: 0.76rem; background: var(--surface-2);
+    border: 1px solid var(--rule); padding: var(--s3); overflow-x: auto; margin: var(--s2) 0 var(--s3);
+    line-height: 1.75; white-space: pre;
+  }
+  .schema .fn { color: var(--accent); font-weight: 500; }
+
+  /* ---------- build steps ---------- */
+  .steps { list-style: none; padding: 0; margin: var(--s3) 0; max-width: none; counter-reset: st; }
+  .steps > li {
+    display: grid; grid-template-columns: 2.4rem 1fr; gap: var(--s3);
+    padding: var(--s3) 0; border-bottom: 1px solid var(--rule-2); margin: 0;
+  }
+  .steps > li::before {
+    counter-increment: st; content: counter(st, decimal-leading-zero);
+    font-family: var(--ff-mono); font-size: 0.8rem; color: var(--accent); padding-top: 0.1rem;
+  }
+  .steps h3 { margin: 0 0 var(--s1); }
+  .steps p { margin: 0; font-size: 0.88rem; color: var(--ink-2); }
+
+  /* ---------- signoff ---------- */
+  .signoff { border: 2px solid var(--ink); padding: var(--s4); margin-top: var(--s5); }
+  .signoff h2 { border-bottom-color: var(--rule); }
+  .qlist { list-style: none; padding: 0; margin: 0; max-width: none; }
+  .qlist > li {
+    padding: var(--s3) 0; border-bottom: 1px solid var(--rule-2);
+    display: grid; grid-template-columns: auto 1fr; gap: var(--s3); align-items: start; margin: 0;
+  }
+  .qlist > li:last-child { border-bottom: none; padding-bottom: 0; }
+  .qlist .who { font-family: var(--ff-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); padding-top: 0.25rem; white-space: nowrap; }
+  .qlist p { margin: 0; }
+  .qlist p + p { margin-top: var(--s1); }
+
+  footer {
+    margin-top: var(--s6); padding-top: var(--s3); border-top: 1px solid var(--rule);
+    font-family: var(--ff-mono); font-size: 0.7rem; color: var(--slate);
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  @media (max-width: 34rem) {
+    .rung { grid-template-columns: 2.6rem 1fr; }
+    .rung .fig { grid-column: 2; text-align: left; }
+    .qlist > li { grid-template-columns: 1fr; gap: var(--s1); }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Implementation plan &middot; for sign-off</p>
+  <h1>Osteoporosis Pipeline Rewrite</h1>
+  <p class="standfirst">Rebuilding <code>OsteoporosisML.py</code> around the specialist&rsquo;s 20-item variable set, a postmenopausal cohort of 1,272, and a with&ndash;without ablation across all eight models.</p>
+  <div class="meta">
+    <span><b>Cohort</b> n = 1,272 postmenopausal</span>
+    <span><b>Models</b> 5 classifiers + 3 regressors</span>
+    <span><b>Source</b> Notes/SpecialistUpdate.docx</span>
+    <span><b>Status</b> awaiting sign-off</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><span class="num">01</span><a href="#decisions">Decisions already locked</a></li>
+    <li><span class="num">02</span><a href="#defects">Three defects found while profiling</a></li>
+    <li><span class="num">03</span><a href="#cohort">Cohort derivation &amp; decision</a></li>
+    <li><span class="num">04</span><a href="#variables">Variable specification</a></li>
+    <li><span class="num">05</span><a href="#imputation">Imputation policy</a></li>
+    <li><span class="num">06</span><a href="#cohorts">The analysis cohorts</a></li>
+    <li><span class="num">07</span><a href="#derivations">Derivations that need care</a></li>
+    <li><span class="num">08</span><a href="#models">Model panel</a></li>
+    <li><span class="num">09</span><a href="#arms">Analysis arms</a></li>
+    <li><span class="num">10</span><a href="#outputs">Output tables</a></li>
+    <li><span class="num">11</span><a href="#code">How the code is laid out</a></li>
+    <li><span class="num">12</span><a href="#limits">Limitations register</a></li>
+    <li><span class="num">13</span><a href="#build">Build order</a></li>
+    <li><span class="num">14</span><a href="#signoff">Sign-off needed</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================ 01 -->
+<section id="decisions">
+  <h2><span class="sn">01</span> Decisions already locked</h2>
+  <p>These are settled and drive everything below. Nothing here needs re-deciding &mdash; only confirming.</p>
+  <div class="tscroll">
+    <table>
+      <caption>Locked decisions and their consequence</caption>
+      <thead>
+        <tr><th>Decision</th><th>Choice</th><th>Consequence</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Cohort</b></td>
+          <td>Postmenopausal only &mdash; no menstrual period in 12 months</td>
+          <td><b>n = 1,272.</b> The <code>1,484</code> assert is re-pinned. Every published figure is superseded.</td>
+        </tr>
+        <tr>
+          <td><b>Model panel</b></td>
+          <td>5 classifiers + 3 T-score regressors</td>
+          <td>8 model rows in every results table. No new estimators.</td>
+        </tr>
+        <tr>
+          <td><b>Vitamin D</b></td>
+          <td>Exclude women with no serum value; run with and without serum</td>
+          <td>Vitamin D arm holds one cohort fixed at n = 974 and varies only the feature set.</td>
+        </tr>
+        <tr>
+          <td><b>Diabetes</b></td>
+          <td>Stratified analysis, diabetic vs non-diabetic</td>
+          <td>Descriptive + non-diabetic modelling. See <a href="#arms">&sect;09</a> for the power limit.</td>
+        </tr>
+        <tr>
+          <td><b>Antidepressants, falls</b></td>
+          <td>Deferred &mdash; stretch goal</td>
+          <td>Both enter the limitations register. No new downloads.</td>
+        </tr>
+        <tr>
+          <td><b>Code layout</b></td>
+          <td>One restructured file</td>
+          <td><code>python OsteoporosisML.py</code> keeps working. ~2,500&ndash;3,000 lines.</td>
+        </tr>
+        <tr>
+          <td><b>Runtime</b></td>
+          <td>Tiered rigour</td>
+          <td>Nested CV for headlines, repeated 5-fold for the ablation grid. 2&ndash;4 h per run.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================ 02 -->
+<section id="defects">
+  <h2><span class="sn">02</span> Three defects found while profiling</h2>
+  <p>All three were found by auditing the specialist&rsquo;s variables against the raw NHANES files. They change what the rewrite has to do, so they belong in the sign-off.</p>
+
+  <div class="defect">
+    <header>
+      <h3>Global refused-code replace destroys real data</h3>
+      <span class="chip defect">defect</span>
+      <span class="chip recover">fixed by rewrite</span>
+    </header>
+    <p><code>REFUSED = [7, 9, 77, 99, 777, 999, 7777, 9999]</code> is applied to <em>every</em> numeric column. But 7 and 9 are legitimate values for many variables. <b>508 real values inside the cohort are nulled.</b></p>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Column</th><th class="n">Present</th><th class="n">Nulled</th><th>What is deleted</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td class="vname">SLD010H</td><td class="n">1,015</td><td class="n">373 <span class="sub">(36.7%)</span></td><td>women sleeping 7 h (328) or 9 h (45)</td></tr>
+          <tr class="hl"><td class="vname">SLD012</td><td class="n">464</td><td class="n">115 <span class="sub">(24.8%)</span></td><td>same, newer cycles</td></tr>
+          <tr><td class="vname">DR1TVD</td><td class="n">1,255</td><td class="n">8</td><td>7 or 9 mcg vitamin D</td></tr>
+          <tr><td class="vname">BMXWT</td><td class="n">1,483</td><td class="n">6</td><td>women weighing 77 kg or 99 kg</td></tr>
+          <tr><td class="vname">ALQ130</td><td class="n">1,019</td><td class="n">3</td><td>7 or 9 drinks per drinking day</td></tr>
+          <tr><td class="vname">DR1TCALC</td><td class="n">1,459</td><td class="n">2</td><td>777 or 999 mg calcium</td></tr>
+          <tr><td class="vname">LBXVIDMS</td><td class="n">941</td><td class="n">1</td><td>77 nmol/L serum 25(OH)D</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>Consequence for sleep is large.</b> True coverage is 1,479 / 1,484 &mdash; 0.3% missing. As coded it is 991, or 33.2% missing. The claim in <code>CLAUDE.md</code> that sleep &ldquo;is sparse across cycles and was dropped for data density&rdquo; describes this bug, not NHANES. The specialist&rsquo;s 7&ndash;8 h reference band holds 745 women and its 7-hour half is deleted.</p>
+    <p><b>Fix.</b> Each variable declares its own plausible range in the spec; anything outside is missing. Nothing global.</p>
+  </div>
+
+  <div class="defect">
+    <header>
+      <h3>PHQ-9 items are text in five of six cycles</h3>
+      <span class="chip defect">defect</span>
+      <span class="chip recover">+1,007 women</span>
+    </header>
+    <p>The nine <code>DPQ</code> items ship as labels &mdash; <span class="sub">&ldquo;Not at all&rdquo;, &ldquo;Several days&rdquo;, &ldquo;More than half the days&rdquo;, &ldquo;Nearly every day&rdquo;</span> &mdash; in every cycle except 2017&ndash;2020, which is numeric. The script sums them arithmetically, so five cycles silently become <code>NaN</code>.</p>
+    <p>Mapping the labels to 0&ndash;3 takes PHQ-9 from <b>264 to 1,271 (0.1% missing)</b>, all six cycles covered. Mean 3.93, median 2, IQR 1&ndash;5, max 27, skew +1.92; <b>127 women (10.0%) screen positive at &ge;10</b>.</p>
+    <div class="note ok">
+      <h4>This removes the need for a PHQ-9 split</h4>
+      <p>The 264 women who previously had a PHQ-9 score were <em>all</em> from 2017&ndash;2020. A present-versus-absent analysis would have compared survey eras, not depression. PHQ-9 now enters as an ordinary continuous predictor, with &ge;10 as a secondary binary.</p>
+    </div>
+  </div>
+
+  <div class="defect">
+    <header>
+      <h3>Zero written as a denormal float in the 2017&ndash;2020 files</h3>
+      <span class="chip defect">defect</span>
+      <span class="chip recover">sanitised on load</span>
+    </header>
+    <p>171 columns across the <code>P_*</code> CSVs encode zero as <code>5.397605346934028e-79</code>. It reaches <code>DR2TVD</code> (324 rows), <code>PAD680</code> (3) and the <code>DPQ</code> items.</p>
+    <p>In a plain sum this is harmless, so <b>current published AUCs are not affected</b>. It breaks the moment anything takes a log, forms a ratio, or tests <code>== 0</code> &mdash; all of which the new plan does. Fix: on load, snap <code>|x| &lt; 1e-10</code> to exactly 0 for these files, guarding against turning <code>NaN</code> into 0 in the process.</p>
+  </div>
+
+  <div class="note">
+    <h4>What this means for the existing results</h4>
+    <p>None of the three invalidates a published AUC. Defects 1 and 3 touch variables that were never in the trained feature set or move only a handful of values; defect 2 touches a variable that was 80% absent. What they do invalidate is the <em>decision</em> to drop sleep, and they were blocking two of the specialist&rsquo;s twenty items.</p>
+  </div>
+</section>
+
+<!-- ============================================ 03 -->
+<section id="cohort">
+  <h2><span class="sn">03</span> Cohort derivation</h2>
+  <p>The specialist&rsquo;s instruction &mdash; <em>&ldquo;eliminate everyone who had a cycle in last 12 months&rdquo;</em> &mdash; is <code>RHQ031</code>. The filter sits after the existing inclusion chain.</p>
+  <div class="tscroll">
+    <table>
+      <caption>Attrition to the analysis cohort</caption>
+      <thead><tr><th>Step</th><th class="n">n</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>NHANES respondents, six cycles</td><td class="n">66,023</td><td></td></tr>
+        <tr><td>Female</td><td class="n">33,341</td><td></td></tr>
+        <tr><td>Non-Hispanic White</td><td class="n">12,239</td><td></td></tr>
+        <tr><td>Aged 50&ndash;65</td><td class="n">1,863</td><td></td></tr>
+        <tr><td>Femoral-neck DXA present</td><td class="n">1,484</td><td>the previously published cohort</td></tr>
+        <tr><td>&minus; still cycling (<code>RHQ031</code> = Yes)</td><td class="n">&minus;170</td><td>premenopausal or perimenopausal</td></tr>
+        <tr><td>&minus; menopausal status unresolvable</td><td class="n">&minus;42</td><td>whole-section reproductive nonresponders</td></tr>
+        <tr class="tot"><td>Analysis cohort</td><td class="n">1,272</td><td>751 at T &le; &minus;1.0 &middot; 91 at T &le; &minus;2.5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Why the excluded 170 are genuinely different</h3>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th></th><th class="n">n</th><th class="n">Median age</th><th class="n">Mean T</th><th class="n">T &le; &minus;1.0</th><th class="n">T &le; &minus;2.5</th></tr></thead>
+      <tbody>
+        <tr><td>Still cycling <span class="sub">(excluded)</span></td><td class="n">170</td><td class="n">52</td><td class="n">&minus;0.488</td><td class="n">35.9%</td><td class="n">1.2% <span class="sub">(2)</span></td></tr>
+        <tr class="hl"><td>Postmenopausal <span class="sub">(kept)</span></td><td class="n">1,272</td><td class="n">59</td><td class="n">&minus;1.162</td><td class="n">59.0%</td><td class="n">7.2% <span class="sub">(91)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>They cluster at the floor of the age window &mdash; 63% are aged 50&ndash;52 &mdash; and their bone is 0.67 T-score units healthier (p &asymp; 9&times;10<sup>&minus;13</sup>). They carry 2 osteoporosis cases between them, so removing 212 women costs only 3 events and prevalence <em>rises</em>.</p>
+  <p>Cohort by cycle: 2005&ndash;06 <b>173</b>, 2007&ndash;08 <b>228</b>, 2009&ndash;10 <b>227</b>, 2013&ndash;14 <b>219</b>, 2017&ndash;18 <b>161</b>, 2017&ndash;20 <b>264</b>.</p>
+
+  <h3 id="perimeno">How the not-yet-postmenopausal women should be used</h3>
+  <p>The 170 women excluded by the menopause filter are those aged 50&ndash;65 who report at least one menstrual period in the preceding twelve months. By the twelve-month amenorrhoea definition they have not reached menopause. <b>They cannot be classified more precisely than that:</b> NHANES carries no cycle-regularity item in any of these six cycles &mdash; <code>RHQ040</code> is absent throughout, and the only period-timing variable that survives for them is <code>RHQ010</code>, age at <em>menarche</em> &mdash; so &ldquo;perimenopausal&rdquo; cannot be separated from &ldquo;premenopausal&rdquo; in this data. They should be described as <em>not yet postmenopausal</em>, which is the strongest claim the data supports, and reported as a characterised excluded group in the attrition table and in Table&nbsp;1 rather than silently dropped.</p>
+  <p>They should not enter the primary modelling cohort, and the reason is not statistical taste but a definitional one. <b>Years since menopause is undefined for 100% of them &mdash; 0 of 170 have a usable <code>RHQ060</code></b>, because a woman who has not had her last period has no last period to count from. Including them therefore does not mean imputing a missing value; it means fabricating a menopause date for women who have not had menopause, for every single one of them. That pushes the undefined rate on a primary exposure from 1.9% to 15.8%. What it buys in return is <b>2 of the 94 osteoporosis events</b> &mdash; because at a median age of 52, with 63% aged 50&ndash;52 and a mean T-score 0.67 units healthier, this group is almost event-free on the endpoint the study exists to predict. The defensible use of the 170 is as a pre-specified sensitivity analysis and as a described subgroup, never as part of the population the headline number is computed on.</p>
+
+  <h3>Cohort decision &mdash; conditions side by side</h3>
+  <div class="tscroll">
+    <table>
+      <caption>All cohort options, for sign-off</caption>
+      <thead>
+        <tr><th>Option</th><th class="n">n</th><th class="n">T &le; &minus;1.0</th><th class="n">T &le; &minus;2.5</th><th class="n">Years-since-menopause undefined</th><th>What it supports</th><th>Cost / risk</th></tr>
+      </thead>
+      <tbody>
+        <tr class="hl">
+          <td><b>A</b> &mdash; 1,272 only<br><span class="sub">postmenopausal, status known</span></td>
+          <td class="n">1,272</td><td class="n">751 <span class="sub">59.0%</span></td><td class="n">91 <span class="sub">7.2%</span></td><td class="n">24 <span class="sub">1.9%</span></td>
+          <td>A clean postmenopausal claim. Every variable is defined for every woman.</td>
+          <td>No answer to &ldquo;what if you included them?&rdquo;</td>
+        </tr>
+        <tr class="hl">
+          <td><b>B</b> &mdash; 1,272 primary <b>+</b> 1,484 sensitivity <span class="chip locked">recommended</span></td>
+          <td class="n">1,272<br><span class="sub">+1,484</span></td><td class="n">751<br><span class="sub">836</span></td><td class="n">91<br><span class="sub">94</span></td><td class="n">1.9%<br><span class="sub">15.8%</span></td>
+          <td>Both at once: the defensible headline plus a pre-specified with-and-without comparison.</td>
+          <td>One extra run. Requires the fix described below.</td>
+        </tr>
+        <tr>
+          <td><b>C</b> &mdash; 1,484 primary<br><span class="sub">menopausal status as a covariate</span></td>
+          <td class="n">1,484</td><td class="n">836 <span class="sub">56.3%</span></td><td class="n">94 <span class="sub">6.3%</span></td><td class="n">235 <span class="sub">15.8%</span></td>
+          <td>Largest n; 3 more osteoporosis events than option A.</td>
+          <td>Fabricates a menopause date for 212 women. Contradicts the specialist&rsquo;s instruction. Mixes two physiologies.</td>
+        </tr>
+        <tr>
+          <td><b>D</b> &mdash; 1,314<br><span class="sub">drop cycling, keep unresolved</span></td>
+          <td class="n">1,314</td><td class="n">775 <span class="sub">59.0%</span></td><td class="n">92 <span class="sub">7.0%</span></td><td class="n">65 <span class="sub">4.9%</span></td>
+          <td>42 more women than A, at the same prevalence.</td>
+          <td>Those 42 are whole-section reproductive nonresponders &mdash; menopausal status asserted, not observed.</td>
+        </tr>
+        <tr>
+          <td colspan="7" style="background:var(--surface-2)"><h4 style="margin:0">The excluded groups, for reference</h4></td>
+        </tr>
+        <tr>
+          <td>The 170 <span class="sub">still cycling</span></td>
+          <td class="n">170</td><td class="n">61 <span class="sub">35.9%</span></td><td class="n">2 <span class="sub">1.2%</span></td><td class="n">170 <span class="sub">100%</span></td>
+          <td>Describable subgroup; median age 52, mean T &minus;0.488.</td>
+          <td>Contributes 2 of 94 osteoporosis events.</td>
+        </tr>
+        <tr>
+          <td>The 42 <span class="sub">status unresolvable</span></td>
+          <td class="n">42</td><td class="n">24 <span class="sub">57.1%</span></td><td class="n">1 <span class="sub">2.4%</span></td><td class="n">41 <span class="sub">97.6%</span></td>
+          <td>&mdash;</td>
+          <td>Blank on <code>RHQ031</code>, hysterectomy, oophorectomy <em>and</em> last-period age.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <h4>If option B is chosen, the sensitivity run needs one fix</h4>
+    <p>A with-and-without comparison on 1,484 is only coherent if years-since-menopause is handled honestly for the 212 women for whom it does not exist. Median-imputing it would assign them 10 years since a menopause they have not had. Two workable options: <b>(i)</b> drop years-since-menopause from the sensitivity model and add a binary <code>postmenopausal</code> predictor in its place &mdash; the cleanest, though it is then not quite the same model; or <b>(ii)</b> set years-since-menopause to 0 <em>and</em> carry a <code>not_yet_postmenopausal</code> indicator, letting the model learn the offset rather than having it smuggled in. Option (i) is the safer default.</p>
+  </div>
+
+  <div class="note warn">
+    <h4>Open question for the specialist &mdash; surgical menopause</h4>
+    <p>Of the 1,272, <b>460 had a hysterectomy</b> and <b>206 an oophorectomy</b>. <code>RHQ060</code> is <em>age at last menstrual period</em>, which for a hysterectomy is the surgery date. If the ovaries were retained, oestrogen production continued past that date, so years-since-menopause overstates true oestrogen-deficient exposure &mdash; the quantity that drives bone loss. Needs a ruling: define the variable for natural menopause only, or compute it for everyone with the caveat stated.</p>
+  </div>
+</section>
+
+<!-- ============================================ 04 -->
+<section id="variables">
+  <h2><span class="sn">04</span> Variable specification</h2>
+  <p>All figures are coverage within the 1,272, computed with the defects in <a href="#defects">&sect;02</a> repaired. This table is the declarative spec the code will be built from &mdash; feature selection becomes an <em>allowlist</em>, not the current exclusion list, which makes target leakage structurally impossible rather than a thing to remember.</p>
+
+  <div class="tscroll">
+    <table>
+      <caption>The 20 specialist items, as modelled</caption>
+      <thead>
+        <tr><th>#</th><th>Variable</th><th>Type</th><th>NHANES source</th><th class="n">Avail.</th><th class="n">Miss</th><th>Distribution</th><th>Handling</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="n">1</td><td class="vname">age</td><td>cont</td><td class="vname">RIDAGEYR</td><td class="n">1,272</td><td class="n">0</td><td>median 59, IQR 55&ndash;62, skew &minus;0.24</td><td>as-is</td></tr>
+        <tr><td class="n">2</td><td class="vname">bmi</td><td>cont</td><td class="vname">BMXBMI</td><td class="n">1,271</td><td class="n">1</td><td>median 28.0, skew +0.68</td><td>impute; 6 WHO bands in Table 1</td></tr>
+        <tr><td class="n">3</td><td class="vname">years_since_menopause</td><td>cont</td><td class="vname">RIDAGEYR &minus; RHQ060</td><td class="n">1,248</td><td class="n">24</td><td>median 10, IQR 5&ndash;17, skew +0.96</td><td>impute median</td></tr>
+        <tr><td class="n">4</td><td class="vname">ever_estrogen</td><td>cat</td><td class="vname">RHQ540</td><td class="n">1,270</td><td class="n">2</td><td>532 yes (42%)</td><td>impute mode</td></tr>
+        <tr><td class="n">5</td><td class="vname">rheumatoid_arthritis</td><td>cat</td><td class="vname">MCQ160A + MCQ190/195</td><td class="n">1,173</td><td class="n">99</td><td><b>49 yes (4%)</b></td><td>no impute &mdash; see caveat</td></tr>
+        <tr><td class="n">6</td><td class="vname">diabetes</td><td>cat</td><td class="vname">DIQ010</td><td class="n">1,239</td><td class="n">33</td><td>130 yes (10%)</td><td>stratifier, not imputed</td></tr>
+        <tr><td class="n">7</td><td class="vname">ever_smoked</td><td>cat</td><td class="vname">SMQ020</td><td class="n">1,272</td><td class="n">0</td><td>669 yes (53%)</td><td>as-is</td></tr>
+        <tr><td class="n">8</td><td class="vname">alcohol_cat</td><td>cat</td><td class="vname">ALQ101|ALQ111 + ALQ130</td><td class="n">1,182</td><td class="n">90</td><td>zero 285 &middot; &lt;3 745 &middot; 3+ 152</td><td>impute mode</td></tr>
+        <tr><td class="n">9</td><td class="vname">prior_fracture</td><td>cat</td><td class="vname">OSQ010A/B/C</td><td class="n">1,272</td><td class="n">0</td><td>206 yes (16%)</td><td>as-is</td></tr>
+        <tr><td class="n">10</td><td class="vname">steroid_use</td><td>cat</td><td class="vname">OSQ130</td><td class="n">1,267</td><td class="n">5</td><td>112 yes (9%)</td><td>impute mode</td></tr>
+        <tr><td class="n">11</td><td class="vname">met_min_week</td><td>cont</td><td class="vname">PAQ605&ndash;PAD675</td><td class="n">1,095</td><td class="n">177</td><td>median 720, skew <b>+4.04</b>, 27% zero</td><td>no impute; log1p</td></tr>
+        <tr><td class="n">11a</td><td class="vname">moderate_min_wk</td><td>cont</td><td class="vname">PAQ620/635/665</td><td class="n">1,096</td><td class="n">176</td><td>median 150, skew +3.32</td><td>secondary</td></tr>
+        <tr><td class="n">11b</td><td class="vname">vigorous_min_wk</td><td>cont</td><td class="vname">PAQ605/650</td><td class="n">1,097</td><td class="n">175</td><td>median <b>0</b>, skew +5.00, 76% zero</td><td>secondary</td></tr>
+        <tr><td class="n">11c</td><td class="vname">sitting_hrs_day</td><td>cont</td><td class="vname">PAD680</td><td class="n">1,095</td><td class="n">177</td><td>median 6.0, skew +0.71</td><td>secondary</td></tr>
+        <tr><td class="n">12</td><td class="vname">total_calcium_mg</td><td>cont</td><td class="vname">DR1TCALC+DR2+DSQTCAL</td><td class="n">1,090</td><td class="n">182</td><td>median 1,028, skew +1.14</td><td>no impute; 4 bands in Table 1</td></tr>
+        <tr><td class="n">13</td><td class="vname">vitd_intake_IU</td><td>cont</td><td class="vname">total_vitd_mcg &times; 40</td><td class="n">1,090</td><td class="n">182</td><td>median 439, skew <b>+13.46</b></td><td>no impute; log; <em>alternative to 14</em></td></tr>
+        <tr><td class="n">14</td><td class="vname">serum_vitd_ngml</td><td>cont</td><td class="vname">LBXVIDMS &divide; 2.496</td><td class="n">974</td><td class="n">298</td><td>median 29.8, skew +1.20</td><td><b>cohort restriction</b>, never imputed</td></tr>
+        <tr><td class="n">15</td><td class="vname">poverty_income_ratio</td><td>cont</td><td class="vname">INDFMPIR</td><td class="n">1,208</td><td class="n">64</td><td>median 3.42, skew &minus;0.24</td><td>impute; 3 bands in Table 1</td></tr>
+        <tr><td class="n">16</td><td class="vname">mother_hip_fx</td><td>cat</td><td class="vname">OSQ170</td><td class="n">1,247</td><td class="n">25</td><td>149 yes (12%)</td><td>impute mode</td></tr>
+        <tr><td class="n">16a</td><td class="vname">father_hip_fx</td><td>cat</td><td class="vname">OSQ200</td><td class="n">1,213</td><td class="n">59</td><td>53 yes (4%)</td><td>impute mode</td></tr>
+        <tr><td class="n">17</td><td class="vname">phq9_score</td><td>cont</td><td class="vname">DPQ010&ndash;090</td><td class="n">1,271</td><td class="n">1</td><td>median 2, IQR 1&ndash;5, skew +1.92</td><td>impute median; &ge;10 binary secondary</td></tr>
+        <tr><td class="n">18</td><td class="vname">antidepressant_use</td><td>&mdash;</td><td class="vname">RXQ_RX</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td>not downloaded</td><td><b>deferred</b></td></tr>
+        <tr><td class="n">19</td><td class="vname">falls</td><td>&mdash;</td><td>&mdash;</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td>no such question in these cycles</td><td><b>unavailable</b></td></tr>
+        <tr><td class="n">20</td><td class="vname">sleep_hrs</td><td>cont</td><td class="vname">SLD012 | SLD010H</td><td class="n">1,267</td><td class="n">5</td><td>median 7.0, skew &minus;0.16</td><td>impute; <b>5 bands as a model</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><b>19 modelled features</b> after excluding the deferred items and treating the activity secondaries and vitamin D alternatives as separate arms. Every remaining column is declared &mdash; no column enters the feature matrix by surviving an exclusion list.</p>
+
+  <div class="note warn">
+    <h4>Rheumatoid arthritis is the awkward one</h4>
+    <p>2009&ndash;2010 asks <em>neither</em> <code>MCQ190</code> nor <code>MCQ195</code>, so RA is underivable there. That makes the 99 missing not a clean cycle drop but <em>the 98 arthritis-positive women in one cycle</em> &mdash; excluding them removes arthritis cases selectively and biases the RA&ndash;bone relationship. With only 49 positives against 91 osteoporosis events, RA is fragile whichever way it goes. Recommend an explicit <code>unknown</code> third level rather than dropping those women.</p>
+  </div>
+
+  <h3>Specialist bands, populated</h3>
+  <p>The document scopes BMI, calcium and income-ratio categories to the demographic table only &mdash; all three stay continuous in every model. Sleep is the single exception: <em>&ldquo;Continuous for primary analysis, categorical for secondary analysis&rdquo;</em>, so it gets both.</p>
+  <div class="tscroll">
+    <table>
+      <caption>Band counts within the 1,272</caption>
+      <thead><tr><th>BMI kg/m&sup2;</th><th class="n">n</th><th>Calcium mg/day</th><th class="n">n</th><th>Income ratio</th><th class="n">n</th><th>Sleep h/night</th><th class="n">n</th></tr></thead>
+      <tbody>
+        <tr><td>&lt;18.5 Underweight</td><td class="n">18</td><td>&lt;600</td><td class="n">184</td><td>&lt;1</td><td class="n">165</td><td>&le;5 Very short</td><td class="n">120</td></tr>
+        <tr><td>18.5&ndash;24.9 Normal</td><td class="n">368</td><td>600&ndash;999</td><td class="n">348</td><td>1 to &lt;3</td><td class="n">383</td><td>6 Short</td><td class="n">219</td></tr>
+        <tr><td>25.0&ndash;29.9 Overweight</td><td class="n">379</td><td>1,000&ndash;1,199</td><td class="n">126</td><td>&ge;3</td><td class="n">660</td><td><b>7&ndash;8 Reference</b></td><td class="n">745</td></tr>
+        <tr><td>30.0&ndash;34.9 Obesity I</td><td class="n">281</td><td>&ge;1,200</td><td class="n">432</td><td></td><td class="n"></td><td>9 Long</td><td class="n">108</td></tr>
+        <tr><td>35.0&ndash;39.9 Obesity II</td><td class="n">147</td><td></td><td class="n"></td><td></td><td class="n"></td><td>&ge;10 Very long</td><td class="n">75</td></tr>
+        <tr><td>&ge;40 Obesity III</td><td class="n">78</td><td></td><td class="n"></td><td></td><td class="n"></td><td></td><td class="n"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Every band has usable numbers; none needs collapsing.</p>
+</section>
+
+<!-- ============================================ 05 -->
+<section id="imputation">
+  <h2><span class="sn">05</span> Imputation policy</h2>
+  <p>Two things to be precise about, because they are easy to state loosely.</p>
+  <div class="note">
+    <h4>Median means the 50th percentile of observed values, not the midpoint of the range</h4>
+    <p>The 24 women missing <code>years_since_menopause</code> receive <b>10.0</b> &mdash; the median of the 1,248 observed values &mdash; not 21, the midpoint of 0&ndash;42. The distinction is large for skewed variables: <code>met_min_week</code> would be 720 by median against roughly 21,840 by range-midpoint.</p>
+    <p>And the median is recomputed <b>inside each cross-validation fold</b>, from that fold&rsquo;s training rows only. Computing it once over the whole dataset leaks test information into training and inflates AUC. The existing <code>_pipe</code> already does this correctly and is kept.</p>
+  </div>
+
+  <h3>What gets imputed</h3>
+  <div class="tscroll">
+    <table>
+      <caption>Imputation decisions, all 1,272</caption>
+      <thead><tr><th>Variable</th><th class="n">Missing</th><th class="n">%</th><th>Method</th></tr></thead>
+      <tbody>
+        <tr><td colspan="4"><h4 style="margin:0">Nothing to impute</h4></td></tr>
+        <tr><td class="vname">age &middot; ever_smoked &middot; prior_fracture</td><td class="n">0</td><td class="n">0.0</td><td>complete</td></tr>
+
+        <tr><td colspan="4"><h4 style="margin:0">Imputed in-fold &mdash; scattered nonresponse</h4></td></tr>
+        <tr><td class="vname">bmi</td><td class="n">1</td><td class="n">0.1</td><td>median <span class="sub">(near-normal)</span></td></tr>
+        <tr><td class="vname">phq9_score</td><td class="n">1</td><td class="n">0.1</td><td>median <span class="sub">(skew +1.92)</span></td></tr>
+        <tr><td class="vname">ever_estrogen</td><td class="n">2</td><td class="n">0.2</td><td>mode</td></tr>
+        <tr><td class="vname">steroid_use</td><td class="n">5</td><td class="n">0.4</td><td>mode</td></tr>
+        <tr><td class="vname">sleep_hrs</td><td class="n">5</td><td class="n">0.4</td><td>median <span class="sub">(near-normal)</span></td></tr>
+        <tr><td class="vname">years_since_menopause</td><td class="n">24</td><td class="n">1.9</td><td>median</td></tr>
+        <tr><td class="vname">mother_hip_fx</td><td class="n">25</td><td class="n">2.0</td><td>mode</td></tr>
+        <tr><td class="vname">father_hip_fx</td><td class="n">59</td><td class="n">4.6</td><td>mode</td></tr>
+        <tr><td class="vname">poverty_income_ratio</td><td class="n">64</td><td class="n">5.0</td><td>median</td></tr>
+        <tr><td class="vname">alcohol_cat</td><td class="n">90</td><td class="n">7.1</td><td>mode</td></tr>
+
+        <tr><td colspan="4"><h4 style="margin:0">Never imputed &mdash; the gap is a whole missing cycle</h4></td></tr>
+        <tr class="hl"><td class="vname">met_min_week + 3 secondaries</td><td class="n">175&ndash;177</td><td class="n">13.9</td><td><b>173 = all of 2005&ndash;06</b>, pre-GPAQ instrument &rarr; drop cycle</td></tr>
+        <tr class="hl"><td class="vname">total_calcium_mg &middot; vitd_intake_IU</td><td class="n">182</td><td class="n">14.3</td><td><b>173 = all of 2005&ndash;06</b>, no <code>DSQTOT_D</code> file &rarr; drop cycle</td></tr>
+        <tr class="hl"><td class="vname">serum_vitd_ngml</td><td class="n">298</td><td class="n">23.4</td><td><b>264 = all of 2017&ndash;20</b>, no lab file exists &rarr; cohort restriction</td></tr>
+        <tr class="hl"><td class="vname">rheumatoid_arthritis</td><td class="n">99</td><td class="n">7.8</td><td><b>98 = 2009&ndash;10</b>, no arthritis-type question &rarr; <code>unknown</code> level</td></tr>
+        <tr class="hl"><td class="vname">diabetes</td><td class="n">33</td><td class="n">2.6</td><td>stratifier; the 33 sit outside both strata</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The principle: <b>scattered nonresponse is imputed, structural absence is not.</b> For the four structural variables, imputation would mean inventing one cycle&rsquo;s values from other cycles&rsquo; women, who differ in era, instrument and population. That is missing-at-random at best and hard to defend.</p>
+</section>
+
+<!-- ============================================ 06 -->
+<section id="cohorts">
+  <h2><span class="sn">06</span> The analysis cohorts</h2>
+  <p>Each model is reported on the largest cohort its variables permit, rather than forcing one strict cohort on everything. <b>These cohorts branch rather than nest.</b> Only C0 contains all the others: C1 and C2 are parallel restrictions that discard <em>different</em> cycles &mdash; C1 drops 2005&ndash;06 for want of activity and supplement data, C2 drops 2017&ndash;20 for want of a vitamin D lab file. 170 women sit in C2 but not C1, and 296 sit in C1 but not C2.</p>
+  <div class="note warn">
+    <h4>Consequence: only within-cohort comparisons are valid</h4>
+    <p>An AUC on C1 and an AUC on C2 describe different populations and must not be read as a progression or compared to each other. Every comparison that carries a claim &mdash; the ablation grid, the vitamin D arm, the diabetes strata &mdash; holds one cohort fixed and varies only the feature set.</p>
+  </div>
+  <div class="ladder">
+    <div class="rung primary">
+      <span class="id">C0</span>
+      <span class="def">Near-complete variables only &mdash; the primary cohort</span>
+      <span class="fig"><b>1,272</b> &middot; 751 / 91 &middot; EPV 5.4</span>
+    </div>
+    <div class="rung primary">
+      <span class="id">C1</span>
+      <span class="def"><span class="sub">branch A &mdash;</span> + activity, calcium, vitamin&nbsp;D intake &nbsp;<span class="sub">drops 2005&ndash;06; keeps all of 2017&ndash;20</span></span>
+      <span class="fig"><b>1,099</b> &middot; 659 / 82 &middot; EPV 4.8</span>
+    </div>
+    <div class="rung primary">
+      <span class="id">C2</span>
+      <span class="def"><span class="sub">branch B &mdash;</span> + serum 25(OH)D, the vitamin&nbsp;D arm &nbsp;<span class="sub">drops 2017&ndash;20; keeps 170 from 2005&ndash;06</span></span>
+      <span class="fig"><b>974</b> &middot; 566 / 68 &middot; EPV 4.0</span>
+    </div>
+    <div class="rung">
+      <span class="id">C3</span>
+      <span class="def">C1 &cap; C2 &mdash; where branch A and branch B overlap</span>
+      <span class="fig"><b>803</b> &middot; 475 / 59 &middot; EPV 3.5</span>
+    </div>
+    <div class="rung">
+      <span class="id">C4</span>
+      <span class="def">+ rheumatoid arthritis resolvable &nbsp;<span class="sub">drops 2009&ndash;10 arthritis cases</span></span>
+      <span class="fig"><b>1,173</b> &middot; 693 / 89 &middot; EPV 5.2</span>
+    </div>
+    <div class="rung thin">
+      <span class="id">C5</span>
+      <span class="def">Strict &mdash; every variable observed, nothing imputed</span>
+      <span class="fig"><b>705</b> &middot; 417 / 57 &middot; EPV 3.4</span>
+    </div>
+  </div>
+  <p class="sub">Figures are n &middot; events at T &le; &minus;1.0 / T &le; &minus;2.5 &middot; events per predictor at 17 features. C0 is the only cohort containing every other; C1 and C2 are parallel branches, C3 their intersection, C5 the strictest subset. Counts are re-asserted on the first full run.</p>
+  <div class="note warn">
+    <h4>The trade-off to be aware of</h4>
+    <p>Applying no-imputation to every structural variable at once collapses to <b>705 women and 57 osteoporosis events</b> &mdash; thinner than the cohort that produced the current results. C5 is therefore reported as a sensitivity arm, not the headline. C0, C1 and C2 carry the primary results.</p>
+  </div>
+</section>
+
+<!-- ============================================ 07 -->
+<section id="derivations">
+  <h2><span class="sn">07</span> Derivations that need care</h2>
+
+  <h3>MET-min/week &mdash; validated against the specialist&rsquo;s own references</h3>
+  <p>Both <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9858810/">PMC9858810</a> and <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12851727/">PMC12851727</a> agree on the convention, and it matches the prototype:</p>
+  <div class="schema"><span class="fn">met_min_week</span> = 8 &times; (PAQ610 &times; PAD615)   vigorous work
+             + 4 &times; (PAQ625 &times; PAD630)   moderate work
+             + 4 &times; (PAQ640 &times; PAD645)   walk / bicycle transport
+             + 8 &times; (PAQ655 &times; PAD660)   vigorous recreation
+             + 4 &times; (PAQ670 &times; PAD675)   moderate recreation</div>
+  <ul>
+    <li><b>Gate-conditional zero fill.</b> A sub-domain left blank while others are valid counts as zero, not missing &mdash; this is the WHO GPAQ rule, not an invention. It is what lifts coverage from 982 to 1,095.</li>
+    <li><b>Validity range</b> 10&ndash;960 min per item, 1&ndash;7 days; the guide caps at 16 h/day per sub-domain. Replaces the prototype&rsquo;s 840-min cap.</li>
+    <li><b>Units.</b> Both papers report MET-<em>hours</em>/week. Output both; &divide;&nbsp;60 converts.</li>
+    <li><b>Outlier rule.</b> PMC12851727 drops cases above 1,000 MET-h/week. Applied as a sensitivity check &mdash; the cohort maximum is 728 MET-h/week, so nothing would drop.</li>
+    <li><b>2005&ndash;06 cannot be rescued.</b> <code>PAQ_D</code> uses the pre-GPAQ instrument (<code>PAD020</code>, <code>PAD080</code>, <code>PAD320</code>&hellip;) with no domain structure. Hence the cycle drop rather than a mapping.</li>
+  </ul>
+
+  <h3>Alcohol, three levels across two instruments</h3>
+  <p>The instrument changed in 2017: <code>ALQ101</code>/<code>ALQ120Q</code> became <code>ALQ111</code>/<code>ALQ121</code>. &ldquo;Zero&rdquo; comes from the gate item, &ldquo;&lt;3&rdquo; and &ldquo;3+&rdquo; from <code>ALQ130</code>, which is drinks per <em>drinking day</em> and is only asked of current drinkers &mdash; so a blank there means non-drinker, not missing. Resolves 1,182 of 1,272.</p>
+
+  <h3>Unit conversions the specialist asked for</h3>
+  <ul>
+    <li>Serum 25(OH)D: <code>LBXVIDMS</code> nmol/L &divide; 2.496 &rarr; ng/mL. Coalesce with <code>LBDVIDMS</code> for 2005&ndash;06.</li>
+    <li>Vitamin D intake: mcg &times; 40 &rarr; IU/day.</li>
+    <li>Sitting: <code>PAD680</code> minutes &divide; 60 &rarr; hours/day.</li>
+    <li>OST comparator, unchanged: <code>0.2 &times; (weight_kg &minus; age)</code>.</li>
+  </ul>
+
+  <h3>Transforms, driven by the measured distributions</h3>
+  <p>The specialist asked for distributions to be checked before analysis. Four variables need a transform; the rest are near-normal or binary.</p>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Variable</th><th class="n">Skew</th><th class="n">Zeros</th><th>Transform</th></tr></thead>
+      <tbody>
+        <tr><td class="vname">vitd_intake_IU</td><td class="n">+13.46</td><td class="n">0%</td><td><code>log</code></td></tr>
+        <tr><td class="vname">vigorous_min_wk</td><td class="n">+5.00</td><td class="n">76%</td><td><code>log1p</code> + zero indicator</td></tr>
+        <tr><td class="vname">met_min_week</td><td class="n">+4.04</td><td class="n">27%</td><td><code>log1p</code>; log of positives is skew &minus;0.10</td></tr>
+        <tr><td class="vname">moderate_min_wk</td><td class="n">+3.32</td><td class="n">29%</td><td><code>log1p</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================ 08 -->
+<section id="models">
+  <h2><span class="sn">08</span> Model panel</h2>
+  <p>Eight models, unchanged from the current script. All wrapped in a pipeline of impute &rarr; encode &rarr; scale &rarr; estimator, so every fitted step is learned inside the training fold. Seed 42 throughout; 5-fold <code>StratifiedKFold</code>.</p>
+  <div class="tscroll">
+    <table>
+      <caption>The eight models plus the clinical comparator</caption>
+      <thead><tr><th>#</th><th>Model</th><th>Target</th><th>Imbalance handling</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>Logistic regression, L2</td><td>binary</td><td><code>class_weight='balanced'</code></td></tr>
+        <tr><td class="n">2</td><td>Elastic-net logistic</td><td>binary</td><td><code>class_weight='balanced'</code></td></tr>
+        <tr><td class="n">3</td><td>Random forest</td><td>binary</td><td><code>class_weight='balanced'</code>, OOB on</td></tr>
+        <tr><td class="n">4</td><td>LightGBM, regularised</td><td>binary</td><td><code>class_weight='balanced'</code></td></tr>
+        <tr><td class="n">5</td><td>XGBoost, regularised</td><td>binary</td><td><code>scale_pos_weight</code></td></tr>
+        <tr><td class="n">6</td><td>RidgeCV</td><td><code>t_score</code></td><td>n/a &mdash; never sees a label</td></tr>
+        <tr><td class="n">7</td><td>Random forest regressor</td><td><code>t_score</code></td><td>n/a</td></tr>
+        <tr><td class="n">8</td><td>LightGBM regressor</td><td><code>t_score</code></td><td>n/a</td></tr>
+        <tr class="hl"><td class="n">&mdash;</td><td>OST <span class="sub">0.2 &times; (weight &minus; age)</span></td><td>comparator</td><td>validated two-input formula</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Both boosters keep <code>max_depth=2</code>, <code>reg_lambda=50</code> &mdash; n &asymp; 1,200 overfits trivially. One regressor fit serves both clinical cutoffs by thresholding the predicted T-score twice. Categorical encoding moves inside a <code>ColumnTransformer</code>, which is the one structural change to the pipeline.</p>
+  <div class="note">
+    <h4>Carried forward from the current methodology</h4>
+    <p>The forest&rsquo;s in-sample AUC is 1.000 by construction, so the leaderboard reports train, test <em>and</em> OOB side by side &mdash; do not rank by the train/test gap. <code>RF_MIN_SAMPLES_LEAF = 1</code> stays: nested CV showed raising it lowers test AUC monotonically. Tree importances stay out of reporting in favour of permutation importance.</p>
+  </div>
+</section>
+
+<!-- ============================================ 09 -->
+<section id="arms">
+  <h2><span class="sn">09</span> Analysis arms</h2>
+
+  <h3>A &mdash; Primary. Full feature set, C0 / C1 / C2</h3>
+  <p>All eight models, both cutoffs, nested cross-validation, against OST with a bootstrap &Delta;AUC confidence interval. This produces the defensible headline number.</p>
+  <div class="note">
+    <h4>What &ldquo;nested cross-validation&rdquo; means here</h4>
+    <p>Fitting eight models and reporting the best is biased upward, because the test data helped pick the winner. Nested CV puts the choosing <em>inside</em> the scoring: an <b>outer</b> loop of 5 folds holds out one fold at a time, and an <b>inner</b> loop of 3 folds &mdash; run only on the remaining data &mdash; selects the model. The inner loop never sees the outer held-out fold, so no test row helps choose the model scored on it.</p>
+    <p>This is what took the previous osteoporosis figure from 0.833 to 0.806. It is unrelated to the cohort structure in <a href="#cohorts">&sect;06</a>, which is about <em>which women</em> are analysed.</p>
+  </div>
+
+  <h3>B &mdash; Ablation. With and without each variable</h3>
+  <p>The core new deliverable, answering <em>&ldquo;how does each model behave with each of these variables, and for categoricals how does it behave without&rdquo;</em>. Leave-one-variable-out: refit the full panel with that one column removed and report the change in out-of-fold AUC. Repeated 5-fold CV, not nested, so the grid is affordable; bootstrap intervals only for variables that actually move AUC.</p>
+
+  <h3>C &mdash; Diabetes stratification</h3>
+  <div class="note warn">
+    <h4>The direction is inverted in this cohort, and the diabetic stratum is underpowered</h4>
+    <p>The specialist expects diabetics to show lower BMD. Unadjusted, the cohort shows the opposite &mdash; and it is entirely body weight:</p>
+  </div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th></th><th class="n">n</th><th class="n">Mean BMI</th><th class="n">Mean T</th><th class="n">T &le; &minus;2.5</th></tr></thead>
+      <tbody>
+        <tr><td>Diabetic</td><td class="n">130</td><td class="n">33.9</td><td class="n">&minus;0.807</td><td class="n">5.4% <span class="sub">(7)</span></td></tr>
+        <tr><td>Non-diabetic</td><td class="n">1,109</td><td class="n">28.1</td><td class="n">&minus;1.211</td><td class="n">7.5% <span class="sub">(83)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tscroll">
+    <table>
+      <caption>T-score on diabetes, progressively adjusted</caption>
+      <thead><tr><th>Model</th><th class="n">Diabetes &beta;</th><th class="n">p</th></tr></thead>
+      <tbody>
+        <tr><td>Unadjusted</td><td class="n">+0.405</td><td class="n">&lt;0.0001</td></tr>
+        <tr><td>+ age</td><td class="n">+0.418</td><td class="n">&lt;0.0001</td></tr>
+        <tr class="hl"><td>+ age + BMI</td><td class="n">+0.022</td><td class="n">0.79</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Diabetics average 5.7 kg/m&sup2; more BMI (p = 1&times;10<sup>&minus;17</sup>), and BMI drives BMD. Adjusted, diabetes has no independent association with T-score; within obese women only the gap is +0.17, p = 0.22. This is the documented <b>type-2 diabetes bone paradox</b> &mdash; normal-to-high BMD with <em>higher</em> fracture risk, through bone quality and falls rather than density. The specialist is right about fracture risk; DXA T-score is the wrong instrument to see it, and <code>DIQ010</code> cannot separate type 1 from type 2.</p>
+  <p><b>So the arm is built as:</b> diabetes-stratified descriptive tables, where the real finding sits; diabetes as a predictor plus a diabetes&times;BMI interaction test in the main models; full stratified modelling in non-diabetics only (n = 1,109, 83 events). The diabetic stratum is reported for osteopenia+ only (61 events) and flagged underpowered &mdash; <b>7 osteoporosis events cannot support 17 features across 8 models</b>.</p>
+
+  <h3>D &mdash; Vitamin D, with and without serum</h3>
+  <p>On C2 (n = 974) run the full panel twice, once with <code>serum_vitd_ngml</code> in the feature set and once without. Constant n, so the difference is attributable to the variable rather than the cohort. <code>vitd_intake_IU</code> runs as the parallel definition &mdash; never in the same model as serum, per the specialist&rsquo;s instruction.</p>
+
+  <h3>E &mdash; Sleep, continuous and categorical</h3>
+  <p>Continuous <code>sleep_hrs</code> in the primary models; the five-band version as a secondary model with 7&ndash;8 h as reference, per the document.</p>
+</section>
+
+<!-- ============================================ 10 -->
+<section id="outputs">
+  <h2><span class="sn">10</span> Output tables</h2>
+  <p>Everything goes through <code>save_csv(df, filename, tier)</code>, keeping the existing PRESENT / METHODS / DIAGNOSTIC convention so <code>outputs/</code> stays self-describing.</p>
+
+  <h4>The main results table &mdash; model &times; variables &times; result</h4>
+  <div class="schema"><span class="fn">model_results.csv</span>                                          PRESENT
+  model          target      cohort  n     events  n_feat
+  variable_set   variables_used
+  auc  auc_ci_lo  auc_ci_hi   sens  spec  ppv
+  ost_auc  delta_vs_ost  delta_ci_lo  delta_ci_hi  verdict</div>
+  <p>One row per model &times; target &times; cohort &times; variable set, with <code>variables_used</code> carrying the explicit column list so any row can be reproduced from the table alone.</p>
+
+  <h4>The ablation table</h4>
+  <div class="schema"><span class="fn">model_variable_ablation.csv</span>                               PRESENT
+  model  target  cohort  variable_removed  var_type
+  auc_full  auc_without  delta_auc  delta_ci_lo  delta_ci_hi
+  rank_within_model  n_observed  pct_imputed</div>
+
+  <h4>The rest</h4>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>File</th><th>Tier</th><th>Contents</th></tr></thead>
+      <tbody>
+        <tr><td class="vname">variable_distributions.csv</td><td>PRESENT</td><td>n, missing, mean, median, IQR, skew, zero-inflation, transform &mdash; the specialist&rsquo;s pre-analysis check</td></tr>
+        <tr><td class="vname">variable_distributions.png</td><td>PRESENT</td><td>small-multiple histograms, one panel per continuous variable</td></tr>
+        <tr><td class="vname">table1_demographics.csv</td><td>PRESENT</td><td>the specialist&rsquo;s bands: BMI &times;6, calcium &times;4, income &times;3, sleep &times;5, alcohol &times;3</td></tr>
+        <tr><td class="vname">nested_cv_verdict.csv</td><td>PRESENT</td><td>the two-row bottom line &mdash; open this first</td></tr>
+        <tr><td class="vname">limitations_table.csv</td><td>PRESENT</td><td>one row per variable, its caveat and severity</td></tr>
+        <tr><td class="vname">cohort_attrition.csv</td><td>PRESENT</td><td>the cohort structure in <a href="#cohorts">&sect;06</a>, with events per cohort</td></tr>
+        <tr><td class="vname">diabetes_stratified.csv</td><td>PRESENT</td><td>descriptive + adjusted, both strata</td></tr>
+        <tr><td class="vname">clinical_predictor_table.csv</td><td>PRESENT</td><td>permutation importance, odds ratios, forest plot</td></tr>
+        <tr><td class="vname">referral_table.csv</td><td>PRESENT</td><td>quantile-flagged, leads with top fraction flagged</td></tr>
+        <tr><td class="vname">threshold_sweep.csv</td><td>PRESENT</td><td>calibrated probabilities &mdash; <b>never merged with the referral table</b></td></tr>
+        <tr><td class="vname">calibration_curve.png</td><td>PRESENT</td><td>closes the known gap left when <code>SF_new1.py</code> was removed</td></tr>
+        <tr><td class="vname">baseline_comparison.csv</td><td>METHODS</td><td>OST and simpler baselines</td></tr>
+        <tr><td class="vname">missingness_by_variable.csv</td><td>METHODS</td><td>with the structural-vs-scattered split</td></tr>
+        <tr><td class="vname">coefficient_diagnostics.csv</td><td>DIAGNOSTIC</td><td>leak and sign-error detector. <b>Not a findings table</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================ 11 -->
+<section id="code">
+  <h2><span class="sn">11</span> How the code is laid out</h2>
+  <p>One file, run the same way. Internally reorganised into seven blocks, with the variable spec as a declarative table at the top so the whole contract is readable in one screen.</p>
+  <div class="schema">OsteoporosisML.py
+  <span class="fn">A  CONFIG</span>        CYCLES, seeds, thresholds, reference means/SDs
+  <span class="fn">B  VARIABLE SPEC</span> the allowlist: name, source, type, valid range,
+                 derivation, transform, impute rule, cohort tier
+  <span class="fn">C  LOAD</span>          per-cycle read, denormal sanitise, range-based
+                 missing codes, dual string/numeric decode
+  <span class="fn">D  DERIVE</span>        MET, alcohol, RA, PHQ-9, calcium, unit conversions
+  <span class="fn">E  QC</span>            distributions, normality, cohort definitions, Table 1
+  <span class="fn">F  MODEL</span>         panel, nested CV, ablation grid, strata
+  <span class="fn">G  REPORT</span>        save_csv by tier, figures, limitations</div>
+  <h3>Three structural changes</h3>
+  <ul>
+    <li><b>Inclusion, not exclusion.</b> <code>define_features</code> currently subtracts a hand-maintained <code>exclude</code> list from every column, so anything BMD-derived leaks unless remembered. The spec in block B is an allowlist &mdash; leakage becomes impossible rather than guarded against.</li>
+    <li><b>Per-variable missing codes.</b> Each variable declares its valid range; <code>recode_refused</code>&rsquo;s global replace goes away.</li>
+    <li><b>Encoding inside the pipeline.</b> A <code>ColumnTransformer</code> joins imputation and scaling, so categorical encoding is fold-local too.</li>
+  </ul>
+  <div class="note">
+    <h4>Dependencies</h4>
+    <p><code>statsmodels</code> is <b>not installed</b>; <code>scipy</code> is. The adjusted regressions use a numpy least-squares implementation rather than adding a dependency. Nothing new to install, so a fresh clone still runs offline on the committed download caches.</p>
+  </div>
+</section>
+
+<!-- ============================================ 12 -->
+<section id="limits">
+  <h2><span class="sn">12</span> Limitations register</h2>
+  <p>Shipped as <code>limitations_table.csv</code> and required reading alongside any result. The specialist asked for these to be listed explicitly.</p>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Variable</th><th>Limitation</th><th>Severity</th></tr></thead>
+      <tbody>
+        <tr><td class="vname">falls</td><td>No falls or balance question exists in any of these six cycles. Not obtainable.</td><td>blocking</td></tr>
+        <tr><td class="vname">antidepressant_use</td><td>Obtainable from <code>RXQ_RX</code> + <code>RXQ_DRUG</code>, not yet pulled. Deferred.</td><td>deferred</td></tr>
+        <tr><td class="vname">serum_vitd_ngml</td><td>No lab file for 2017&ndash;20: 264 women permanently without a value. Varies with season and sun exposure.</td><td>high</td></tr>
+        <tr><td class="vname">met_min_week</td><td>2005&ndash;06 uses the pre-GPAQ instrument; 173 women unusable. Self-reported.</td><td>high</td></tr>
+        <tr><td class="vname">rheumatoid_arthritis</td><td>2009&ndash;10 asks no arthritis-type question. Only 49 positives; self-reported, not serology.</td><td>high</td></tr>
+        <tr><td class="vname">diabetes</td><td><code>DIQ010</code> cannot separate type 1 from type 2. Association with T-score is fully confounded by BMI.</td><td>high</td></tr>
+        <tr><td class="vname">prior_fracture</td><td>Age at fracture known for only 224 respondents, so fragility cannot be distinguished from trauma.</td><td>moderate</td></tr>
+        <tr><td class="vname">steroid_use</td><td>Duration available for 126 users via <code>OSQ140Q</code>/<code>OSQ140U</code> &mdash; <b>more than the specialist assumed</b>; dose never recorded.</td><td>moderate</td></tr>
+        <tr><td class="vname">ever_estrogen</td><td>Timing only partial: <code>RHQ570</code> is 70% missing, so &ldquo;when&rdquo; is unanswerable for most.</td><td>moderate</td></tr>
+        <tr><td class="vname">years_since_menopause</td><td>460 hysterectomies and 206 oophorectomies; last-period date is the surgery, not ovarian failure.</td><td>moderate</td></tr>
+        <tr><td class="vname">alcohol_cat</td><td>Instrument changed in 2017. <code>ALQ130</code> is drinks per <em>drinking day</em>, not per day.</td><td>moderate</td></tr>
+        <tr><td class="vname">father_hip_fx</td><td>183 &ldquo;don&rsquo;t know&rdquo; responses cycle-wide; recall for paternal history is weaker than maternal.</td><td>moderate</td></tr>
+        <tr><td class="vname">total_calcium_mg</td><td>Two-day dietary average plus supplements; no <code>DSQTOT</code> file for 2005&ndash;06.</td><td>moderate</td></tr>
+        <tr><td class="vname">sleep_hrs</td><td>Whole hours in older cycles, half hours from 2017; self-reported.</td><td>low</td></tr>
+        <tr><td class="vname">phq9_score</td><td>Screening instrument, not a diagnosis. Reverse causation plausible.</td><td>low</td></tr>
+        <tr><td>cohort</td><td>Non-Hispanic White women 50&ndash;65 only. Cross-sectional &mdash; no incident fractures, so no fracture-risk claim.</td><td>design</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================ 13 -->
+<section id="build">
+  <h2><span class="sn">13</span> Build order</h2>
+  <p>Sequential, because each step&rsquo;s output is the next step&rsquo;s input. Steps 1&ndash;5 are verifiable against the numbers in this document before any model runs.</p>
+  <ol class="steps">
+    <li>
+      <h3>Variable spec and loader</h3>
+      <p>Block B as a declarative table; per-variable ranges replace the global refused list; denormal sanitising on the <code>P_*</code> files; dual string/numeric decode. <b>Checkpoint:</b> sleep reaches 1,267 and PHQ-9 reaches 1,271.</p>
+    </li>
+    <li>
+      <h3>Cohort filter and assert</h3>
+      <p>Menopause filter after the existing chain; re-pin the assert at 1,272 and emit the attrition table. <b>Checkpoint:</b> 751 and 91 events, cycle counts as in &sect;03.</p>
+    </li>
+    <li>
+      <h3>Derivations</h3>
+      <p>MET with the GPAQ rules, alcohol across both instruments, RA with the <code>unknown</code> level, unit conversions. <b>Checkpoint:</b> MET reaches 1,095 with median 720.</p>
+    </li>
+    <li>
+      <h3>Distribution QC</h3>
+      <p>The specialist&rsquo;s pre-analysis requirement: per-variable distributions, skew, zero-inflation, histogram panel, recommended transform. <b>Checkpoint:</b> matches &sect;04.</p>
+    </li>
+    <li>
+      <h3>Cohort definitions and Table 1</h3>
+      <p>C0&ndash;C5 with events per cohort; demographic table in the specialist&rsquo;s bands. <b>Checkpoint:</b> cohort sizes match &sect;06.</p>
+    </li>
+    <li>
+      <h3>Pipeline and model panel</h3>
+      <p><code>ColumnTransformer</code> for impute/encode/scale; the eight models; OST comparator. Leaderboard with train, test and OOB.</p>
+    </li>
+    <li>
+      <h3>Nested CV headline</h3>
+      <p>Arm A on C0, C1, C2, both cutoffs, with bootstrap &Delta;AUC against OST. This is the number that gets quoted.</p>
+    </li>
+    <li>
+      <h3>Ablation grid</h3>
+      <p>Arm B: leave-one-variable-out across all eight models, repeated 5-fold, bootstrap intervals only where AUC moves.</p>
+    </li>
+    <li>
+      <h3>Stratified and paired arms</h3>
+      <p>Arms C, D, E &mdash; diabetes strata with the interaction test, vitamin D with and without serum on C2, sleep continuous and banded.</p>
+    </li>
+    <li>
+      <h3>Reporting</h3>
+      <p>All tables via <code>save_csv</code> with tiers, forest plot, calibration curve, limitations register.</p>
+    </li>
+    <li>
+      <h3>Documentation</h3>
+      <p>Update <code>CLAUDE.md</code> for the new cohort, spec and defect fixes; update <code>Notes/project_walkthrough.html</code> so the explainer matches the results.</p>
+    </li>
+  </ol>
+</section>
+
+<!-- ============================================ 14 -->
+<section id="signoff" class="signoff">
+  <h2><span class="sn">14</span> Sign-off needed</h2>
+  <p>Everything above is specified and buildable. These are the points where a ruling changes what gets built, rather than how.</p>
+  <ul class="qlist">
+    <li>
+      <span class="who">Specialist</span>
+      <div>
+        <p><b>Diabetes and the T-score direction.</b> Adjusted for BMI, diabetes has no independent association with T-score here (&beta; = +0.022, p = 0.79), and the diabetic stratum holds 7 osteoporosis events. Confirm the arm should be descriptive plus non-diabetic modelling, rather than a full split.</p>
+      </div>
+    </li>
+    <li>
+      <span class="who">Specialist</span>
+      <div>
+        <p><b>Years since menopause with surgical menopause.</b> 460 hysterectomies among 1,272. Define for natural menopause only, or for everyone with the caveat stated?</p>
+      </div>
+    </li>
+    <li>
+      <span class="who">Specialist</span>
+      <div>
+        <p><b>Rheumatoid arthritis.</b> 49 positives, and 2009&ndash;10 cannot type arthritis at all. Keep RA as a modelled predictor with an <code>unknown</code> level, or demote it to a descriptive row?</p>
+      </div>
+    </li>
+    <li>
+      <span class="who">Specialist</span>
+      <div>
+        <p><b>Imputation method per variable.</b> The proposal in <a href="#imputation">&sect;05</a> is median for continuous, mode for categorical, in-fold. Mean versus median only changes four variables materially &mdash; the skewed activity and vitamin&nbsp;D intake measures.</p>
+      </div>
+    </li>
+    <li>
+      <span class="who">Specialist</span>
+      <div>
+        <p><b>Cohort: option A or option B.</b> See the decision table in <a href="#perimeno">&sect;03</a>. Recommendation is <b>option B</b> &mdash; 1,272 as the primary cohort, 1,484 as a pre-specified sensitivity run &mdash; because it answers &ldquo;what if the not-yet-postmenopausal women were included?&rdquo; at the cost of one extra run, without letting a fabricated menopause date into the headline figure.</p>
+      </div>
+    </li>
+    <li>
+      <span class="who">You</span>
+      <div>
+        <p><b>Superseding the published cohort.</b> Re-pinning at 1,272 means every figure in the manuscript, walkthrough and decks is replaced. Confirm before step 2 lands.</p>
+      </div>
+    </li>
+    <li>
+      <span class="who">You</span>
+      <div>
+        <p><b>Third reference.</b> PubMed 37454096 sits behind a cookie wall &mdash; send the PDF if you want its MET method checked against the other two.</p>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<footer>
+  <p>Sources: <code>Notes/SpecialistUpdate.docx</code> &middot; <code>Notes/specialist_variable_decisions.csv</code> &middot; regenerate with <code>python Notes/build_variable_decisions.py</code>. MET convention from PMC9858810, PMC12851727 and the WHO GPAQ Analysis Guide. All coverage figures computed on the 1,272 cohort with the &sect;02 defects repaired.</p>
+</footer>
+
+</div>

@@ -416,15 +416,17 @@
     <p class="eyebrow">NHANES Osteoporosis Study · Code walkthrough · <code>OsteoporosisML.py</code></p>
     <h1>Screening Before the Scan</h1>
     <p class="standfirst">A complete, plain-language account of what this pipeline does: how 66,023 survey
-      respondents become 1,484 women, how a DXA scan is turned into an answer key and then hidden from the
-      model, what the models actually achieve, and which of the sixteen files in <code>outputs/</code> are
-      worth putting in front of a clinician.</p>
+      respondents become 1,111 postmenopausal women, how a DXA scan is turned into an answer key and then
+      hidden from the model, what the models actually achieve &mdash; which, on the corrected cohort, is
+      <em>not</em> more than a two-variable formula from 2001 &mdash; and which of the files in
+      <code>outputs/</code> are worth putting in front of a clinician.</p>
     <div class="masthead-meta">
-      <span>Cohort <b>1,484 women</b></span>
-      <span>Predictors <b>23</b></span>
+      <span>Cohort <b>1,111 women</b></span>
+      <span>Predictors <b>20</b></span>
       <span>Models <b>8</b></span>
-      <span>Nested AUC <b>0.810</b> vs OST <b>0.747</b></span>
-      <span>Prepared <b>5 September 2026</b></span>
+      <span>Nested AUC <b>0.751</b> vs OST <b>0.739</b></span>
+      <span>Verdict <b>not separable</b></span>
+      <span>Revised <b>29 September 2026</b></span>
     </div>
   </header>
 
@@ -435,10 +437,10 @@
       <li><a href="#problem"><span>—</span><span>Why not just scan everyone</span></a></li>
       <li><a href="#trick"><span>—</span><span>Answer key, then hidden</span></a></li>
       <li><a href="#data"><span>1–2</span><span>Where the data comes from</span></a></li>
-      <li><a href="#cohort"><span>3–4</span><span>Getting to 1,484</span></a></li>
+      <li><a href="#cohort"><span>3–4</span><span>Getting to 1,111</span></a></li>
       <li><a href="#target"><span>5</span><span>Making the answer key</span></a></li>
-      <li><a href="#features"><span>6–9</span><span>The 23 inputs</span></a></li>
-      <li><a href="#guards"><span>6–9</span><span>Six ways of cheating, guarded</span></a></li>
+      <li><a href="#features"><span>6–9</span><span>The 20 inputs</span></a></li>
+      <li><a href="#guards"><span>6–9</span><span>Seven ways of cheating, guarded</span></a></li>
       <li><a href="#models"><span>10</span><span>The models</span></a></li>
       <li><a href="#leaderboard"><span>10</span><span>Results: leaderboard</span></a></li>
       <li><a href="#predictors"><span>11b</span><span>Results: what matters</span></a></li>
@@ -558,8 +560,8 @@
 
           <!-- cohort -->
           <rect class="svg-box" x="14" y="152" width="122" height="70" rx="3"></rect>
-          <text class="svg-t" x="75" y="180" text-anchor="middle">1,484 women</text>
-          <text class="svg-t-sm" x="75" y="197" text-anchor="middle">NHANES, 6 rounds</text>
+          <text class="svg-t" x="75" y="180" text-anchor="middle">1,111 women</text>
+          <text class="svg-t-sm" x="75" y="197" text-anchor="middle">NHANES, 5 rounds</text>
 
           <!-- split arrows -->
           <path class="svg-line" d="M 136 172 L 166 172 L 166 78 L 196 78" marker-end="url(#ar)"></path>
@@ -623,19 +625,23 @@
           scanner.</figcaption>
       </figure>
 
-      <p>In code, that wall is the <code>exclude</code> list inside <code>define_features</code>. It names
+      <p>In code, that wall used to be an <code>exclude</code> list: a blocklist naming
         <code>femoral_neck_bmd</code>, <code>total_hip_bmd</code>, <code>t_femoral_neck</code>,
         <code>t_total_hip</code>, <code>t_score</code>, <code>bone_status</code>, <code>at_risk</code> and
-        <code>osteoporosis</code> — every column that carries any trace of the scan.</p>
+        <code>osteoporosis</code>. <strong>The rewrite inverted it.</strong> <code>FEATURE_PANEL</code> is now
+        an <em>allowlist</em>: eighteen named source variables, and nothing else can reach a model no matter
+        what else the table happens to contain.</p>
 
       <div class="note caution">
-        <span class="note-label">A design decision worth knowing about</span>
-        <p>Feature selection here works by <em>exclusion</em>, not inclusion: the code takes every column in
-          the table and removes the ones on the blocklist. That is convenient — a newly engineered variable
-          is picked up automatically with no extra wiring — but it cuts the other way too. Any future column
-          derived from bone density silently becomes an input unless someone remembers to add it to the list.
-          This is why the script carries a standing leak alarm; see
-          <a href="#guards">Six ways of cheating, guarded</a>.</p>
+        <span class="note-label">Why the direction matters</span>
+        <p>A blocklist is convenient — a newly engineered variable is picked up automatically with no extra
+          wiring — but it fails in the dangerous direction. Any future column derived from bone density
+          silently becomes an input unless someone remembers to add it to the list, and the failure is
+          invisible: the model simply gets better. An allowlist fails in the safe direction instead. A new
+          column is ignored until someone writes its name down, so the worst outcome is a variable you meant
+          to use sitting idle, not the scan leaking into the thing that is supposed to replace it. The
+          standing leak alarm is still there as a second line; see
+          <a href="#guards">Seven ways of cheating, guarded</a>.</p>
       </div>
     </section>
 
@@ -705,8 +711,8 @@
         <p>Asking someone what they ate yesterday measures <em>yesterday</em>, not their habitual diet, and
           the day-to-day scatter is enormous. Feeding a single noisy day into a model systematically drags
           any real nutrient effect toward zero — the classic regression-dilution problem. Averaging two days
-          does not eliminate it but materially reduces it. On this cohort, 1,369 of the 1,484 women have both
-          days, 90 have one, and 25 have neither.</p>
+          does not eliminate it but materially reduces it. On this cohort, 1,040 of the 1,111 women have both
+          days, 63 have one, and 8 have neither.</p>
       </div>
 
       <h3>One quirk that shapes a lot of the code</h3>
@@ -727,13 +733,13 @@
     <section id="cohort">
       <div class="sec-head">
         <span class="sec-step">Steps 3 – 4</span>
-        <h2>Getting to 1,484</h2>
+        <h2>Getting to 1,111</h2>
       </div>
 
-      <p>Four filters, applied in order. Each one is a deliberate narrowing, and the narrowness is the point:
-        by holding sex, ethnicity and age band fixed, the model does not have to spend its limited
-        statistical power learning those effects, and the T-score reference values used later are the right
-        ones for this group.</p>
+      <p>Five filters, applied in order. Each one is a deliberate narrowing, and the narrowness is the point:
+        by holding sex, ethnicity, age band and menopausal status fixed, the model does not have to spend its
+        limited statistical power learning those effects, and the T-score reference values used later are the
+        right ones for this group.</p>
 
       <div class="bleed">
         <div class="tbl-wrap">
@@ -742,43 +748,70 @@
               <tr><th>Stage</th><th class="num">Remaining</th><th class="num">Removed</th><th>Why</th></tr>
             </thead>
             <tbody>
-              <tr><td>All respondents across the six cycles</td><td class="num">66,023</td><td class="num">—</td><td>Everything merged, before any selection</td></tr>
-              <tr><td>Female</td><td class="num">33,341</td><td class="num">32,682</td><td>Bone loss after menopause is a different process from male bone loss; the T-score reference is sex-specific</td></tr>
-              <tr><td>Non-Hispanic White</td><td class="num">12,239</td><td class="num">21,102</td><td>Bone density distributions differ by ancestry; mixing them without modelling it would blur the signal</td></tr>
-              <tr><td>Aged 50–65</td><td class="num">1,863</td><td class="num">10,376</td><td>The decade of fastest post-menopausal loss, and the decade routine screening usually misses</td></tr>
-              <tr class="row-hi"><td>Has a femoral-neck DXA result</td><td class="num"><strong>1,484</strong></td><td class="num">379</td><td>No scan means no answer key — nothing to train against or grade against</td></tr>
+              <tr><td>All respondents across the five cycles</td><td class="num">56,769</td><td class="num">—</td><td>Everything merged, before any selection</td></tr>
+              <tr><td>Female</td><td class="num">28,644</td><td class="num">28,125</td><td>Bone loss after menopause is a different process from male bone loss; the T-score reference is sex-specific</td></tr>
+              <tr><td>Non-Hispanic White</td><td class="num">10,672</td><td class="num">17,972</td><td>Bone density distributions differ by ancestry; mixing them without modelling it would blur the signal</td></tr>
+              <tr><td>Aged 50–65</td><td class="num">1,639</td><td class="num">9,033</td><td>The decade of fastest post-menopausal loss, and the decade routine screening usually misses</td></tr>
+              <tr><td>Has a femoral-neck DXA result</td><td class="num">1,308</td><td class="num">331</td><td>No scan means no answer key — nothing to train against or grade against</td></tr>
+              <tr class="row-hi"><td>Postmenopausal</td><td class="num"><strong>1,111</strong></td><td class="num">197</td><td>156 still cycling and 41 whose status cannot be determined. The question is about bone loss <em>after</em> menopause</td></tr>
             </tbody>
           </table>
         </div>
-        <caption>The final row is where the answer key requirement bites: 379 otherwise-eligible women
-          (20% of them) were not scanned, or their scan was invalid, and are dropped.</caption>
+        <caption>Two rows do the heavy lifting. 331 otherwise-eligible women were not scanned, or their
+          scan was invalid, and have no answer key to train or grade against. A further 197 are removed by
+          the menopause gate.</caption>
       </div>
 
-      <h3>The cohort is spread evenly across the six survey rounds</h3>
+      <h3>The cohort is spread evenly across the five survey rounds</h3>
 
       <div class="stats">
-        <div class="stat"><dt>2005–06</dt><dd>206</dd></div>
-        <div class="stat"><dt>2007–08</dt><dd>270</dd></div>
-        <div class="stat"><dt>2009–10</dt><dd>283</dd></div>
-        <div class="stat"><dt>2013–14</dt><dd>257</dd></div>
-        <div class="stat"><dt>2017–18</dt><dd>176</dd></div>
-        <div class="stat"><dt>2017–20</dt><dd>292</dd></div>
+        <div class="stat"><dt>2005–06</dt><dd>173</dd></div>
+        <div class="stat"><dt>2007–08</dt><dd>228</dd></div>
+        <div class="stat"><dt>2009–10</dt><dd>227</dd></div>
+        <div class="stat"><dt>2013–14</dt><dd>219</dd></div>
+        <div class="stat"><dt>2017–20</dt><dd>264</dd></div>
+      </div>
+
+      <h3>The three groups the gate separates are not interchangeable</h3>
+
+      <div class="bleed">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>Group</th><th class="num">n</th><th class="num">Mean T-score</th><th class="num">Median age</th><th>Disposition</th></tr>
+            </thead>
+            <tbody>
+              <tr class="row-hi"><td>Postmenopausal</td><td class="num"><strong>1,111</strong></td><td class="num">−1.140</td><td class="num">59</td><td>The analysis cohort</td></tr>
+              <tr><td>Still cycling</td><td class="num">156</td><td class="num">−0.473</td><td class="num">52</td><td>Excluded — younger and markedly denser</td></tr>
+              <tr><td>Status undeterminable</td><td class="num">41</td><td class="num">−1.155</td><td class="num">58</td><td>Excluded — unknown, <em>not</em> premenopausal</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <caption>The still-cycling group is the one that matters: at a mean T-score of −0.473 against
+          −1.140, they are easy negatives, and a model rewarded for separating them looks better than it is.
+          The 41 undeterminable women sit at −1.155 — statistically indistinguishable from the kept group —
+          so excluding them is conservative rather than convenient. They must never be described as
+          premenopausal.</caption>
       </div>
 
       <div class="note good">
         <span class="note-label">The assert is a feature, not a bug</span>
-        <p><code>apply_filters</code> ends with <code>assert len(df) == 1484</code>. It exists to make the
+        <p><code>apply_filters</code> ends with <code>assert n4 == N_DXA_COHORT</code> (1,308), and
+          <code>apply_menopause_gate</code> asserts all three of 156, 41 and 1,111. They exist to make the
           published cohort tamper-evident: if anyone changes a cycle, an inclusion rule or the DXA
           requirement, the script stops instead of quietly reporting different results under the same
           heading. A failing assert means <em>the cohort definition moved</em> — the correct response is to
-          find out why, not to update the number.</p>
+          find out why, not to update the number. This is not hypothetical: the previous version of this
+          document reported 1,484, and that number was wrong for a reason no assert was watching for.</p>
       </div>
 
       <div class="note caution">
-        <span class="note-label">Two cycles sit on disk unused, on purpose</span>
-        <p><code>data/raw/</code> also contains 2015–2016 and 2021–2023 data that is deliberately not listed
-          in <code>CYCLES</code>. Adding them would change the cohort and trip the assert. Do not "fix" this
-          without checking why they were excluded.</p>
+        <span class="note-label">Three cycles sit on disk unused, and one of them is load-bearing</span>
+        <p><code>data/raw/</code> also contains 2015–2016, 2017–2018 and 2021–2023 data that is deliberately
+          not listed in <code>CYCLES</code>. Adding any of them would change the cohort and trip the assert.
+          2017–2018 is the critical one and has its own section below — it is <em>physically inside</em> the
+          2017–2020 files under different ID numbers, and loading both counted 176 women twice. Do not
+          "fix" this.</p>
       </div>
     </section>
 
@@ -816,26 +849,29 @@
       <div class="stats">
         <div class="stat">
           <dt>at_risk — T ≤ −1.0</dt>
-          <dd>836 <small>56.3% of the cohort. Osteopenia <em>or worse</em>. This is the primary target.</small></dd>
+          <dd>645 <small>58.1% of the cohort. Osteopenia <em>or worse</em>. This is the primary target.</small></dd>
         </div>
         <div class="stat">
           <dt>osteoporosis — T ≤ −2.5</dt>
-          <dd>94 <small>6.3%. The WHO diagnostic threshold. A secondary target, evaluated separately.</small></dd>
+          <dd>76 <small>6.8%. The WHO diagnostic threshold. A secondary target, evaluated separately.</small></dd>
         </div>
         <div class="stat">
           <dt>T-score distribution</dt>
-          <dd>−1.08 <small>mean, with SD 1.02 — the cohort average sits right at the osteopenia line.</small></dd>
+          <dd>−1.14 <small>mean, with SD 0.98 — the cohort average sits just past the osteopenia line.</small></dd>
         </div>
       </div>
 
       <div class="note risk">
         <span class="note-label">Read this before quoting the headline number</span>
         <p>The primary target is <strong>not osteoporosis</strong>. It is osteopenia-or-worse, which describes
-          <strong>56.3%</strong> of this cohort — more than half. A model that predicts it well is answering
+          <strong>58.1%</strong> of this cohort — more than half. A model that predicts it well is answering
           "does this woman have any measurable bone loss", not "does this woman have osteoporosis". The
-          osteoporosis-only target has just 94 cases against 23 predictors — about 4 events per predictor,
+          osteoporosis-only target has just 76 cases against 20 model columns — 3.8 events per predictor,
           well under the conventional minimum of 10 — so anything estimated on that target alone is fragile.
-          The script evaluates both and reports them side by side rather than picking the flattering one.</p>
+          The rewrite made that arithmetic a gate rather than a footnote: <code>power_gate.csv</code> computes
+          events per predictor for every analysis before it runs and labels this target
+          <strong>UNDERPOWERED</strong> in the output itself. The script still evaluates both targets and
+          reports them side by side rather than picking the flattering one.</p>
       </div>
     </section>
 
@@ -843,12 +879,17 @@
     <section id="features">
       <div class="sec-head">
         <span class="sec-step">Steps 6 – 9</span>
-        <h2>The 23 things the model may look at</h2>
+        <h2>The 20 things the model may look at</h2>
       </div>
 
       <p>Grouped by where a real clinic would get them. This is the honest test of the project's premise: if
         a variable on this list is not actually obtainable in a primary-care visit, the tool does not work as
         advertised.</p>
+
+      <p><strong>Eighteen variables, twenty model columns.</strong> The two numbers differ because
+        <code>menopause_type</code> is categorical: it expands into three indicator columns against a
+        reference level of natural menopause. Clinically it is one question, so the ablation grid drops all
+        three together — groups, not columns, are the unit of analysis.</p>
 
       <div class="bleed">
         <div class="tbl-wrap">
@@ -859,43 +900,75 @@
             <tbody>
               <tr>
                 <td><strong>Measured in the room</strong><br><span style="color:var(--ink-3);font-size:13px">scale, stadiometer, DOB</span></td>
-                <td><code>weight_kg</code> <code>height_cm</code> <code>bmi</code> <code>age</code></td>
-                <td>Essentially complete — 0.5% missing or less. <code>weight_kg</code> turns out to be the single most predictive variable in the whole set.</td>
+                <td><code>age</code> <code>weight_kg</code> <code>bmi</code></td>
+                <td>Complete or near it — 0.1% missing at worst. <code>weight_kg</code> is not merely the most
+                  predictive variable here; on the corrected cohort it is very nearly the <em>only</em> one.
+                  <code>height_cm</code> is deliberately absent: it enters through <code>bmi</code>, and
+                  carrying weight, height and BMI together makes the design near-singular.</td>
               </tr>
               <tr>
-                <td><strong>Reproductive history</strong><br><span style="color:var(--ink-3);font-size:13px">interview</span></td>
-                <td><code>postmenopausal</code> <code>years_since_menopause</code> <code>hysterectomy</code> <code>oophorectomy</code> <code>menopause_natural</code> <code>ever_used_estrogen</code></td>
-                <td>Derived, not raw — see below. Missingness ranges from 2.8% to 33.6%.</td>
+                <td><strong>Reproductive and hormonal</strong><br><span style="color:var(--ink-3);font-size:13px">interview</span></td>
+                <td><code>years_since_menopause</code> <code>menopause_type</code> <code>ever_used_estrogen</code></td>
+                <td>Derived, not raw — see below. 2.0% / 0% / 0.2% missing. <code>menopause_type</code> has no
+                  missing category because "unknown" <em>is</em> one of its levels (104 women), which is
+                  honest rather than imputed. <code>postmenopausal</code> is gone from the panel: it is now
+                  a cohort filter, so it is constant by construction and carries no information.</td>
               </tr>
               <tr>
-                <td><strong>Chart / history</strong><br><span style="color:var(--ink-3);font-size:13px">notes, medication list</span></td>
-                <td><code>any_prior_fracture</code> <code>steroid_use</code> <code>any_arthritis</code> <code>diabetes</code> <code>ever_smoked</code> <code>alcohol_drinks_day</code> <code>vigorous_activity</code></td>
-                <td>Classic clinical risk factors, most of them also in FRAX.</td>
+                <td><strong>Chart and family history</strong><br><span style="color:var(--ink-3);font-size:13px">notes, medication list</span></td>
+                <td><code>any_prior_fracture</code> <code>steroid_use</code> <code>diabetes</code> <code>parental_hip_fracture</code> <code>family_hx_osteoporosis</code></td>
+                <td>Classic clinical risk factors, most of them also in FRAX. 0% – 4.7% missing.</td>
               </tr>
               <tr>
-                <td><strong>Labs</strong></td>
-                <td><code>serum_vitd_nmol</code></td>
-                <td>Measured blood 25(OH)D. Available for 1,142 of 1,484 (23% missing) — the 2017–2020 release ships no vitamin D file at all.</td>
-              </tr>
-              <tr>
-                <td><strong>Diet and supplements</strong></td>
-                <td><code>total_calcium_mg</code> <code>total_vitd_mcg</code> <code>supp_data_available</code></td>
-                <td>Two-day dietary average plus supplement intake. See the caveat on <code>supp_data_available</code> below.</td>
+                <td><strong>Lifestyle</strong><br><span style="color:var(--ink-3);font-size:13px">interview</span></td>
+                <td><code>ever_smoked</code> <code>alcohol_drinks_day</code> <code>vigorous_activity</code> <code>sedentary_min_day</code></td>
+                <td>The worst-covered block: 0%, 13.6%, 15.6%, 15.8% missing. Alcohol is
+                  <em>current</em> intake with lifelong abstainers set to a true zero and former drinkers
+                  left missing rather than zeroed — a former heavy drinker is not a non-drinker.</td>
               </tr>
               <tr>
                 <td><strong>Social</strong></td>
                 <td><code>poverty_income_ratio</code></td>
-                <td>Family income relative to the federal poverty line. 5.5% missing.</td>
+                <td>Family income relative to the federal poverty line. 5.0% missing.</td>
               </tr>
               <tr>
-                <td><strong>Mood</strong></td>
-                <td><code>phq9_score</code></td>
-                <td><strong>80.4% missing.</strong> Flagged as a problem below.</td>
+                <td><strong>Mood and sleep</strong></td>
+                <td><code>phq9_score</code> <code>sleep_hrs</code></td>
+                <td><strong>0.1% and 0.4% missing.</strong> Both were catastrophically incomplete in the old
+                  pipeline — PHQ-9 at 80% missing, sleep dropped from the model entirely for sparsity. Both
+                  were repaired by the rewrite, not by imputation; see below.</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <caption>The 23 features the models actually receive, from <code>define_features</code>.</caption>
+        <caption>The 18 variables and 20 columns the models actually receive, from <code>FEATURE_GROUPS</code>.</caption>
+      </div>
+
+      <div class="note">
+        <span class="note-label">Four more variables exist, but only inside a named arm</span>
+        <p><code>total_calcium_mg</code> and <code>total_vitd_mcg</code> (930 women), <code>serum_vitd_nmol</code>
+          (974) and <code>rheumatoid_arthritis</code> (988) are each measured on a <em>different</em> subset
+          of the cohort. Putting them all in one model silently intersects those subsets and shrinks the
+          analysis to whoever has everything. So the base panel excludes them and each one gets its own
+          prespecified arm, run on its own complete-case sample and compared against the same base panel
+          restricted to the same women. That is the only way the comparison answers "does this variable add
+          anything" rather than "does this subset of women behave differently". All four arms came back
+          null; the numbers are in <a href="#arms">the arms table</a>.</p>
+      </div>
+
+      <div class="note good">
+        <span class="note-label">Two variables were rescued rather than imputed</span>
+        <p><strong>PHQ-9 went from 80.4% missing to 0.1%.</strong> The old code summed the nine depression
+          items with <code>min_count=5</code>, meaning a woman needed five answered items to get a score —
+          and NHANES routes most respondents past most of those items by skip logic, so four out of five
+          women ended up with no score at all. The rewrite reads the skip pattern instead of fighting it: an
+          unasked item following a negative screen is a zero, not a blank. 1,110 of 1,111 women now have a
+          score, and 112 of them (10.1%) screen positive at the conventional cutoff of 10 — a plausible
+          prevalence, which the 20% sample never was.</p>
+        <p><strong><code>sleep_hrs</code> is back in the panel.</strong> It was dropped from the old model for
+          data density, on the strength of a coverage figure that was itself an artifact of not coalescing
+          <code>SLD012</code> (newer cycles) with <code>SLD010H</code> (older ones). Coalesced properly it
+          covers 1,107 of 1,111.</p>
       </div>
 
       <h3>The reproductive variables are the most carefully built part of the pipeline</h3>
@@ -939,14 +1012,16 @@
             <thead><tr><th>Dropped</th><th>Reason</th></tr></thead>
             <tbody>
               <tr><td><code>femoral_neck_bmd</code> <code>total_hip_bmd</code> <code>t_femoral_neck</code> <code>t_total_hip</code> <code>t_score</code> <code>bone_status</code> <code>at_risk</code> <code>osteoporosis</code></td><td><strong>Target leakage.</strong> Every column that carries the scan. Mandatory.</td></tr>
-              <tr><td><code>prior_hip_fracture</code> <code>prior_spine_fracture</code> <code>prior_wrist_fracture</code></td><td>Too rare to estimate separately — 21 hip and 46 wrist events. Every tree model gave them exactly zero importance while the linear models fitted noise. Pooled into <code>any_prior_fracture</code> (233 positives, 15.7%), which is both estimable and the clinically meaningful construct.</td></tr>
+              <tr><td><code>prior_hip_fracture</code> <code>prior_spine_fracture</code> <code>prior_wrist_fracture</code></td><td>Too rare to estimate separately — 18 hip and 35 wrist events on this cohort. Every tree model gave them exactly zero importance while the linear models fitted noise. Pooled into <code>any_prior_fracture</code> (177 positives, 15.9%), which is both estimable and the clinically meaningful construct.</td></tr>
               <tr><td><code>age_at_menopause</code></td><td>Exactly collinear with age − years since menopause.</td></tr>
               <tr><td><code>dietary_calcium_mg</code> <code>dietary_vitd_mcg</code> <code>supp_calcium_mg</code> <code>supp_vitd_mcg</code> <code>DR2TCALC</code> <code>DR2TVD</code> and the 2-day averages</td><td>Components superseded by the <code>total_*</code> variables. Left in, they would enter as near-duplicates of the totals.</td></tr>
               <tr><td><code>n_recall_days</code></td><td>Encodes whether the person answered a second diet survey — a property of the survey, not of the woman.</td></tr>
               <tr><td><code>DPQ010</code>…<code>DPQ090</code></td><td>The nine raw PHQ items, superseded by their sum.</td></tr>
-              <tr><td><code>sleep_risk</code> / <code>sleep_hrs</code></td><td>Sleep data is sparse and inconsistent across cycles. The code builds both a with-sleep and a without-sleep feature set, then trains only on the without.</td></tr>
-              <tr><td><code>sedentary_min_day</code></td><td>Collected, excluded.</td></tr>
-              <tr><td><code>education</code></td><td>Not an explicit exclusion — it survives as text and is then swept up by the blanket drop of non-numeric columns. An accidental omission rather than a decision.</td></tr>
+              <tr><td><code>sleep_risk</code></td><td>A hand-cut binary of <code>sleep_hrs</code>. Superseded by the continuous variable, which is now in the panel — the old with-sleep / without-sleep pair of feature sets is gone, and with it the dead <code>X_with</code> arm that was built every run and never scored.</td></tr>
+              <tr><td><code>hysterectomy</code> <code>oophorectomy</code> <code>menopause_natural</code></td><td>Three overlapping binaries for one clinical question, and not mutually exclusive, so a woman could be coded several ways at once. Replaced by the single categorical <code>menopause_type</code> with natural menopause as the reference level.</td></tr>
+              <tr><td><code>supp_data_available</code></td><td>A property of the survey cycle, not of the woman. See the flag above.</td></tr>
+              <tr><td><code>any_arthritis</code></td><td>Pools rheumatoid with osteoarthritis, which have opposite bone implications. Rheumatoid arthritis alone is a prespecified arm instead (71 cases).</td></tr>
+              <tr><td><code>education</code></td><td>Under the old blocklist this was an <em>accident</em>: it survived as text and was then swept up by a blanket drop of non-numeric columns, so nobody ever decided to leave it out. Under the allowlist it is simply not on the panel — the same outcome, now as a recorded choice.</td></tr>
               <tr><td><code>SEQN</code> <code>RIAGENDR</code> <code>RIDRETH1</code> <code>survey_cycle</code></td><td>IDs and the filter variables, which are constant by construction.</td></tr>
             </tbody>
           </table>
@@ -954,21 +1029,19 @@
       </div>
 
       <div class="note caution">
-        <span class="note-label">Three data-quality flags worth raising yourself</span>
-        <p><strong><code>phq9_score</code> is 80.4% missing</strong> and is nonetheless fed to the model,
-          where the median imputer fills four out of five values with the same number. Its measured
-          contribution is negative — shuffling it <em>improves</em> out-of-fold AUC slightly. It earns its
-          place in neither statistical nor clinical terms.</p>
-        <p><strong><code>supp_data_available</code> is not a patient characteristic.</strong> It flags whether
-          the woman's survey cycle shipped a supplement file at all — 2005–06 did not, so all 206 of its
-          women are marked unobserved. It is a dataset provenance marker sitting in a clinical feature list.
-          Harmless in practice here (odds ratio 1.00, importance ≈ 0) but it should not be there, and a
-          specialist may well ask.</p>
-        <p><strong>Three more predictors exceed 15% missingness:</strong> <code>alcohol_drinks_day</code>
-          31.7%, <code>menopause_natural</code> 33.6%, <code>serum_vitd_nmol</code> 23.0%,
-          <code>oophorectomy</code> 17.0%, <code>years_since_menopause</code> 15.8%. All are median-imputed,
-          which is a defensible default but does mean the reported effects for those variables lean partly on
-          fabricated values.</p>
+        <span class="note-label">Two data-quality flags worth raising yourself</span>
+        <p><strong><code>supp_data_available</code> is gone, and it should never have been there.</strong> It
+          flagged whether the woman's survey <em>cycle</em> shipped a supplement file — 2005–06 did not, so
+          all 173 of its women were marked unobserved. That is a dataset provenance marker sitting in a
+          clinical feature list: a variable the model could learn from that no clinician could ever record.
+          It was harmless in effect here (odds ratio 1.00, importance ≈ 0) but the allowlist now simply has
+          no entry for it.</p>
+        <p><strong>Three predictors still exceed 13% missingness:</strong> <code>sedentary_min_day</code>
+          15.8%, <code>vigorous_activity</code> 15.6%, <code>alcohol_drinks_day</code> 13.6%. All are
+          median-imputed <em>inside the training fold</em>, which is a defensible default and leaks nothing,
+          but it does mean the reported effect for each of those variables leans partly on fabricated values.
+          The imputation values actually used are written out to
+          <code>Notes/imputation_values.csv</code> so a reviewer can see exactly what was filled in.</p>
       </div>
     </section>
 
@@ -976,45 +1049,91 @@
     <section id="guards">
       <div class="sec-head">
         <span class="sec-step">Built into steps 6 – 11</span>
-        <h2>Six ways this could have been wrong, and the guard against each</h2>
+        <h2>Seven ways this could have been wrong, and the guard against each</h2>
       </div>
 
-      <p>This section is the strongest thing to bring to a specialist meeting. Most of these are not
-        hypothetical — the code comments record that they were <em>found</em> and fixed, which is a very
-        different and much more credible claim than "we were careful".</p>
+      <p>This section is the strongest thing to bring to a specialist meeting. None of these are
+        hypothetical — every one was <em>found</em> in this codebase and fixed, which is a very different and
+        much more credible claim than "we were careful". The first is the one that changed the answer.</p>
 
-      <h4>1 · Target leakage</h4>
-      <p>Because features are chosen by exclusion, a new column derived from bone density would silently
-        become an input. The standing guard is a coefficient alarm: after fitting, the script checks the
-        largest standardised coefficient against a threshold of 2.0. The largest legitimate one observed is
-        about 0.99 (<code>weight_kg</code>); anything leaking the target would dominate at several times
-        that. <strong>This run: largest coefficient 0.990, on <code>weight_kg</code>. Clean.</strong></p>
+      <h4>1 · The same women counted twice</h4>
+      <p>This is the defect that overturned the project's headline result, and no guard was watching for it.
+        NHANES built its pre-pandemic file by pooling the complete 2017–2018 cycle with the partial
+        2019–2020 sample and <strong>re-numbering every SEQN</strong>. So <code>DEMO_J</code> runs
+        93703–102956 and <code>P_DEMO</code> runs 109263–124822 — disjoint ranges for overlapping people.
+        Loading both cycles, as the old <code>CYCLES</code> list did, put <strong>176 of these women in the
+        cohort twice</strong> under two different IDs that no deduplication on SEQN could ever catch.</p>
+      <p>Cross-validation splits <em>rows</em>, not people. A woman present twice lands in the training fold
+        and the test fold simultaneously, and the model is scored on a row it has already memorised. That is
+        exactly the mechanism target leakage uses, arriving through the front door. The guard is now
+        threefold: 2017–2018 is out of <code>CYCLES</code>; a <strong>fingerprint audit</strong> hashes
+        each woman's continuous measurements (both BMD values, weight, height, age) and asserts that no two
+        rows share one — <strong>this run: 1,306 rows with a complete fingerprint, 0 collisions</strong>;
+        and the 2017–2018 file is still read, but only as a <em>lookup table</em> to crosswalk the missing
+        vitamin D values, never as a source of cohort rows.</p>
+      <p>The cost is quantified rather than asserted. <code>auc_decomposition.csv</code> reruns the whole
+        pipeline at four stages, and the duplicate fix alone accounts for <strong>−0.074 AUC</strong> — the
+        overwhelming majority of the total −0.083 drop from the published figure. See
+        <a href="#honesty">the honesty section</a>.</p>
 
-      <h4>2 · Clinically backwards effects</h4>
+      <h4>2 · Target leakage</h4>
+      <p>Under the old blocklist, a new column derived from bone density would silently
+        become an input. Two guards now sit on this. The structural one is
+        <code>BMD_DENYLIST</code>: ten named columns — both raw BMD values, both site T-scores, the combined
+        T-score, both labels, and the descriptive category — asserted absent from every feature matrix,
+        under every arm, before any model is fitted. The statistical one is a coefficient alarm: after
+        fitting, the script checks the largest standardised coefficient against a threshold of 2.0. The
+        largest legitimate one is about 1.21 (<code>weight_kg</code>); anything carrying the scan would
+        dominate at several times that. <strong>This run: largest coefficient 1.214, on
+        <code>weight_kg</code>. No leak signature.</strong></p>
+
+      <h4>3 · Clinically backwards effects</h4>
       <p>A dictionary named <code>EXPECTED_SIGNS</code> records the direction each well-established risk
         factor should point (weight protective, age harmful, prior fracture harmful, and so on). After
         fitting, any coefficient pointing the wrong way is printed as a warning. This check is what surfaced
         the age / age-at-menopause collinearity in the first place. <strong>This run flags one:
-        <code>total_vitd_mcg</code></strong>, where higher intake associates with slightly higher risk — a
-        classic reverse-causation pattern, since women told they have thinning bones start taking vitamin D.
-        Worth saying out loud rather than hiding.</p>
+        <code>bmi</code></strong>, at +0.171 where a protective sign was expected. The script does not
+        merely flag it, it <em>diagnoses</em> it: it reports the flagged variable's strongest collinear
+        partner and that partner's coefficient, and prints
+        <em>"strongest partner <code>weight_kg</code> (|r| 0.94, coef −1.214): partner absorbed the effect,
+        so this is a residual with no clinical reading."</em> At a correlation of 0.94, weight has taken the
+        entire protective effect and BMI is fitting what is left over. The block ablation below confirms
+        this directly — the two together are worth +0.150 AUC, either one alone is worth almost nothing.
+        This is also why the old run's flag on <code>total_vitd_mcg</code> no longer appears: vitamin D
+        intake is no longer in the base panel at all.</p>
+      <p>Note what is deliberately <em>not</em> in <code>EXPECTED_SIGNS</code>: diabetes. Type 2 diabetes
+        raises measured bone density while also raising fracture risk — the diabetic bone paradox — so the
+        protective coefficient here (−0.040) is the expected result and flagging it would be wrong.</p>
 
-      <h4>3 · Fabricated totals</h4>
+      <h4>4 · Fabricated totals</h4>
       <p>Calcium intake is food plus pills. The obvious implementation, <code>.add(fill_value=0)</code>,
         would treat a missing supplement figure as a real zero and produce a confident-looking total from
         half the information. The script uses plain addition so a missing component yields a missing total,
         and separately distinguishes "this cycle had no supplement file" (genuinely unobserved, left NaN)
         from "this woman was surveyed and reported no supplements" (a true zero — NHANES codes non-users as
-        blank, not 0). <strong>206 women unobserved; 229 totals left missing.</strong></p>
+        blank, not 0). <strong>173 women unobserved; 181 totals left missing.</strong></p>
+      <p>The rewrite added a second layer here: per-variable plausibility ranges. A global
+        refused/don't-know list cannot catch a decode error, because NHANES's sentinel codes mean different
+        things in different files. So each variable declares its own valid interval —
+        <code>DR2TCALC</code> 0–8,000 mg, <code>DR2TVD</code> 0–400 µg — and anything outside it is set
+        to missing with a count printed. <strong>This run: 3 of 38,222 calcium values rejected, 0 of 29,958
+        vitamin D values.</strong> Near-zero, which is the useful result: the guard confirms the decode was
+        already right rather than papering over a problem.</p>
 
-      <h4>4 · A variable running under a false name</h4>
+      <h4>5 · A variable running under a false name</h4>
       <p><code>MCQ160A</code> was previously called <code>rheumatoid_arthritis</code> in this code. It is not
         rheumatoid-specific — it asks whether a doctor ever mentioned arthritis of any type, and it is
-        positive in 45.8% of this cohort. Rheumatoid arthritis is a genuine FRAX risk factor with a 1–2%
-        prevalence. Under the wrong name, a common, weakly-relevant variable was masquerading as a rare,
-        strongly-relevant one. It is now <code>any_arthritis</code>.</p>
+        positive in 47.7% of this cohort. Rheumatoid arthritis is a genuine FRAX risk factor at a few
+        percent prevalence. Under the wrong name, a common, weakly-relevant variable was masquerading as a
+        rare, strongly-relevant one.</p>
+      <p>The rewrite went further than renaming it. <code>MCQ195</code> asks which <em>type</em> of arthritis,
+        so real rheumatoid arthritis is recoverable: <strong>71 of 988 women (7.2%)</strong>, with 123
+        excluded because they reported arthritis but no type. That is now a prespecified arm of its own, and
+        <code>any_arthritis</code> — which pools rheumatoid with osteoarthritis, two conditions with
+        opposite bone implications — is off the panel entirely. <strong>The arm came back null:
+        Δ +0.000.</strong></p>
 
-      <h4>5 · Importance measures that lie</h4>
+      <h4>6 · Importance measures that lie</h4>
       <p>Tree-model importances — Gini importance and split counts — were <em>removed</em> from the reporting.
         They are unsigned and biased toward continuous variables over binary ones, and here they inverted the
         real ranking: <code>total_calcium_mg</code> placed 7th despite a completely flat outcome gradient
@@ -1022,6 +1141,13 @@
         despite an odds ratio of 1.28. They were replaced with <strong>permutation importance</strong> —
         literally: shuffle one column, refit nothing, and measure how much out-of-fold AUC is lost. That is
         model-agnostic, in the same units for every model, and not biased by variable type.</p>
+      <p>The rewrite added two more importance methods, because permutation importance has its own blind
+        spot: when two variables carry the same information, shuffling either one costs nothing, since the
+        model simply reads the other. So the script now also runs <strong>single-variable ablation</strong>
+        (drop a variable, refit everything, remeasure) and <strong>block ablation</strong> (drop a whole
+        clinical group at once). Where the three disagree is exactly where collinearity lives, and that
+        disagreement is the finding rather than a nuisance — see
+        <a href="#predictors">which variables actually matter</a>.</p>
 
       <div class="note good">
         <span class="note-label">A file that contradicted this has been removed</span>
@@ -1031,21 +1157,33 @@
           <a href="#stale">What was removed</a>.</p>
       </div>
 
-      <h4>6 · An in-sample score that flatters a forest</h4>
+      <h4>7 · An in-sample score that flatters a forest</h4>
       <p>A random forest with unrestricted leaves memorises its training rows — its in-sample AUC is close to
         1.000 no matter what, and on deliberately shuffled labels this configuration still reaches 0.997. So
         the train-versus-test gap is meaningless for it. The script enables <strong>out-of-bag scoring</strong>
         instead: each row is scored using only the ~37% of trees whose bootstrap sample happened to exclude
         it. That is the honest in-sample figure for a bagged ensemble, and the leaderboard prints it in its
         own column with an explicit instruction not to rank models by the train/test gap.</p>
+      <p>That guard needed a guard of its own. On the osteoporosis target, out-of-bag scoring silently
+        breaks: <code>class_weight='balanced'</code> oversamples the 76 cases so heavily that most of them
+        are in nearly every tree's bootstrap sample and are therefore almost never out-of-bag. Rows with no
+        out-of-bag coverage come back from scikit-learn as all-<em>zero</em> score rows rather than as
+        missing, so they score as confident negatives and the OOB AUC <strong>inverts</strong> — the
+        unfixed code printed <strong>0.108</strong> in a table labelled PRESENT. The rewrite checks coverage
+        before reporting and withholds the number instead, printing
+        <em>"OOB withheld: only 28% of class 1 rows are ever out-of-bag (class_weight oversamples them)"</em>.
+        A refused number is a result; an inverted one is a lie.</p>
 
       <div class="note good">
         <span class="note-label">And one thing that was tested rather than assumed</span>
         <p>The forest's <code>min_samples_leaf</code> was tuned by nested cross-validation, not chosen by
           eye. It matters because the intuitive move — raising it to shrink the alarming train/test gap —
           <em>lowers</em> test AUC monotonically. The gap is the price of the performance, not a defect. Inner
-          CV picked leaf = 1 in 5 of 5 folds for the osteopenia target and 3 of 5 for osteoporosis, lifting
-          test AUC from 0.784 to 0.810 and from 0.829 to 0.835 respectively.</p>
+          CV picked small leaves, and the sweep across the grid falls monotonically once past leaf = 2:
+          0.753, 0.754, 0.751, 0.749, 0.747, 0.744 at leaves 1, 2, 5, 10, 20, 50. The spread is 0.010 AUC
+          against a fold-to-fold SD of about 0.021 — which is the more useful reading of this table than
+          the ranking: on the corrected cohort, <strong>this hyperparameter does not matter</strong>. That
+          is worth knowing before spending effort tuning it.</p>
       </div>
     </section>
 
@@ -1097,14 +1235,14 @@
       <div class="note">
         <span class="note-label">Why both boosters are deliberately crippled</span>
         <p><code>max_depth=2</code>, <code>num_leaves=4</code>, <code>min_child_samples=50</code>,
-          <code>reg_lambda=50</code>. With 1,484 rows and 23 columns, an unconstrained booster memorises the
+          <code>reg_lambda=50</code>. With 1,111 rows and 20 columns, an unconstrained booster memorises the
           dataset trivially and reports a fantasy. The heavy regularisation is a decision about the sample
           size, not a default. Class imbalance is handled per model — <code>class_weight='balanced'</code>
           for four of them, <code>scale_pos_weight</code> for XGBoost.</p>
       </div>
 
       <h4>How every score is produced: 5-fold cross-validation</h4>
-      <p>Split the 1,484 women into five groups, keeping the proportion of cases equal in each
+      <p>Split the 1,111 women into five groups, keeping the proportion of cases equal in each
         (<code>StratifiedKFold</code>). Train on four, test on the fifth. Rotate five times so every woman is
         tested exactly once, on a model that never saw her. Average the five results. The random seed is
         fixed at 42 throughout, so the whole thing reproduces exactly.</p>
@@ -1117,9 +1255,18 @@
         <h2>The leaderboard</h2>
       </div>
 
-      <p>Target: <code>at_risk</code>, T ≤ −1.0, prevalence 56.3%. AUC is the probability that the model
+      <p>Target: <code>at_risk</code>, T ≤ −1.0, prevalence 58.1%. AUC is the probability that the model
         scores a randomly chosen affected woman higher than a randomly chosen unaffected one: 0.5 is a coin
         flip, 1.0 is perfect.</p>
+
+      <div class="note risk">
+        <span class="note-label">These are not the numbers to quote</span>
+        <p>The leaderboard exists to be <em>compared against</em> the nested-CV estimate, not to be reported.
+          Fitting eight models and reporting the best is upward-biased by construction. The defensible
+          figures are in <a href="#honesty">the honesty checks</a>; the script prints
+          <em>"Do NOT quote the leaderboard figure as a result for this target"</em> beneath this very
+          table.</p>
+      </div>
 
       <div class="bleed">
         <div class="tbl-wrap">
@@ -1128,45 +1275,52 @@
               <tr><th>Model</th><th class="num">Test AUC</th><th class="num">Train AUC</th><th class="num">OOB AUC</th><th class="num">Sensitivity</th><th class="num">Specificity</th></tr>
             </thead>
             <tbody>
-              <tr class="row-hi"><td><strong>Random Forest</strong></td><td class="num"><strong>0.810</strong></td><td class="num">1.000</td><td class="num">0.825</td><td class="num">74.0%</td><td class="num">72.8%</td></tr>
-              <tr><td>LightGBM (aggressive reg.)</td><td class="num">0.764</td><td class="num">0.823</td><td class="num">—</td><td class="num">64.4%</td><td class="num">72.5%</td></tr>
-              <tr><td>XGBoost (aggressive reg.)</td><td class="num">0.760</td><td class="num">0.858</td><td class="num">—</td><td class="num">66.5%</td><td class="num">69.1%</td></tr>
-              <tr><td>Logistic Regression (L2)</td><td class="num">0.753</td><td class="num">0.771</td><td class="num">—</td><td class="num">69.4%</td><td class="num">67.0%</td></tr>
-              <tr><td>Elastic Net Logistic Regression</td><td class="num">0.753</td><td class="num">0.771</td><td class="num">—</td><td class="num">69.5%</td><td class="num">67.3%</td></tr>
+              <tr class="row-hi"><td><strong>Logistic Regression (L2)</strong></td><td class="num"><strong>0.755</strong></td><td class="num">0.770</td><td class="num">—</td><td class="num">67.9%</td><td class="num">67.8%</td></tr>
+              <tr><td>Elastic Net Logistic Regression</td><td class="num">0.754</td><td class="num">0.769</td><td class="num">—</td><td class="num">67.9%</td><td class="num">67.6%</td></tr>
+              <tr><td>Random Forest</td><td class="num">0.753</td><td class="num">1.000</td><td class="num">0.753</td><td class="num">67.6%</td><td class="num">68.5%</td></tr>
+              <tr><td>LightGBM (aggressive reg.)</td><td class="num">0.742</td><td class="num">0.813</td><td class="num">—</td><td class="num">62.0%</td><td class="num">72.7%</td></tr>
+              <tr><td>XGBoost (aggressive reg.)</td><td class="num">0.739</td><td class="num">0.837</td><td class="num">—</td><td class="num">63.9%</td><td class="num">71.2%</td></tr>
             </tbody>
           </table>
         </div>
-        <caption>Five-fold cross-validated. Sensitivity and specificity are at the default 0.5 probability
+        <caption>Five-fold cross-validated, five classifiers; three T-score regressors are scored alongside
+          them and enter the nested selection. Sensitivity and specificity are at the default 0.5 probability
           cutoff — see <a href="#referral">Scans per case found</a> for what happens when that cutoff moves.
-          The forest's train AUC of 1.000 is inflated by construction; 0.825 out-of-bag is its honest
-          in-sample number.</caption>
+          The forest's train AUC of 1.000 is inflated by construction; 0.753 out-of-bag is its honest
+          in-sample number, and it happens to land exactly on its test AUC.</caption>
       </div>
 
       <h3>How to read this</h3>
       <ul>
-        <li><strong>The random forest wins clearly</strong> — 0.810 against 0.753 for the linear models. That
-          gap says there is real non-linear or interaction structure that a straight additive model cannot
-          capture.</li>
-        <li><strong>The boosters lose to the forest</strong>, which is unusual on tabular data and is a
-          direct consequence of how hard they were regularised. That was the right call for n = 1,484, but it
-          is worth noting that a less-constrained booster was not systematically searched.</li>
-        <li><strong>L2 and elastic net are indistinguishable</strong> (identical to three decimals). With 23
-          well-chosen predictors there is nothing much for the sparsity penalty to remove.</li>
-        <li><strong>The forest is balanced, not skewed</strong> — 74.0% sensitivity and 72.8% specificity at
-          the default cutoff. It is not achieving its AUC by flagging everyone.</li>
-        <li><strong>And it is not a fluke of this particular split.</strong> When model selection was redone
-          inside each training fold (next section), the forest won in 5 of 5 folds and the nested estimate
-          came out at 0.810 — identical to the leaderboard. For this target the leaderboard was not
-          flattering itself.</li>
+        <li><strong>Nothing wins.</strong> The top three models are separated by 0.002 AUC — logistic
+          regression 0.755, elastic net 0.754, random forest 0.753 — which is far inside the fold-to-fold
+          noise of about 0.021. <em>This is a change of finding.</em> The previous version of this document
+          reported the forest winning clearly at 0.810 against 0.753 for the linear models, and read that gap
+          as evidence of real non-linear structure. On the corrected cohort the gap is gone. The forest's
+          advantage was being manufactured by duplicated women: a tree that memorises a training row scores
+          it perfectly when the same woman reappears in the test fold, and a forest memorises every row.
+          Linear models, which cannot memorise, were the ones telling the truth all along.</li>
+        <li><strong>The boosters come last</strong>, by about 0.014, which is a direct consequence of how
+          hard they were regularised. That was the right call for n = 1,111, but a less-constrained booster
+          was not systematically searched.</li>
+        <li><strong>L2 and elastic net are indistinguishable</strong> (0.755 vs 0.754). With 18
+          pre-specified predictors there is nothing much for a sparsity penalty to remove.</li>
+        <li><strong>The forest's train/test gap is as alarming as ever and still means nothing</strong> —
+          1.000 in-sample against 0.753 out. Its out-of-bag AUC is 0.753, identical to its test AUC, which is
+          the cleanest possible demonstration that the gap is an artifact of bagging rather than
+          overfitting in any actionable sense.</li>
+        <li><strong>Balanced, not skewed</strong> — roughly 68% sensitivity and 68% specificity at the
+          default cutoff. No model is achieving its AUC by flagging everyone.</li>
       </ul>
 
-      <div class="note">
-        <span class="note-label">The number that gives 0.810 its meaning</span>
-        <p>By itself, 0.810 is unreadable. The comparison that makes it interpretable is that
-          <strong>OST — weight minus age, times 0.2 — scores 0.747 on the same folds.</strong> So all 23
-          variables, the blood work, the diet surveys and the 500-tree forest buy +0.063 AUC over a formula
-          you can do in your head. That is a real gain, and it is also a realistic sense of scale. Always
-          quote the two together.</p>
+      <div class="note risk">
+        <span class="note-label">The number that takes 0.755's meaning away</span>
+        <p>By itself, 0.755 is unreadable. The comparison that makes it interpretable is that
+          <strong>OST — weight minus age, times 0.2 — scores 0.739 on the same folds</strong>, and
+          <strong>weight on its own scores 0.737</strong>. So eighteen variables, a diet survey and eight
+          models buy about +0.016 AUC over a formula you can do in your head — and once model selection is
+          moved inside the folds, that margin does not survive its own confidence interval. Always quote the
+          two together; quoting the first alone is the single easiest way to misrepresent this project.</p>
       </div>
     </section>
 
@@ -1177,74 +1331,188 @@
         <h2>Which predictors actually carry the signal</h2>
       </div>
 
-      <p>This is the table the specialist will want, and the script generates it as
-        <code>clinical_predictor_table.csv</code> plus a forest plot. It reports three things per predictor:
-        an <strong>adjusted odds ratio</strong> in clinically meaningful units, a <strong>95% confidence
-        interval</strong> from a stratified bootstrap, and <strong>ΔAUC</strong> — how much out-of-fold
-        accuracy is lost if that column is shuffled.</p>
+      <p>This is the section the specialist will want, and it is the direct answer to "which variables
+        actually matter". The rewrite answers it <strong>three different ways</strong>, because one way is
+        not enough — and where the three disagree is itself the finding.</p>
+
+      <div class="bleed">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Method</th><th>The question it answers</th><th>Its blind spot</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Odds ratio + CI</strong><br><span style="color:var(--ink-3);font-size:13px"><code>clinical_predictor_table.csv</code></span></td><td>Holding everything else fixed, how much does this variable move the odds?</td><td>Unstable when two variables measure the same thing. Says "we cannot separate these", which readers hear as "neither matters".</td></tr>
+              <tr><td><strong>Permutation importance</strong><br><span style="color:var(--ink-3);font-size:13px">same file, ΔAUC columns</span></td><td>Shuffle this one column inside a fitted model. How much out-of-fold AUC is lost?</td><td>Measures what the <em>fitted</em> model relied on, not what is available. A model handed a substitute is not harmed.</td></tr>
+              <tr><td><strong>Ablation</strong><br><span style="color:var(--ink-3);font-size:13px"><code>model_variable_ablation_*.csv</code><br><code>model_block_ablation_*.csv</code></span></td><td>Remove the variable entirely and refit everything from scratch. How much worse is the best achievable model?</td><td>Cannot see a variable whose information exists elsewhere in the panel — which is exactly what the block version is for.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>1 · Odds ratios: six of twenty columns have an interval that excludes 1</h3>
+
+      <p>Adjusted odds ratios in clinically meaningful units, with 95% intervals from a stratified bootstrap,
+        plus the ΔAUC from shuffling that column in the logistic model and in the forest.</p>
 
       <div class="bleed">
         <div class="tbl-wrap">
           <table>
             <thead>
-              <tr><th>Predictor</th><th>Per</th><th class="num">OR</th><th class="num">95% CI</th><th>Direction</th><th class="num">ΔAUC (forest)</th><th class="num">Missing</th></tr>
+              <tr><th>Predictor</th><th>Per</th><th class="num">OR</th><th class="num">95% CI</th><th>Direction</th><th class="num">ΔAUC (LR)</th><th class="num">ΔAUC (RF)</th><th class="num">Missing</th></tr>
             </thead>
             <tbody>
-              <tr class="row-hi"><td><code>weight_kg</code></td><td>10 kg</td><td class="num">0.61</td><td class="num">0.41 – 1.05</td><td><span class="pill no">ns</span></td><td class="num">+0.098</td><td class="num">0.5%</td></tr>
-              <tr class="row-hi"><td><code>age</code></td><td>5 years</td><td class="num">1.30</td><td class="num">1.10 – 1.54</td><td><span class="pill stop">risk</span></td><td class="num">+0.024</td><td class="num">0.0%</td></tr>
-              <tr class="row-hi"><td><code>postmenopausal</code></td><td>yes vs no</td><td class="num">2.13</td><td class="num">1.42 – 3.36</td><td><span class="pill stop">risk</span></td><td class="num">+0.007</td><td class="num">2.8%</td></tr>
-              <tr class="row-hi"><td><code>any_prior_fracture</code></td><td>yes vs no</td><td class="num">1.72</td><td class="num">1.27 – 2.56</td><td><span class="pill stop">risk</span></td><td class="num">+0.006</td><td class="num">0.0%</td></tr>
-              <tr class="row-hi"><td><code>ever_used_estrogen</code></td><td>yes vs no</td><td class="num">0.58</td><td class="num">0.43 – 0.75</td><td><span class="pill yes">protective</span></td><td class="num">+0.007</td><td class="num">2.9%</td></tr>
-              <tr class="row-hi"><td><code>poverty_income_ratio</code></td><td>1 unit</td><td class="num">0.91</td><td class="num">0.83 – 0.99</td><td><span class="pill yes">protective</span></td><td class="num">+0.022</td><td class="num">5.5%</td></tr>
-              <tr><td><code>bmi</code></td><td>5 kg/m²</td><td class="num">0.89</td><td class="num">0.43 – 1.42</td><td><span class="pill no">ns</span></td><td class="num">+0.047</td><td class="num">0.1%</td></tr>
-              <tr><td><code>height_cm</code></td><td>5 cm</td><td class="num">0.89</td><td class="num">0.69 – 1.08</td><td><span class="pill no">ns</span></td><td class="num">+0.025</td><td class="num">0.1%</td></tr>
-              <tr><td><code>years_since_menopause</code></td><td>5 years</td><td class="num">1.09</td><td class="num">0.98 – 1.19</td><td><span class="pill no">ns</span></td><td class="num">+0.016</td><td class="num">15.8%</td></tr>
-              <tr><td><code>oophorectomy</code></td><td>yes vs no</td><td class="num">1.30</td><td class="num">0.83 – 2.06</td><td><span class="pill no">ns</span></td><td class="num">+0.002</td><td class="num">17.0%</td></tr>
-              <tr><td><code>menopause_natural</code></td><td>yes vs no</td><td class="num">1.25</td><td class="num">0.89 – 1.78</td><td><span class="pill no">ns</span></td><td class="num">−0.003</td><td class="num">33.6%</td></tr>
-              <tr><td><code>steroid_use</code></td><td>yes vs no</td><td class="num">1.20</td><td class="num">0.83 – 1.83</td><td><span class="pill no">ns</span></td><td class="num">+0.001</td><td class="num">0.4%</td></tr>
-              <tr><td><code>any_arthritis</code></td><td>yes vs no</td><td class="num">1.10</td><td class="num">0.86 – 1.41</td><td><span class="pill no">ns</span></td><td class="num">+0.002</td><td class="num">0.3%</td></tr>
-              <tr><td><code>vigorous_activity</code></td><td>yes vs no</td><td class="num">1.08</td><td class="num">0.72 – 1.53</td><td><span class="pill no">ns</span></td><td class="num">+0.000</td><td class="num">13.9%</td></tr>
-              <tr><td><code>ever_smoked</code></td><td>yes vs no</td><td class="num">1.03</td><td class="num">0.82 – 1.35</td><td><span class="pill no">ns</span></td><td class="num">+0.004</td><td class="num">0.0%</td></tr>
-              <tr><td><code>total_vitd_mcg</code></td><td>10 mcg</td><td class="num">1.01</td><td class="num">0.99 – 1.08</td><td><span class="pill hold">sign flag</span></td><td class="num">+0.011</td><td class="num">15.5%</td></tr>
-              <tr><td><code>total_calcium_mg</code></td><td>500 mg</td><td class="num">1.01</td><td class="num">0.90 – 1.11</td><td><span class="pill no">ns</span></td><td class="num">+0.009</td><td class="num">15.4%</td></tr>
-              <tr><td><code>phq9_score</code></td><td>5 points</td><td class="num">1.00</td><td class="num">0.77 – 1.40</td><td><span class="pill no">ns</span></td><td class="num">−0.002</td><td class="num">80.4%</td></tr>
-              <tr><td><code>supp_data_available</code></td><td>yes vs no</td><td class="num">1.00</td><td class="num">0.70 – 1.47</td><td><span class="pill no">ns</span></td><td class="num">+0.001</td><td class="num">0.0%</td></tr>
-              <tr><td><code>hysterectomy</code></td><td>yes vs no</td><td class="num">0.96</td><td class="num">0.68 – 1.42</td><td><span class="pill no">ns</span></td><td class="num">+0.003</td><td class="num">4.5%</td></tr>
-              <tr><td><code>alcohol_drinks_day</code></td><td>1 drink/day</td><td class="num">0.95</td><td class="num">0.81 – 1.08</td><td><span class="pill no">ns</span></td><td class="num">+0.005</td><td class="num">31.7%</td></tr>
-              <tr><td><code>serum_vitd_nmol</code></td><td>25 nmol/L</td><td class="num">0.94</td><td class="num">0.82 – 1.05</td><td><span class="pill no">ns</span></td><td class="num">−0.003</td><td class="num">23.0%</td></tr>
-              <tr><td><code>diabetes</code></td><td>yes vs no</td><td class="num">0.91</td><td class="num">0.57 – 1.45</td><td><span class="pill no">ns</span></td><td class="num">+0.002</td><td class="num">2.4%</td></tr>
+              <tr class="row-hi"><td><code>weight_kg</code></td><td>10 kg</td><td class="num">0.50</td><td class="num">0.38 – 0.62</td><td><span class="pill yes">protective</span></td><td class="num">+0.2438</td><td class="num">+0.1464</td><td class="num">0.0%</td></tr>
+              <tr class="row-hi"><td><code>ever_used_estrogen</code></td><td>yes vs no</td><td class="num">0.63</td><td class="num">0.45 – 0.83</td><td><span class="pill yes">protective</span></td><td class="num">+0.0069</td><td class="num">+0.0030</td><td class="num">0.2%</td></tr>
+              <tr class="row-hi"><td><code>poverty_income_ratio</code></td><td>1 unit</td><td class="num">0.90</td><td class="num">0.81 – 0.98</td><td><span class="pill yes">protective</span></td><td class="num">+0.0069</td><td class="num">+0.0195</td><td class="num">5.0%</td></tr>
+              <tr class="row-hi"><td><code>age</code></td><td>5 years</td><td class="num">1.24</td><td class="num">1.03 – 1.51</td><td><span class="pill stop">risk</span></td><td class="num">+0.0090</td><td class="num">+0.0113</td><td class="num">0.0%</td></tr>
+              <tr class="row-hi"><td><code>any_prior_fracture</code></td><td>yes vs no</td><td class="num">1.71</td><td class="num">1.15 – 2.73</td><td><span class="pill stop">risk</span></td><td class="num">+0.0063</td><td class="num">+0.0068</td><td class="num">0.0%</td></tr>
+              <tr class="row-hi"><td><code>sedentary_min_day</code></td><td>1 hour/day</td><td class="num">1.06</td><td class="num">1.01 – 1.11</td><td><span class="pill stop">risk</span></td><td class="num">+0.0053</td><td class="num">+0.0016</td><td class="num">15.8%</td></tr>
+              <tr><td><code>steroid_use</code></td><td>yes vs no</td><td class="num">1.50</td><td class="num">1.00 – 2.45</td><td><span class="pill no">ns</span></td><td class="num">+0.0041</td><td class="num">+0.0013</td><td class="num">0.5%</td></tr>
+              <tr><td><code>family_hx_osteoporosis</code></td><td>yes vs no</td><td class="num">1.16</td><td class="num">0.85 – 1.64</td><td><span class="pill no">ns</span></td><td class="num">+0.0012</td><td class="num">+0.0035</td><td class="num">4.7%</td></tr>
+              <tr><td><code>parental_hip_fracture</code></td><td>yes vs no</td><td class="num">1.17</td><td class="num">0.78 – 1.77</td><td><span class="pill no">ns</span></td><td class="num">+0.0004</td><td class="num">+0.0009</td><td class="num">4.4%</td></tr>
+              <tr><td><code>bmi</code></td><td>5 kg/m²</td><td class="num">1.14</td><td class="num">0.81 – 1.58</td><td><span class="pill hold">sign flag</span></td><td class="num">+0.0003</td><td class="num">+0.0279</td><td class="num">0.1%</td></tr>
+              <tr><td><code>vigorous_activity</code></td><td>yes vs no</td><td class="num">1.11</td><td class="num">0.72 – 1.79</td><td><span class="pill no">ns</span></td><td class="num">−0.0010</td><td class="num">−0.0001</td><td class="num">15.6%</td></tr>
+              <tr><td><code>years_since_menopause</code></td><td>5 years</td><td class="num">1.10</td><td class="num">0.98 – 1.23</td><td><span class="pill no">ns</span></td><td class="num">+0.0063</td><td class="num">+0.0049</td><td class="num">2.0%</td></tr>
+              <tr><td><code>phq9_score</code></td><td>5 points</td><td class="num">1.08</td><td class="num">0.91 – 1.28</td><td><span class="pill no">ns</span></td><td class="num">+0.0013</td><td class="num">−0.0001</td><td class="num">0.1%</td></tr>
+              <tr><td><code>ever_smoked</code></td><td>yes vs no</td><td class="num">1.08</td><td class="num">0.82 – 1.37</td><td><span class="pill no">ns</span></td><td class="num">−0.0013</td><td class="num">−0.0000</td><td class="num">0.0%</td></tr>
+              <tr><td><code>alcohol_drinks_day</code></td><td>1 drink/day</td><td class="num">0.99</td><td class="num">0.86 – 1.11</td><td><span class="pill no">ns</span></td><td class="num">−0.0000</td><td class="num">+0.0086</td><td class="num">13.6%</td></tr>
+              <tr><td><code>meno_hysterectomy_ovaries_kept</code></td><td>vs natural</td><td class="num">0.93</td><td class="num">0.59 – 1.51</td><td><span class="pill no">ns</span></td><td class="num">+0.0006</td><td class="num">−0.0004</td><td class="num">0.0%</td></tr>
+              <tr><td><code>sleep_hrs</code></td><td>1 hour</td><td class="num">0.92</td><td class="num">0.83 – 1.02</td><td><span class="pill no">ns</span></td><td class="num">+0.0031</td><td class="num">+0.0023</td><td class="num">0.4%</td></tr>
+              <tr><td><code>meno_surgical_oophorectomy</code></td><td>vs natural</td><td class="num">0.89</td><td class="num">0.54 – 1.36</td><td><span class="pill no">ns</span></td><td class="num">−0.0008</td><td class="num">−0.0013</td><td class="num">0.0%</td></tr>
+              <tr><td><code>diabetes</code></td><td>yes vs no</td><td class="num">0.88</td><td class="num">0.53 – 1.46</td><td><span class="pill no">ns</span></td><td class="num">+0.0005</td><td class="num">−0.0005</td><td class="num">0.0%</td></tr>
+              <tr><td><code>meno_unknown</code></td><td>vs natural</td><td class="num">0.68</td><td class="num">0.40 – 1.11</td><td><span class="pill no">ns</span></td><td class="num">+0.0009</td><td class="num">+0.0009</td><td class="num">0.0%</td></tr>
             </tbody>
           </table>
         </div>
-        <caption>Highlighted rows are the six predictors that either reach statistical significance or carry
-          the largest share of predictive accuracy. "ns" means the confidence interval includes an odds ratio
-          of 1 and the point estimate should not be interpreted.</caption>
+        <caption>All 20 model columns, sorted by |ΔAUC| in the logistic model. Highlighted rows are the six
+          whose interval excludes an odds ratio of 1. "ns" means the interval includes 1 and the point
+          estimate should not be interpreted. Three <code>meno_*</code> rows are one clinical variable
+          against a reference level of natural menopause.</caption>
       </div>
 
-      <h3>Five of 23 predictors have a confidence interval that excludes 1</h3>
-      <p>Older age (OR 1.30 per 5 years), being postmenopausal (2.13), any prior fracture (1.72), ever having
-        used oestrogen (0.58, protective) and higher income relative to the poverty line (0.91 per unit,
-        protective). Everything else is statistically indistinguishable from no effect at this sample size.
-        That is not a disappointing result — it is an accurate one, and stating it plainly is more useful to a
-        clinician than a ranked list of 23 apparent effects.</p>
+      <p><strong>The six that clear the interval:</strong> lower weight (OR 0.50 per 10 kg — the largest
+        effect in the table by a wide margin), ever having used oestrogen (0.63, protective), higher income
+        relative to the poverty line (0.90 per unit, protective), older age (1.24 per 5 years), any prior
+        fracture (1.71) and more sedentary time (1.06 per hour per day). <code>steroid_use</code> sits
+        exactly on the boundary at 1.50 (1.00 – 2.45) and is reported as non-significant rather than rounded
+        into significance.</p>
+
+      <p>Everything else is statistically indistinguishable from no effect at this sample size. That is not a
+        disappointing result — it is an accurate one, and stating it plainly is more useful to a clinician
+        than a ranked list of twenty apparent effects. Note also what has <em>changed</em> from the previous
+        version of this document: <code>postmenopausal</code> was previously reported as the second-strongest
+        predictor at OR 2.13, and it is simply gone — it became a cohort filter, so within this cohort it is
+        constant and can carry no signal. A predictor that strong disappearing on a definition change is
+        itself worth understanding: it was largely encoding "is this woman older", which age already carries.</p>
+
+      <h3>2 · Single-variable ablation: remove it and refit everything</h3>
+
+      <p>Permutation importance asks what the fitted model leaned on. Ablation asks a harder question — drop
+        the variable, refit all eight models from scratch, and see whether the <em>best achievable</em> model
+        is any worse. With a paired bootstrap CI and a Holm correction across the eighteen tests.</p>
+
+      <div class="bleed">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th class="num">#</th><th>Variable dropped</th><th class="num">ΔAUC</th><th class="num">95% CI</th><th class="num">p (1-sided)</th><th class="num">p (Holm)</th></tr></thead>
+            <tbody>
+              <tr class="row-hi"><td class="num">1</td><td><code>weight_kg</code></td><td class="num"><strong>+0.0203</strong></td><td class="num">[+0.009, +0.032]</td><td class="num">&lt;0.001</td><td class="num"><strong>&lt;0.001</strong></td></tr>
+              <tr><td class="num">2</td><td><code>poverty_income_ratio</code></td><td class="num">+0.0019</td><td class="num">[−0.002, +0.006]</td><td class="num">0.21</td><td class="num">1.00</td></tr>
+              <tr><td class="num">3</td><td><code>ever_used_estrogen</code></td><td class="num">+0.0033</td><td class="num">[−0.002, +0.008]</td><td class="num">0.11</td><td class="num">1.00</td></tr>
+              <tr><td class="num">4</td><td><code>sedentary_min_day</code></td><td class="num">+0.0032</td><td class="num">[−0.002, +0.008]</td><td class="num">0.10</td><td class="num">1.00</td></tr>
+              <tr><td class="num">9</td><td><code>bmi</code></td><td class="num">−0.0002</td><td class="num">[−0.001, +0.001]</td><td class="num">0.64</td><td class="num">1.00</td></tr>
+              <tr><td class="num">10</td><td><code>age</code></td><td class="num">+0.0018</td><td class="num">[−0.003, +0.007]</td><td class="num">0.21</td><td class="num">1.00</td></tr>
+              <tr><td class="num">13</td><td><code>menopause_type</code> <span style="color:var(--ink-3)">(3 cols)</span></td><td class="num">−0.0000</td><td class="num">[−0.003, +0.003]</td><td class="num">0.53</td><td class="num">1.00</td></tr>
+              <tr><td class="num">18</td><td><code>ever_smoked</code></td><td class="num">−0.0013</td><td class="num">[−0.004, +0.001]</td><td class="num">0.84</td><td class="num">1.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <caption>Selected rows from all eighteen; full grid in <code>model_variable_ablation_osteopenia.csv</code>.
+          A positive Δ means the full panel is better. Negative values are noise — dropping the variable
+          happened to help by less than the fold-to-fold error.</caption>
+      </div>
+
+      <p><strong>One variable out of eighteen survives multiple-comparison correction, and it is weight.</strong>
+        Every other single variable can be deleted from the panel without any measurable loss. That includes
+        <code>age</code>, <code>bmi</code> and the entire <code>menopause_type</code> categorical.</p>
+
+      <h3>3 · Block ablation: the table that resolves the disagreement</h3>
+
+      <p>Single-variable ablation has an obvious hole. Drop <code>bmi</code> and the model reads
+        <code>weight_kg</code> instead; drop <code>weight_kg</code> and it reads <code>bmi</code>. Each looks
+        disposable alone while the pair is indispensable. The block ablation drops whole clinical groups at
+        once, which is the only way to see that.</p>
+
+      <div class="bleed">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>What is removed</th><th class="num">Vars left</th><th class="num">AUC</th><th class="num">Δ vs full panel</th><th class="num">95% CI</th><th>Verdict</th></tr></thead>
+            <tbody>
+              <tr class="row-hi"><td><strong>body size</strong> — <code>bmi</code> + <code>weight_kg</code></td><td class="num">16</td><td class="num"><strong>0.606</strong></td><td class="num"><strong>+0.150</strong></td><td class="num">[+0.114, +0.184]</td><td><span class="pill stop">panel wins</span></td></tr>
+              <tr><td>all menopause / hormone variables</td><td class="num">15</td><td class="num">0.753</td><td class="num">+0.004</td><td class="num">[−0.003, +0.011]</td><td><span class="pill no">no difference</span></td></tr>
+              <tr><td>all lifestyle variables</td><td class="num">14</td><td class="num">0.756</td><td class="num">+0.001</td><td class="num">[−0.005, +0.007]</td><td><span class="pill no">no difference</span></td></tr>
+              <tr><td>all history / family variables</td><td class="num">14</td><td class="num">0.753</td><td class="num">+0.003</td><td class="num">[−0.004, +0.010]</td><td><span class="pill no">no difference</span></td></tr>
+              <tr><td><em>keep only</em> <code>age</code> + <code>weight_kg</code> — OST's two inputs</td><td class="num">2</td><td class="num">0.739</td><td class="num">+0.018</td><td class="num">[+0.001, +0.035]</td><td><span class="pill hold">panel wins slightly</span></td></tr>
+              <tr><td><em>keep only</em> <code>age</code> + <code>bmi</code></td><td class="num">2</td><td class="num">0.718</td><td class="num">+0.039</td><td class="num">[+0.018, +0.060]</td><td><span class="pill hold">panel wins</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <caption>Full panel AUC 0.757 (Ridge → T-score, the primary model chosen per fold). Paired stratified
+          bootstrap, 500 resamples. From <code>model_block_ablation_osteopenia.csv</code>.</caption>
+      </div>
+
+      <div class="note risk">
+        <span class="note-label">If you take one thing from this document, take this</span>
+        <p><strong>Body size is very nearly the only thing the model knows.</strong> Remove
+          <code>weight_kg</code> and <code>bmi</code> and performance falls from 0.757 to <strong>0.606</strong>
+          — a 0.150 collapse, with an interval nowhere near zero. Remove the menopause block, the lifestyle
+          block or the history block <em>in its entirety</em> and the model loses 0.004, 0.001 and 0.003
+          respectively — all three intervals straddle zero. Sixteen of the eighteen variables, taken
+          together, are worth less than the measurement error.</p>
+        <p>And the bottom two rows close the argument. <code>age</code> + <code>weight_kg</code> alone scores
+          <strong>0.739</strong> — which is OST's own AUC on this cohort, to three decimals, because those
+          are OST's two inputs. Everything the eighteen-variable panel adds on top of a scale and a date of
+          birth is +0.018 AUC, and once model selection is moved inside the cross-validation folds even that
+          margin loses its significance. <em>That is the whole reason the headline claim does not
+          survive.</em></p>
+      </div>
+
+      <h3>Why the three methods disagreed about BMI, and which one was right</h3>
+
+      <p><code>bmi</code> is the cleanest illustration in the dataset of why one importance measure is never
+        enough:</p>
+
+      <ul>
+        <li><strong>Odds ratio:</strong> 1.14 (0.81 – 1.58), non-significant — and pointing the
+          <em>wrong way</em>, which trips the sign alarm.</li>
+        <li><strong>Permutation importance:</strong> +0.0279 in the forest — second highest of all twenty
+          columns.</li>
+        <li><strong>Single-variable ablation:</strong> −0.0002. Ranked 9th of 18. Indistinguishable from
+          deleting nothing.</li>
+        <li><strong>Block ablation, paired with weight:</strong> +0.150. The largest effect measured anywhere
+          in this project.</li>
+      </ul>
+
+      <p>All four are correct, and together they say one thing: <strong>BMI and weight are pure substitutes
+        here</strong>, correlated at |r| = 0.94 on this cohort. The fitted forest leans on BMI (hence the
+        permutation number), but nothing is lost by taking it away because weight carries the same
+        information (hence the ablation zero), and the odds ratio is unstable for exactly that reason — weight
+        has absorbed the protective effect and BMI is left fitting a residual, which is why its sign inverts.
+        The pair is what matters, which only the block test can see.</p>
 
       <div class="note">
-        <span class="note-label">The most instructive row in the table</span>
-        <p><code>weight_kg</code> is <em>by far</em> the most predictive single variable — shuffling it costs
-          0.145 AUC in the logistic model and 0.098 in the forest, five to ten times more than anything else
-          — and yet its odds ratio is reported as non-significant (0.41 – 1.05).</p>
-        <p>Both statements are true. Weight, BMI and height are three measurements of largely the same
-          physical fact, so the model can shift credit between them almost freely; the confidence interval on
-          any one of them is consequently wide. But collectively they carry the signal, and shuffling weight
-          alone breaks the whole arrangement. <strong>The lesson: a wide interval means "we cannot separate
-          this from its neighbours", not "this does not matter."</strong> That distinction is exactly why the
-          script reports both columns instead of picking one.</p>
+        <span class="note-label">What to say when asked "which variables are important?"</span>
+        <p>Quote the <strong>block ablation</strong>. It is the only one of the three that answers the
+          question a clinician is actually asking — "what do I need to collect?" — rather than "what did
+          this particular fitted model happen to lean on?". The answer is: a scale, and the patient's age.
+          The other sixteen variables are, on this cohort and at this sample size, not measurably worth
+          collecting.</p>
       </div>
 
-      <p>The clinical picture is otherwise entirely conventional — lighter, older, longer-postmenopausal women
-        with a fracture history and no oestrogen exposure are at higher risk. Nothing here contradicts the
-        osteoporosis literature, which is itself a form of validation: a pipeline this complicated
-        rediscovering the textbook is evidence it is wired up correctly.</p>
+      <p>The clinical picture is otherwise entirely conventional — lighter, older women with a fracture
+        history, more sedentary time and no oestrogen exposure are at higher risk. Nothing here contradicts
+        the osteoporosis literature, which is itself a form of validation: a pipeline this complicated
+        rediscovering the textbook is evidence it is wired up correctly. What it does contradict is the idea
+        that the textbook needed a machine-learning pipeline to find.</p>
     </section>
 
     <!-- ============================================================ -->
@@ -1254,8 +1522,9 @@
         <h2>The honesty checks</h2>
       </div>
 
-      <p>An AUC of 0.810 sounds respectable. Two questions decide whether it means anything, and roughly half
-        the script's length exists to answer them.</p>
+      <p>An AUC of 0.755 sounds respectable. Three questions decide whether it means anything, and roughly
+        half the script's length exists to answer them. On the corrected cohort, all three answers come back
+        against the project's original claim.</p>
 
       <h3>Question one: is it better than a two-variable formula from 2001?</h3>
 
@@ -1270,8 +1539,9 @@
         reports every model's AUC <em>relative to OST</em> with a paired bootstrap confidence interval on the
         difference.</p>
 
-      <p>Reporting a bare AUC without that comparison would be uninterpretable. A model that scores 0.81
-        while OST scores 0.80 has added a great deal of complexity for nothing.</p>
+      <p>Reporting a bare AUC without that comparison would be uninterpretable. A model that scores 0.755
+        while OST scores 0.739 has added a great deal of complexity for very little — which, as it turns
+        out, is precisely the situation.</p>
 
       <h3>Question two: does picking the winner inflate the winner's score?</h3>
 
@@ -1314,7 +1584,7 @@
           <text class="svg-t-alarm" x="352" y="157" text-anchor="middle">— the test rows helped choose the winner</text>
 
           <rect x="710" y="42" width="176" height="44" rx="2" fill="var(--alarm-soft)" stroke="var(--alarm)" stroke-width="1.4"></rect>
-          <text class="svg-t" x="798" y="61" text-anchor="middle">best AUC 0.810</text>
+          <text class="svg-t" x="798" y="61" text-anchor="middle">best AUC 0.755</text>
           <text class="svg-t-sm" x="798" y="78" text-anchor="middle">an upper bound</text>
 
           <!-- divider -->
@@ -1360,71 +1630,167 @@
         95% confidence interval on the difference excludes zero. Its own closing words:
         <em>"the nested row is the defensible number."</em></p>
 
-      <h3>The answers, and they differ by target</h3>
+      <h3>Question three: were these the same women twice?</h3>
 
-      <p>This is the single most important result in the project, and it is not the same story at both
-        clinical thresholds.</p>
+      <p>This question was not asked in the original project, and it is the one that mattered most. It is
+        <a href="#guards">guard 1</a> in full: NHANES re-numbered every SEQN when it built the pre-pandemic
+        file, so loading both the 2017–2018 cycle and the pooled 2017–2020 release put 176 women in the
+        cohort twice under IDs no deduplication could match. Cross-validation splits rows, not people, so
+        those women trained and tested the same model simultaneously.</p>
+
+      <p>The rewrite now measures the cost rather than asserting it. <code>auc_decomposition.csv</code> reruns
+        the entire pipeline at four cohort definitions, changing one thing at a time:</p>
+
+      <div class="bleed">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Stage</th><th class="num">n</th><th class="num">Events</th><th class="num">Best AUC</th><th class="num">OST</th><th class="num">Δ vs OST</th></tr></thead>
+            <tbody>
+              <tr><td><strong>A.</strong> 6 cycles, all DXA <span style="color:var(--ink-3)">(as published)</span></td><td class="num">1,484</td><td class="num">836</td><td class="num">0.840</td><td class="num">0.747</td><td class="num">+0.093 <span style="font-size:12px">[+0.075, +0.113]</span></td></tr>
+              <tr><td><strong>B.</strong> 6 cycles, postmenopausal only</td><td class="num">1,272</td><td class="num">751</td><td class="num">0.837</td><td class="num">0.733</td><td class="num">+0.104 <span style="font-size:12px">[+0.081, +0.126]</span></td></tr>
+              <tr><td><strong>C.</strong> 5 cycles, all DXA <span style="color:var(--ink-3)">(duplicates removed)</span></td><td class="num">1,308</td><td class="num">724</td><td class="num">0.766</td><td class="num">0.753</td><td class="num">+0.013 <span style="font-size:12px">[−0.001, +0.026]</span></td></tr>
+              <tr class="row-hi"><td><strong>D.</strong> 5 cycles, postmenopausal <span style="color:var(--ink-3)">(shipped)</span></td><td class="num">1,111</td><td class="num">645</td><td class="num">0.757</td><td class="num">0.739</td><td class="num">+0.018 <span style="font-size:12px">[+0.001, +0.034]</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <caption>All four stages run the <em>rebuilt</em> feature panel, so the only thing changing down the
+          column is the cohort. Stage A therefore scores 0.840 rather than the published 0.810 — the rebuilt
+          panel is slightly better on the duplicated cohort too, which is why A-vs-C is the valid subtraction
+          and A-vs-published is not.</caption>
+      </div>
+
+      <p><strong>The arithmetic is unambiguous.</strong> The duplicate fix alone (A → C) costs
+        <strong>−0.074</strong>. The menopause gate alone (A → B) costs <strong>−0.003</strong>. Both
+        together (A → D) cost <strong>−0.083</strong>. Ninety per cent of the collapse is the bug.</p>
+
+      <div class="note caution">
+        <span class="note-label">A correction to an earlier explanation</span>
+        <p>An earlier draft of this document attributed part of the AUC drop to the deliberate narrowing to
+          postmenopausal women — the reasoning being that removing younger, denser, still-cycling women takes
+          away easy negatives and leaves a harder cohort. That reasoning is sound and the effect is real, but
+          the decomposition shows it is worth only 0.003 AUC. It is not an explanation for what happened
+          here. The claim died at stage C, <em>before</em> the menopause gate was applied at all.</p>
+      </div>
+
+      <h3>The answers, and they are the same at both targets now</h3>
+
+      <p>This is the single most important result in the project. The previous version of this document
+        reported it as a split verdict — osteopenia clearly beaten, osteoporosis not separable. On the
+        corrected cohort both rows say the same thing, and the script tests each target against
+        <em>two</em> comparators rather than one.</p>
 
       <div class="bleed">
         <div class="tbl-wrap">
           <table>
             <thead>
-              <tr><th>Target</th><th class="num">OST AUC</th><th class="num">Best model AUC</th><th class="num">Nested AUC</th><th class="num">Nested Δ vs OST</th><th>Verdict</th></tr>
+              <tr><th>Target</th><th>Comparator</th><th class="num">Comp. AUC</th><th class="num">Leaderboard</th><th class="num">Nested</th><th class="num">Nested Δ</th><th class="num">p</th><th>Verdict</th></tr>
             </thead>
             <tbody>
               <tr class="row-hi">
-                <td><strong>Osteopenia or worse</strong><br><span style="color:var(--ink-3);font-size:13px">T ≤ −1.0 · 836 events · 36.3 per predictor</span></td>
-                <td class="num">0.747</td>
-                <td class="num">0.810</td>
-                <td class="num"><strong>0.810</strong></td>
-                <td class="num">+0.063<br><span style="font-size:12px">[+0.046, +0.082]</span></td>
-                <td><span class="pill yes">Beats OST</span><br><span style="color:var(--ink-3);font-size:12.5px">CI excludes zero; positive in all 5 folds</span></td>
+                <td rowspan="2"><strong>Osteopenia or worse</strong><br><span style="color:var(--ink-3);font-size:13px">T ≤ −1.0 · 645 events<br>32.3 per predictor</span></td>
+                <td>OST</td>
+                <td class="num">0.739</td>
+                <td class="num">0.755</td>
+                <td class="num"><strong>0.751</strong></td>
+                <td class="num">+0.012<br><span style="font-size:12px">[−0.005, +0.030]</span></td>
+                <td class="num">0.074</td>
+                <td><span class="pill stop">Not separable</span></td>
+              </tr>
+              <tr class="row-hi">
+                <td>Weight alone</td>
+                <td class="num">0.737</td>
+                <td class="num">0.755</td>
+                <td class="num"><strong>0.751</strong></td>
+                <td class="num">+0.014<br><span style="font-size:12px">[−0.003, +0.032]</span></td>
+                <td class="num">0.055</td>
+                <td><span class="pill stop">Not separable</span></td>
               </tr>
               <tr>
-                <td><strong>Osteoporosis</strong><br><span style="color:var(--ink-3);font-size:13px">T ≤ −2.5 · 94 events · 4.1 per predictor</span></td>
-                <td class="num">0.773</td>
-                <td class="num">0.833</td>
-                <td class="num">0.806</td>
-                <td class="num">+0.031<br><span style="font-size:12px">[−0.013, +0.077]</span></td>
-                <td><span class="pill stop">Not separable</span><br><span style="color:var(--ink-3);font-size:12.5px">CI includes zero; one fold negative</span></td>
+                <td rowspan="2"><strong>Osteoporosis</strong><br><span style="color:var(--ink-3);font-size:13px">T ≤ −2.5 · 76 events<br>3.8 per predictor — <strong>underpowered</strong></span></td>
+                <td>OST</td>
+                <td class="num">0.780</td>
+                <td class="num">0.782</td>
+                <td class="num">0.790</td>
+                <td class="num">+0.010<br><span style="font-size:12px">[−0.015, +0.035]</span></td>
+                <td class="num">0.21</td>
+                <td><span class="pill stop">Not separable</span></td>
+              </tr>
+              <tr>
+                <td>Weight alone</td>
+                <td class="num">0.766</td>
+                <td class="num">0.782</td>
+                <td class="num">0.790</td>
+                <td class="num">+0.024<br><span style="font-size:12px">[−0.002, +0.052]</span></td>
+                <td class="num">0.037</td>
+                <td><span class="pill stop">Not separable</span></td>
               </tr>
             </tbody>
           </table>
         </div>
-        <caption>The random forest was the model chosen by inner CV in 5 of 5 folds for osteopenia and 4 of 5
-          for osteoporosis (a Ridge T-score regressor won the fifth).</caption>
+        <caption>From <code>nested_cv_verdict.csv</code> — open this file first. p is one-sided from a paired
+          stratified bootstrap; the verdict follows the 95% interval, so a p above 0.025 necessarily has an
+          interval touching zero. Inner CV chose a T-score regressor or a forest depending on the fold:
+          for osteopenia the five outer folds picked RF→T, forest, Ridge→T, forest, Ridge→T.</caption>
       </div>
 
-      <p>Read the two rows side by side and the whole point of the exercise becomes visible:</p>
+      <p>Read the four rows together and the whole point of the exercise becomes visible:</p>
 
       <ul>
-        <li><strong>For osteopenia-or-worse, the machine learning genuinely earns its keep.</strong> The
-          nested estimate is identical to the optimistic one (0.810 both ways), the gain over OST is +0.063,
-          and the per-fold differences are positive in every single fold: +0.070, +0.063, +0.052, +0.055,
-          +0.074. There is no selection bias to strip out because the same model won everywhere — the
-          leaderboard was not flattering itself. This is a solid, reproducible result.</li>
-        <li><strong>For osteoporosis, the apparent gain largely evaporates.</strong> The leaderboard says
-          0.833; nested cross-validation says 0.806. That 0.027 drop <em>is</em> the selection bias, caught
-          in the act. The remaining +0.031 advantage over OST has a confidence interval spanning zero
-          ([−0.013, +0.077]) and one of the five folds came out negative. With 94 events, the correct
-          statement is that we cannot show the model beats a two-variable formula from 2001.</li>
+        <li><strong>Neither target is separable from OST.</strong> The osteopenia interval is
+          [−0.005, +0.030] and the osteoporosis interval is [−0.015, +0.035]. Both include zero. The
+          correct statement for both is that we cannot show an eighteen-variable model beats
+          <code>0.2 × (weight − age)</code>.</li>
+        <li><strong>Nor from weight on its own.</strong> This is the harsher of the two comparisons and it is
+          why the script computes it. Age adds so little that dropping it from the comparator barely changes
+          the gap: +0.014 [−0.003, +0.032] at the osteopenia threshold. The panel is not beating a formula;
+          it is not reliably beating a bathroom scale.</li>
+        <li><strong>Selection bias was small this time, and in one case negative.</strong> Optimism is +0.003
+          for osteopenia and −0.008 for osteoporosis — the nested estimate came out <em>higher</em> than the
+          leaderboard for the rarer target, which happens when different folds genuinely prefer different
+          models and pooling their out-of-fold ranks beats any single fixed choice. In the previous run this
+          gap was the story (0.833 collapsing to 0.806). Here the cohort defect had already removed the
+          performance that selection bias was inflating.</li>
+        <li><strong>The osteoporosis row should not be quoted at all.</strong> 76 events against 20 columns
+          is 3.8 events per predictor, against a conventional floor of 10. The power gate labels it
+          UNDERPOWERED before the model runs. Its nested AUC of 0.790 is a number with an interval wide
+          enough to contain almost any conclusion, and the honest reading is "we do not have the cases to
+          answer this", not "0.790".</li>
       </ul>
 
+      <div class="note risk">
+        <span class="note-label">What was previously claimed, and what replaces it</span>
+        <p>The published result was <strong>nested AUC 0.810 against OST 0.747, Δ +0.063 [+0.046, +0.082],
+          "beats OST"</strong>, with per-fold differences positive in all five folds. That result does not
+          survive. It is replaced by <strong>0.751 against 0.739, Δ +0.012 [−0.005, +0.030], not
+          separable</strong>. The figures 0.810, 0.833 and 0.806 should not be quoted from this project in
+          any context except this one — an explanation of what went wrong.</p>
+        <p>The second published claim, that machine learning "earns its keep" for osteopenia because the
+          nested and leaderboard numbers agreed, was also an artifact. They agreed because the random forest
+          won in all five folds, and it won in all five folds because duplicated rows reward memorisation.
+          With the duplicates gone, the forest ties with logistic regression and the folds disagree about
+          which model to use.</p>
+      </div>
+
       <div class="note good">
-        <span class="note-label">Why this is a good result to present, not a bad one</span>
-        <p>A project that reported "AUC 0.833 for osteoporosis detection" would be reporting a number its own
-          data does not support. This one built the machinery to catch that, ran it, and printed the
-          uncomfortable verdict itself. Bringing a specialist a result that says <em>"this half works, this
-          half we cannot yet claim"</em> is far more credible than two impressive numbers — and it points
-          straight at what the next round of work needs: more osteoporosis cases.</p>
+        <span class="note-label">Why this is still a good result to present, and a better one than before</span>
+        <p>A project that reported "AUC 0.810, beats OST" would be reporting a number produced by a data
+          defect. This one built the machinery to catch that — a fingerprint audit, a decomposition harness,
+          a power gate, two comparators instead of one — ran it, and printed the uncomfortable verdict
+          itself. Bringing a specialist a null result <em>with the mechanism of the earlier false positive
+          fully traced and quantified</em> is a stronger piece of work than the impressive number was. It
+          also points straight at what the next round needs, which is not a better model: it is either more
+          cases, or a variable that is not another measurement of body size.</p>
       </div>
 
       <div class="note">
         <span class="note-label">A neat side result on regularisation</span>
-        <p>The leaf-size sweep confirms the counterintuitive claim in the code comments. For osteopenia,
-          per-fold AUC falls monotonically as leaves get larger: 0.810 at leaf = 1, then 0.798, 0.784, 0.775,
-          0.770, 0.762 at leaf = 50. Every attempt to "fix" the forest's perfect training score by
-          constraining it makes real performance worse. The gap is the price of the performance.</p>
+        <p>The leaf-size sweep still points the counterintuitive way, but it no longer points very hard.
+          Per-fold AUC across the grid: 0.753, 0.754, 0.751, 0.749, 0.747, 0.744 at leaves 1, 2, 5, 10, 20,
+          50. Constraining the forest to "fix" its perfect training score does make real performance worse,
+          as the code comments claim — but the whole range spans 0.010 against a fold-to-fold SD of 0.021,
+          so on the corrected cohort the honest summary is that this hyperparameter does not matter. The old
+          run's much steeper slope (0.810 down to 0.762) was another duplicate artifact: deep trees look
+          dramatically better when memorisation pays.</p>
       </div>
 
       <div class="note caution">
@@ -1445,22 +1811,25 @@
         <h2>Scans per case found</h2>
       </div>
 
-      <p>AUC is not a clinical unit. No one orders 0.81 of a scan. The last part of the script translates the
+      <p>AUC is not a clinical unit. No one orders 0.75 of a scan. The last part of the script translates the
         model into the decision a clinician actually makes, in two complementary ways.</p>
 
       <h3><code>referral_table</code> — the screening cost table</h3>
       <p>For each cutoff it reports: how many DXA scans get ordered, how many cases that finds, how many are
         missed, the positive predictive value, and <strong>scans ordered per case found</strong>. The last
         row is always "scan all" — 100% sensitivity at maximum cost — so the trade-off is visible against
-        the alternative of not triaging at all.</p>
+        the alternative of not triaging at all. The rewrite changed what score this table ranks on: it is now
+        the <strong>nested-CV out-of-fold rank</strong>, not the leaderboard winner's score. That matters,
+        because the leaderboard winner is chosen partly by luck on the rows it is then graded on, and a
+        screening table built on it inherits that optimism.</p>
 
-      <h3><code>optimize_for_early_detection</code> — the sensitivity-first sweep</h3>
+      <h3><code>threshold_sweep</code> — the sensitivity-first sweep</h3>
       <p>A separate, deliberately different forest: shallower (<code>max_depth=6</code>), larger leaves
         (<code>min_samples_leaf=15</code>), and weighted 3:1 in favour of catching cases. It is wrapped in
         <code>CalibratedClassifierCV</code> with sigmoid calibration, which matters: an uncalibrated forest's
         "0.30" is not a real 30% probability, and if you are going to set a clinical threshold at 0.30 then
         the number behind it had better mean something. The sweep then walks the cutoff down from 0.50 to
-        0.25, targeting ≥ 80% sensitivity, and reports missed cases and scans flagged at each step.</p>
+        0.25 and reports missed cases and scans flagged at each step.</p>
 
       <div class="note">
         <span class="note-label">Why lowering the threshold is the whole point</span>
@@ -1474,15 +1843,19 @@
         <span class="note-label">Do not put these two tables on the same slide without this caveat</span>
         <p>They look contradictory and are not. They differ in <strong>two</strong> ways at once:</p>
         <ul>
-          <li><strong>Different models.</strong> The referral table uses the leaderboard-winning forest
-            (unrestricted leaves, AUC 0.810). The sweep uses the separate shallow, calibrated, 3:1-weighted
-            forest — which scores <strong>0.764</strong> ROC-AUC, noticeably worse, because it was built for
-            calibrated probabilities rather than maximum ranking.</li>
-          <li><strong>Different meaning of "cutoff".</strong> The referral table is called with
-            <code>as_quantile=True</code>, so "0.50" means <em>flag the top 50% of scores</em>. In the sweep,
-            "≥ 0.50" means <em>a predicted probability of 0.50</em>. The same printed number denotes two
-            different things.</li>
+          <li><strong>Different models.</strong> The referral table ranks on the nested-CV out-of-fold score,
+            which is a pooled within-fold percentile and not any single model's output. The sweep uses the
+            separate shallow, calibrated, 3:1-weighted forest, which scores <strong>0.753</strong> ROC-AUC —
+            built for calibrated probabilities rather than maximum ranking.</li>
+          <li><strong>Different meaning of "cutoff".</strong> The referral table's "0.50" means
+            <em>flag the top 50% of scores</em>. In the sweep, "≥ 0.50" means <em>a predicted probability of
+            0.50</em>. The same printed number denotes two different things, which is why each file carries
+            its score type in a column on every row.</li>
         </ul>
+        <p>There is no longer an osteoporosis referral table. It was withdrawn deliberately: at 76 events the
+          power gate marks that target underpowered, and a screening-cost table implies a precision the
+          sample cannot support. The previous version of this document presented one and called it "where
+          triage actually pays" — that section is gone.</p>
       </div>
 
       <h3>Screening cost, osteopenia or worse — top-fraction cutoffs</h3>
@@ -1494,85 +1867,79 @@
               <tr><th>Flag the top…</th><th class="num">Sensitivity</th><th class="num">DXAs ordered</th><th class="num">Cases found</th><th class="num">Missed</th><th class="num">PPV</th><th class="num">Scans per case</th></tr>
             </thead>
             <tbody>
-              <tr class="row-hi"><td>50%</td><td class="num">71.1%</td><td class="num">746</td><td class="num">594</td><td class="num">242</td><td class="num">79.6%</td><td class="num">1.26</td></tr>
-              <tr><td>40%</td><td class="num">60.4%</td><td class="num">597</td><td class="num">505</td><td class="num">331</td><td class="num">84.6%</td><td class="num">1.18</td></tr>
-              <tr><td>35%</td><td class="num">54.3%</td><td class="num">520</td><td class="num">454</td><td class="num">382</td><td class="num">87.3%</td><td class="num">1.15</td></tr>
-              <tr><td>30%</td><td class="num">48.0%</td><td class="num">448</td><td class="num">401</td><td class="num">435</td><td class="num">89.5%</td><td class="num">1.12</td></tr>
-              <tr><td>25%</td><td class="num">41.1%</td><td class="num">374</td><td class="num">344</td><td class="num">492</td><td class="num">92.0%</td><td class="num">1.09</td></tr>
-              <tr><td><em>scan everyone</em></td><td class="num">100%</td><td class="num">1,484</td><td class="num">836</td><td class="num">0</td><td class="num">56.3%</td><td class="num">1.78</td></tr>
+              <tr class="row-hi"><td>50%</td><td class="num">66.4%</td><td class="num">561</td><td class="num">428</td><td class="num">217</td><td class="num">76.3%</td><td class="num">1.31</td></tr>
+              <tr><td>40%</td><td class="num">55.5%</td><td class="num">445</td><td class="num">358</td><td class="num">287</td><td class="num">80.4%</td><td class="num">1.24</td></tr>
+              <tr><td>35%</td><td class="num">50.2%</td><td class="num">390</td><td class="num">324</td><td class="num">321</td><td class="num">83.1%</td><td class="num">1.20</td></tr>
+              <tr><td>30%</td><td class="num">44.0%</td><td class="num">335</td><td class="num">284</td><td class="num">361</td><td class="num">84.8%</td><td class="num">1.18</td></tr>
+              <tr><td>25%</td><td class="num">37.1%</td><td class="num">278</td><td class="num">239</td><td class="num">406</td><td class="num">86.0%</td><td class="num">1.16</td></tr>
+              <tr><td><em>scan everyone</em></td><td class="num">100%</td><td class="num">1,111</td><td class="num">645</td><td class="num">0</td><td class="num">58.1%</td><td class="num">1.72</td></tr>
             </tbody>
           </table>
         </div>
-        <caption>Because 56% of this cohort is affected, the efficiency gain is modest by construction — you
-          cannot do much better than 1.78 scans per case when more than half the room is a case. The honest
-          summary is that triaging for osteopenia saves roughly a third of the scanning effort per case found,
-          at the cost of missing 29% of cases.</caption>
-      </div>
-
-      <h3>Screening cost, osteoporosis — where triage actually pays</h3>
-
-      <div class="bleed">
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr><th>Flag the top…</th><th class="num">Sensitivity</th><th class="num">DXAs ordered</th><th class="num">Cases found</th><th class="num">Missed</th><th class="num">PPV</th><th class="num">Scans per case</th></tr>
-            </thead>
-            <tbody>
-              <tr class="row-hi"><td>50%</td><td class="num">85.1%</td><td class="num">743</td><td class="num">80</td><td class="num">14</td><td class="num">10.8%</td><td class="num">9.29</td></tr>
-              <tr><td>40%</td><td class="num">81.9%</td><td class="num">594</td><td class="num">77</td><td class="num">17</td><td class="num">13.0%</td><td class="num">7.71</td></tr>
-              <tr><td>35%</td><td class="num">79.8%</td><td class="num">520</td><td class="num">75</td><td class="num">19</td><td class="num">14.4%</td><td class="num">6.93</td></tr>
-              <tr><td>30%</td><td class="num">75.5%</td><td class="num">446</td><td class="num">71</td><td class="num">23</td><td class="num">15.9%</td><td class="num">6.28</td></tr>
-              <tr><td>25%</td><td class="num">71.3%</td><td class="num">374</td><td class="num">67</td><td class="num">27</td><td class="num">17.9%</td><td class="num">5.58</td></tr>
-              <tr><td><em>scan everyone</em></td><td class="num">100%</td><td class="num">1,484</td><td class="num">94</td><td class="num">0</td><td class="num">6.3%</td><td class="num">15.79</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <caption>The clinically interesting row is the first: scanning half the cohort finds 85% of the
-          osteoporosis cases at 9.29 scans per case, against 15.79 if you scan everyone — a 41% reduction in
-          scanning effort per case found, missing 14 of 94 cases. Note the tension with the previous section:
-          the nested test says this ranking is <em>not statistically separable from OST</em>, so any such
-          claim should be made for "a cheap risk score" generally, not for machine learning specifically.</caption>
+        <caption>Ranked on nested-CV out-of-fold score. Because 58% of this cohort is affected, the efficiency
+          gain is modest by construction — you cannot do much better than 1.72 scans per case when more than
+          half the room is a case. The honest summary is that triaging for osteopenia saves roughly a quarter
+          of the scanning effort per case found, at the cost of missing a third of cases.</caption>
       </div>
 
       <h3>The sensitivity-first sweep</h3>
 
-      <p>The calibrated forest, with probability cutoffs, on the osteopenia target. This is the table that
-        answers "what if we are willing to over-refer in order to miss almost nobody".</p>
+      <p>The calibrated forest, with real probability cutoffs, on the osteopenia target. This is the table
+        that answers "what if we are willing to over-refer in order to miss almost nobody".</p>
 
       <div class="bleed">
         <div class="tbl-wrap">
           <table>
             <thead>
-              <tr><th>Probability cutoff</th><th class="num">Sensitivity</th><th class="num">Specificity</th><th class="num">PPV</th><th class="num">Missed cases</th><th class="num">Flagged for DXA</th></tr>
+              <tr><th>Probability cutoff</th><th class="num">Sensitivity</th><th class="num">DXAs ordered</th><th class="num">Cases found</th><th class="num">Missed</th><th class="num">PPV</th><th class="num">Scans per case</th></tr>
             </thead>
             <tbody>
-              <tr><td>≥ 0.50</td><td class="num">78.9%</td><td class="num">55.9%</td><td class="num">69.8%</td><td class="num">176</td><td class="num">946</td></tr>
-              <tr class="row-hi"><td>≥ 0.40</td><td class="num">88.8%</td><td class="num">41.0%</td><td class="num">66.0%</td><td class="num">94</td><td class="num">1,124</td></tr>
-              <tr><td>≥ 0.35</td><td class="num">91.3%</td><td class="num">34.4%</td><td class="num">64.2%</td><td class="num">73</td><td class="num">1,188</td></tr>
-              <tr><td>≥ 0.30</td><td class="num">94.4%</td><td class="num">27.8%</td><td class="num">62.8%</td><td class="num">47</td><td class="num">1,257</td></tr>
-              <tr><td>≥ 0.25</td><td class="num">95.9%</td><td class="num">20.7%</td><td class="num">60.9%</td><td class="num">34</td><td class="num">1,316</td></tr>
+              <tr><td>≥ 0.50</td><td class="num">75.0%</td><td class="num">681</td><td class="num">484</td><td class="num">161</td><td class="num">71.1%</td><td class="num">1.41</td></tr>
+              <tr class="row-hi"><td>≥ 0.40</td><td class="num">89.6%</td><td class="num">887</td><td class="num">578</td><td class="num">67</td><td class="num">65.2%</td><td class="num">1.53</td></tr>
+              <tr><td>≥ 0.35</td><td class="num">94.3%</td><td class="num">971</td><td class="num">608</td><td class="num">37</td><td class="num">62.6%</td><td class="num">1.60</td></tr>
+              <tr><td>≥ 0.30</td><td class="num">98.0%</td><td class="num">1,039</td><td class="num">632</td><td class="num">13</td><td class="num">60.8%</td><td class="num">1.64</td></tr>
+              <tr><td>≥ 0.25</td><td class="num">99.2%</td><td class="num">1,087</td><td class="num">640</td><td class="num">5</td><td class="num">58.9%</td><td class="num">1.70</td></tr>
+              <tr><td><em>scan everyone</em></td><td class="num">100%</td><td class="num">1,111</td><td class="num">645</td><td class="num">0</td><td class="num">58.1%</td><td class="num">1.72</td></tr>
             </tbody>
           </table>
         </div>
-        <caption>Calibrated forest: ROC-AUC 0.764, PR-AUC 0.813. The ≥ 0.40 row hits the stated ≥ 80%
-          sensitivity target. But read the last column: at that cutoff the tool flags 1,124 of 1,484 women —
-          76% of the cohort. Pushing to 95.9% sensitivity flags 89%.</caption>
+        <caption>Calibrated forest, ROC-AUC 0.753. The ≥ 0.40 row clears an 80% sensitivity target. But read
+          the DXA column: at that cutoff the tool flags 887 of 1,111 women — 80% of the cohort. Pushing to
+          99.2% sensitivity flags 98%. The "scan all" row is carried on this table too, so the comparison is
+          always in front of you.</caption>
       </div>
 
       <div class="note caution">
         <span class="note-label">The uncomfortable arithmetic, stated plainly</span>
-        <p>On a target with 56% prevalence, high sensitivity and useful triage are close to mutually
-          exclusive. Missing only 34 of 836 cases requires scanning 1,316 of 1,484 women — at which point you
+        <p>On a target with 58% prevalence, high sensitivity and useful triage are close to mutually
+          exclusive. Missing only 5 of 645 cases requires scanning 1,087 of 1,111 women — at which point you
           have not built a triage tool, you have built an expensive way of saying "scan almost everyone".
-          Expect a specialist to spot this immediately. The defensible framing is the osteoporosis table
-          above, where prevalence is 6.3% and there is real scanning effort to save.</p>
+          Every row of the sweep costs <em>more</em> scans per case than the "flag the top 50%" rule in the
+          table above, and the 0.25 row (1.70) is barely better than scanning everyone (1.72). Expect a
+          specialist to spot this immediately.</p>
+        <p>The previous version of this document deferred to the osteoporosis table here, on the grounds that
+          6% prevalence leaves real scanning effort to save. That is still true in principle, but the table
+          is withdrawn: 76 events cannot support it, and the nested test says the ranking is not separable
+          from OST at either threshold. Any claim in this direction belongs to "a cheap risk score"
+          generally — which means OST — and not to this model.</p>
       </div>
 
       <div class="note good">
-        <span class="note-label">Both tables are now saved</span>
-        <p>As <code>referral_table.csv</code> (both thresholds, one file) and
-          <code>threshold_sweep.csv</code>. Each carries the model that produced it on every row, so the
-          cutoff-semantics trap above is visible in the data rather than only in this document.</p>
+        <span class="note-label">And the calibration gap is closed</span>
+        <p>Step 13 depends on its probabilities meaning something, and until this rewrite there was no
+          calibration figure to check that — the only plotting code for one had been deleted with an earlier
+          script. <code>calibration_curve.png</code> now ships: a reliability curve with the Brier score for
+          both the raw and the sigmoid-calibrated forest. <strong>Calibrated 0.198 against raw 0.199.</strong>
+          Essentially no improvement, which is itself the useful finding — this forest was already close to
+          calibrated, so the <code>CalibratedClassifierCV</code> wrapper is insurance rather than a fix, and
+          the probability cutoffs in the sweep above can be read as probabilities.</p>
+      </div>
+
+      <div class="note">
+        <span class="note-label">Both tables are saved</span>
+        <p>As <code>referral_table.csv</code> and <code>threshold_sweep.csv</code>. Each carries its score
+          type and the model that produced it on every row, so the cutoff-semantics trap above is visible in
+          the data rather than only in this document.</p>
       </div>
     </section>
 
@@ -1589,8 +1956,8 @@
         code.</p>
 
       <div class="kv">
-        <div><dt>PRESENT</dt><dd>For the clinical audience. Six files.</dd></div>
-        <div><dt>METHODS</dt><dd>Backs up a methodological choice if it is challenged. Two files.</dd></div>
+        <div><dt>PRESENT</dt><dd>For the clinical audience. Twelve files.</dd></div>
+        <div><dt>METHODS</dt><dd>Backs up a methodological choice if it is challenged. Three files.</dd></div>
         <div><dt>DIAGNOSTIC</dt><dd>A bug detector. Standardised units, unstable across collinear
           predictors — not findings, and not to be shown as results. One file.</dd></div>
       </div>
@@ -1603,11 +1970,25 @@
             </thead>
             <tbody>
               <tr class="row-hi">
-                <td><code>nested_cv_verdict.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new</span></td>
+                <td><code>nested_cv_verdict.csv</code></td>
                 <td><span class="pill yes">Present</span></td>
-                <td><strong>The headline result.</strong> One row per clinical threshold: OST AUC, optimistic
-                  best, nested AUC, nested Δ with confidence interval, which model each fold picked, and a
-                  literal <code>Verdict</code> column reading "BEATS OST" or "NOT separable from OST".</td>
+                <td><strong>The headline result. Open this first.</strong> Four rows — two clinical
+                  thresholds × two comparators. Comparator AUC, leaderboard best, nested AUC, optimism,
+                  nested Δ with interval and one-sided p, and a literal <code>Verdict</code> column. All four
+                  currently read "Not separable".</td>
+              </tr>
+              <tr class="row-hi">
+                <td><code>model_block_ablation_osteopenia.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new in the rewrite</span></td>
+                <td><span class="pill yes">Present</span></td>
+                <td><strong>The variable-importance answer.</strong> Drop a whole clinical block, refit
+                  everything, remeasure. This is the file that shows body size is carrying the model
+                  (Δ +0.150) and that the menopause, lifestyle and history blocks are not.</td>
+              </tr>
+              <tr class="row-hi">
+                <td><code>model_variable_ablation_osteopenia.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new in the rewrite</span></td>
+                <td><span class="pill yes">Present</span></td>
+                <td>The same test one variable at a time, all eighteen, across all eight models, with paired
+                  bootstrap intervals and a Holm correction. Exactly one variable survives correction.</td>
               </tr>
               <tr class="row-hi">
                 <td><code>clinical_predictor_table.csv</code></td>
@@ -1622,33 +2003,61 @@
                   line at OR = 1.</td>
               </tr>
               <tr class="row-hi">
-                <td><code>referral_table.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new</span></td>
+                <td><code>table_one.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new in the rewrite</span></td>
                 <td><span class="pill yes">Present</span></td>
-                <td>Screening cost at both thresholds: DXAs ordered, cases found, missed, PPV, scans per case.
-                  The cutoff column is named <code>Top fraction flagged</code>, not "cutoff" — see the trap
-                  below.</td>
+                <td>The cohort description every clinical paper opens with: each variable's distribution
+                  overall and split by outcome, with missingness. Continuous as mean (SD), binary as percent
+                  positive.</td>
               </tr>
               <tr class="row-hi">
-                <td><code>threshold_sweep.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new</span></td>
+                <td><code>prespecified_arms.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new in the rewrite</span></td>
                 <td><span class="pill yes">Present</span></td>
-                <td>The sensitivity-first sweep. Carries <code>Model</code>, <code>Model ROC-AUC</code> and
-                  <code>Model PR-AUC</code> on every row so it can never be mistaken for the leaderboard
-                  model.</td>
+                <td>Every secondary question, each with its null stated before the run: vitamin D intake,
+                  serum 25(OH)D, rheumatoid arthritis, PHQ-9 as a binary, two diabetes recodes, and the two
+                  single-site T-score sensitivity analyses. All null.</td>
               </tr>
               <tr class="row-hi">
-                <td><code>model_leaderboard.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new</span></td>
+                <td><code>calibration_curve.png</code><br><span style="color:var(--ink-3);font-size:12.5px">new in the rewrite</span></td>
                 <td><span class="pill yes">Present</span></td>
-                <td>Five models × test / train / OOB AUC, sensitivity, specificity, plus the full confusion
-                  matrix.</td>
+                <td>Reliability curve plus Brier score, raw and sigmoid-calibrated. The gap the previous
+                  version of this document flagged as its "obvious next addition".</td>
+              </tr>
+              <tr class="row-hi">
+                <td><code>referral_table.csv</code></td>
+                <td><span class="pill yes">Present</span></td>
+                <td>Screening cost at the osteopenia threshold: DXAs ordered, cases found, missed, PPV, scans
+                  per case. The cutoff column is named <code>Top fraction flagged</code>, and the score
+                  column says <em>"Nested CV out-of-fold rank (not a probability)"</em> on every row.</td>
+              </tr>
+              <tr class="row-hi">
+                <td><code>threshold_sweep.csv</code></td>
+                <td><span class="pill yes">Present</span></td>
+                <td>The sensitivity-first sweep. Carries <code>Model</code> and its AUC on every row so it
+                  can never be mistaken for the table above.</td>
+              </tr>
+              <tr class="row-hi">
+                <td><code>model_leaderboard_osteopenia.csv</code><br><code>model_leaderboard_osteoporosis.csv</code></td>
+                <td><span class="pill yes">Present</span></td>
+                <td>Five classifiers × test / train / OOB AUC, sensitivity, specificity and the full confusion
+                  matrix. Now one file per target, and the OOB column carries an
+                  <code>oob_note</code> saying why a number is absent when it is.</td>
               </tr>
               <tr>
-                <td><code>baseline_comparison.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new</span></td>
+                <td><code>auc_decomposition.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new in the rewrite</span></td>
                 <td><span class="pill hold">Methods</span></td>
-                <td>All ten scores — eight models plus OST and weight-alone — at both thresholds, with
-                  ΔAUC against OST and its bootstrap interval. The evidence behind the verdict file.</td>
+                <td><strong>Where the AUC went.</strong> Four cohort definitions, one change at a time,
+                  attributing the −0.083 drop from the published figure: −0.074 duplicates, −0.003
+                  menopause gate. Written by <code>_decompose.py</code>, not the main script.</td>
               </tr>
               <tr>
-                <td><code>rf_leaf_tuning.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new</span></td>
+                <td><code>power_gate.csv</code><br><span style="color:var(--ink-3);font-size:12.5px">new in the rewrite</span></td>
+                <td><span class="pill hold">Methods</span></td>
+                <td>Events per predictor for every analysis cohort × target, with an OK / UNDERPOWERED label
+                  against a floor of 10. Computed <em>before</em> the models run, so an underpowered result
+                  is declared rather than discovered afterwards.</td>
+              </tr>
+              <tr>
+                <td><code>rf_leaf_tuning.csv</code></td>
                 <td><span class="pill hold">Methods</span></td>
                 <td>Nested-tuned versus fixed <code>min_samples_leaf</code> across the grid. The answer to
                   "why leaf = 1, when the training AUC is 1.000?"</td>
@@ -1656,14 +2065,16 @@
               <tr>
                 <td><code>coefficient_diagnostics.csv</code></td>
                 <td><span class="pill stop">Diagnostic</span></td>
-                <td>Standardised coefficients from the two linear models, powering the leakage alarm and the
-                  sign check. Not interpretable as effect sizes.</td>
+                <td>Standardised coefficients powering the leakage alarm and the sign check, and — new in
+                  the rewrite — the collinear partner of any variable that trips the sign check. Not
+                  interpretable as effect sizes.</td>
               </tr>
               <tr>
-                <td><code>data/processed/option_b_v4_final.csv</code></td>
+                <td><code>data/processed/analysis_cohort_postmenopausal.csv</code></td>
                 <td><span class="pill no">Dataset</span></td>
-                <td>The analysis table: 1,484 rows, every raw, renamed and derived column — including those
-                  excluded from the model. The audit trail.</td>
+                <td>The analysis table: 1,111 rows × 119 columns — every raw, renamed and derived variable,
+                  including those excluded from the model. The audit trail, and the only file the script
+                  writes outside <code>outputs/</code>.</td>
               </tr>
               <tr>
                 <td><code>data/raw/&lt;cycle&gt;/DSQTOT_*.csv</code><br><code>data/raw/&lt;cycle&gt;/DR2TOT_*_calcium_vitd.csv</code></td>
@@ -1674,39 +2085,43 @@
             </tbody>
           </table>
         </div>
-        <caption>Nine files in <code>outputs/</code>, every one written by a line in this script and labelled
-          at the moment it is written. Six of the nine were added by this cleanup; before it, the leaderboard,
-          verdict, referral and sweep results existed only in terminal scrollback.</caption>
+        <caption>Sixteen files in <code>outputs/</code>, every one written by a line in this script (bar the
+          decomposition, which has its own) and labelled at the moment it is written. Seven were added by the
+          rewrite, and two — <code>baseline_comparison.csv</code> and the single combined
+          <code>model_leaderboard.csv</code> — were deleted, because they held the withdrawn 0.810 / 0.833
+          figures on the duplicated cohort and nothing regenerates them.</caption>
       </div>
 
       <h3>Why the coefficient file is explicitly not for presentation</h3>
       <p>Its job is to catch bugs, not to describe biology. Standardised coefficients are in units of "per one
-        standard deviation of this dataset", which is not a clinical unit; and because weight, BMI and height
-        share information, the individual numbers shift around between them. It is a smoke alarm — a
-        coefficient above 2.0 means a leak, a coefficient with the wrong sign means a wiring error. Both are
-        useful to <em>you</em>. Neither belongs in front of a clinician, who would reasonably read −0.99 for
-        weight as a finding rather than a diagnostic. The script now says so in its own output, on the line
-        after it writes the file.</p>
+        standard deviation of this dataset", which is not a clinical unit; and because weight and BMI share
+        information at |r| = 0.94, the individual numbers shift around between them — which is precisely why
+        <code>bmi</code> currently shows a positive coefficient where biology says negative. It is a smoke
+        alarm: a coefficient above 2.0 means a leak, a coefficient with the wrong sign means either a wiring
+        error or a collinear partner having absorbed the effect, and the file now names that partner so the
+        two cases can be told apart. Both are useful to <em>you</em>. Neither belongs in front of a
+        clinician, who would reasonably read −1.21 for weight as a finding rather than a diagnostic. The
+        script says so in its own output, on the line after it writes the file.</p>
 
       <div class="note good">
         <span class="note-label">Both problems from the first draft of this document are now closed</span>
-        <p><strong>The presentable results are on disk.</strong> The leaderboard, the OST/nested verdict, the
-          referral tables and the threshold sweep are written as CSVs rather than printed and lost. The
-          verdict file in particular is the one to open first: it is a two-row summary of the entire
-          project.</p>
-        <p><strong>The folder is unambiguous.</strong> Thirteen stale files are gone, and the nine that remain
-          carry an explicit tier. A colleague opening <code>outputs/</code> can now tell the clinical table
-          from the diagnostic one without reading the source.</p>
+        <p><strong>The presentable results are on disk.</strong> The leaderboard, the verdict, the ablation
+          grids, the arms, the calibration curve, Table 1, the referral tables and the sweep are all written
+          as files rather than printed and lost. The verdict file in particular is the one to open first: it
+          is a four-row summary of the entire project.</p>
+        <p><strong>The folder is unambiguous.</strong> Every file carries an explicit tier. A colleague
+          opening <code>outputs/</code> can tell the clinical table from the diagnostic one without reading
+          the source.</p>
       </div>
 
       <div class="note caution">
-        <span class="note-label">One trap survives by necessity — it is now labelled rather than removed</span>
+        <span class="note-label">One trap survives by necessity — it is labelled rather than removed</span>
         <p><code>referral_table.csv</code> and <code>threshold_sweep.csv</code> both have a cutoff column
-          containing 0.50, 0.40, 0.35, 0.30, 0.25 — and they mean different things, for different models.
-          The first is a <em>top fraction of the score distribution</em> from the leaderboard forest
-          (AUC 0.810); the second is a <em>predicted probability</em> from the calibrated forest (AUC 0.764).
-          The column names and the per-row model labels now make this visible in the files themselves, but
-          the two tables still must not be merged or plotted on shared axes.</p>
+          containing 0.50, 0.40, 0.35, 0.30, 0.25 — and they mean different things. The first is a
+          <em>top fraction of the score distribution</em>, ranked on the nested-CV out-of-fold score; the
+          second is a <em>predicted probability</em> from the separate calibrated forest (AUC 0.753). The
+          column names and the per-row score labels make this visible in the files themselves, but the two
+          tables still must not be merged or plotted on shared axes.</p>
       </div>
     </section>
 
@@ -1778,14 +2193,27 @@
           them with <code>git checkout HEAD~1 -- outputs/&lt;name&gt;</code> if a reason emerges.</caption>
       </div>
 
+      <div class="note good">
+        <span class="note-label">The one gap this opened is now closed</span>
+        <p>Deleting the old <code>calibration_curve.png</code> left the project with no calibration figure,
+          while step 13 depends on calibrated probabilities being trustworthy — that is the whole reason it
+          wraps the forest in <code>CalibratedClassifierCV</code>. The earlier version of this document
+          flagged regenerating one <em>from this script</em> as the obvious next addition. The rewrite does
+          it: <code>calibration_curve.png</code> is now written by the pipeline itself, as a reliability
+          curve with the Brier score for both the raw and the sigmoid-calibrated forest — 0.198 calibrated
+          against 0.199 raw. The figure exists, and it says the probabilities were close to honest already.</p>
+      </div>
+
       <div class="note caution">
-        <span class="note-label">One genuine gap this opened, worth knowing about</span>
-        <p>Deleting <code>calibration_curve.png</code> leaves the project with no calibration figure, and
-          step 13 depends on calibrated probabilities being trustworthy — that is the whole reason it wraps
-          the forest in <code>CalibratedClassifierCV</code>. The numbers are sound (the sweep reports
-          PR-AUC alongside ROC-AUC), but if a specialist asks "are these probabilities real?", the honest
-          answer today is that the sweep table implies it and no plot demonstrates it. Regenerating a
-          calibration curve <em>from this script</em> is the obvious next addition.</p>
+        <span class="note-label">Two more files were deleted in this round, for a different reason</span>
+        <p><code>baseline_comparison.csv</code> and the single combined <code>model_leaderboard.csv</code>
+          are gone. Not stale-by-neglect like the thirteen above — stale-by-correction. They held the 0.810
+          and 0.833 figures computed on the duplicated cohort, and nothing in the current script regenerates
+          them: the baseline comparison was folded into <code>nested_cv_verdict.csv</code> (which now carries
+          both comparators), and the leaderboard is written once per target. Leaving them in place would have
+          left a withdrawn result sitting in the same folder as its replacement.</p>
+        <p><code>outputs/run_log.txt</code> was deliberately <em>not</em> touched. It is your manual capture,
+          not the script's artifact, and deleting someone's own audit trail is not the pipeline's call.</p>
       </div>
 
       <div class="note good">
@@ -1808,30 +2236,67 @@
       </div>
 
       <h3>The four-sentence version</h3>
-      <p class="lede">Using six rounds of NHANES data, we assembled 1,484 non-Hispanic White women aged 50–65
-        who received a hip DXA scan, and trained models to predict their bone-density category from
-        clinic-available information alone, with every trace of the scan excluded from the inputs. A random
-        forest reaches a cross-validated AUC of 0.810 for detecting osteopenia or worse, at 74% sensitivity
-        and 73% specificity. Tested honestly — with model selection moved inside each training fold — that
-        beats the OST formula by 0.063 AUC with a confidence interval clear of zero, and it
-        beats it in every fold. For osteoporosis specifically we cannot make that claim: the apparent
-        advantage shrinks from +0.060 to +0.031 once selection bias is removed, and the interval crosses
-        zero, because there are only 94 cases.</p>
+      <p class="lede">Using five rounds of NHANES data, we assembled 1,111 postmenopausal non-Hispanic White
+        women aged 50–65 who received a hip DXA scan, and trained eight models to predict their bone-density
+        category from clinic-available information alone, with every trace of the scan excluded from the
+        inputs. Tested honestly — with model selection moved inside each training fold — the best of them
+        reaches AUC 0.751 for detecting osteopenia or worse, against <strong>0.739 for the OST formula</strong>
+        (weight minus age, times 0.2) and <strong>0.737 for weight on its own</strong>: a margin of +0.012
+        whose interval crosses zero. <strong>The eighteen-variable panel is not separable from a two-input
+        formula, at either clinical threshold, against either comparator.</strong> The reason is visible in
+        the ablation grid — body size carries essentially all of the signal, and the other sixteen variables
+        can be deleted one at a time without measurable loss.</p>
 
       <div class="stats">
         <div class="stat">
           <dt>Osteopenia or worse</dt>
-          <dd>+0.063 <small>nested AUC gain over OST, CI [+0.046, +0.082] — a real, reproducible improvement</small></dd>
+          <dd>+0.012 <small>nested AUC over OST, CI [−0.005, +0.030], p = 0.074 — not separable</small></dd>
         </div>
         <div class="stat">
           <dt>Osteoporosis</dt>
-          <dd>+0.031 <small>nested AUC gain, CI [−0.013, +0.077] — not separable from OST at n = 94 cases</small></dd>
+          <dd>+0.010 <small>nested AUC over OST, CI [−0.015, +0.035] — not separable, and underpowered at 76 events</small></dd>
         </div>
         <div class="stat">
-          <dt>Ask for</dt>
-          <dd>2 <small>the referral cutoff, and which risk factors their notes already carry</small></dd>
+          <dt>Drop body size</dt>
+          <dd>−0.150 <small>AUC lost when <code>bmi</code> and <code>weight_kg</code> both go: 0.757 → 0.606</small></dd>
         </div>
       </div>
+
+      <div class="note risk">
+        <span class="note-label">Read this before quoting anything from an older version of this document</span>
+        <p>The previous four-sentence version of this section said "a random forest reaches a cross-validated
+          AUC of 0.810 … that beats the OST formula by 0.063 AUC with a confidence interval clear of zero,
+          and it beats it in every fold." <strong>That claim is withdrawn.</strong> It was produced on a
+          cohort containing 176 women counted twice — NHANES pooled the 2017–2018 cycle into its
+          2017–March 2020 pre-pandemic file under re-numbered SEQNs, so loading both cycles duplicated
+          people under IDs no de-duplication on SEQN could see. Cross-validation splits <em>rows</em>, not
+          <em>people</em>, so the same woman sat in the training and test folds at once and the trees
+          memorised her. Correcting it costs −0.074 of the −0.083 total drop
+          (<a href="#honesty">the decomposition</a>); the narrowing to postmenopausal women costs only
+          −0.003. The figures 0.810, 0.833 and 0.806 should not leave this document except as history.</p>
+      </div>
+
+      <h3>If they ask one question, it will be "so which variables matter?"</h3>
+      <p>This is worth rehearsing, because the answer is short, defensible, and not what the project set out
+        to find. Three methods were run and they agree
+        (<a href="#predictors">the full tables</a>):</p>
+      <ul>
+        <li><strong>Body size is very nearly the whole model.</strong> Remove <code>bmi</code> and
+          <code>weight_kg</code> together and AUC falls from 0.757 to <strong>0.606</strong>
+          (Δ +0.150 [+0.114, +0.184]). Remove the <em>entire</em> menopause and hormone block and it costs
+          0.004. The whole lifestyle block: 0.001. The whole history and family block: 0.003. All three
+          intervals straddle zero.</li>
+        <li><strong>One variable of eighteen survives multiple-comparison correction:</strong>
+          <code>weight_kg</code>, +0.0203 AUC when deleted, p &lt; 0.001 after Holm. <code>age</code> is
+          +0.0018. <code>bmi</code> is −0.0002 — because weight already carries it, at |r| = 0.94.</li>
+        <li><strong>Age plus weight alone scores 0.739</strong>, reproducing OST's AUC to three decimals.
+          That is the crux: the panel cannot beat OST because OST is already using the two variables that
+          carry the signal.</li>
+      </ul>
+      <p>Six predictors still show odds ratios whose intervals exclude 1 — weight, prior estrogen use,
+        poverty-income ratio, age, prior fracture and sedentary minutes — and those are legitimate
+        associations worth discussing. They just do not add <em>discrimination</em> on top of body size, and
+        "associated with the outcome" and "improves the prediction" are different claims.</p>
 
       <h3>Questions to expect, and the honest answers</h3>
       <dl class="qa">
@@ -1841,14 +2306,14 @@
           an <em>event</em>. It is a triage tool for who should get scanned, not a fracture-risk calculator
           like FRAX, and it should not be compared to one.</dd>
 
-        <dt>56% prevalence? That is nothing like my clinic.</dt>
+        <dt>58% prevalence? That is nothing like my clinic.</dt>
         <dd>Also correct, and it matters for the numbers. The target is osteopenia-or-worse, which is
           genuinely common in this age group, but NHANES is a survey sample, not a referral population.
           Sensitivity and specificity travel across settings; positive predictive value and scans-per-case do
           not. Any referral table would need recalculating against local prevalence.</dd>
 
         <dt>Why only white women 50–65?</dt>
-        <dd>To keep the statistical power focused. With 1,484 people, modelling sex, ethnicity and a wide age
+        <dd>To keep the statistical power focused. With 1,111 people, modelling sex, ethnicity and a wide age
           range as well would spread the data too thin. The cost is that nothing here generalises outside
           that group, and the same pipeline would have to be re-run and re-validated for any other
           population. The narrow cohort is a starting point, not a claim of generality.</dd>
@@ -1868,8 +2333,9 @@
           <em>two-day</em> dietary average, plus a blood 25(OH)D level — and none of the three shows an
           association with bone density in this cohort. Calcium OR 1.01 (0.90–1.11), vitamin D intake OR
           1.01 (0.99–1.08), serum 25(OH)D OR 0.94 (0.82–1.05); all three intervals include 1. Removing all
-          of them from the model changes cross-validated AUC by +0.004, well inside the fold-to-fold
-          variation of ±0.027 — statistically indistinguishable from no change.
+          of them from the model changes cross-validated AUC by −0.002 [−0.006, +0.001] for intake and
+          −0.001 [−0.008, +0.005] for serum 25(OH)D — both intervals containing zero, and both nulls
+          written down <em>before</em> the run in <code>prespecified_arms.csv</code>.
           <br><br>This is a null result, not a missing measurement, and the distinction matters: the careful
           measurement is precisely what licenses the statement. It is also consistent with the reverse
           causation below. What it does <em>not</em> license is any claim about supplementation
@@ -1882,18 +2348,31 @@
           settle questions about treatment effects.</dd>
 
         <dt>Which single number should I trust?</dt>
-        <dd>The nested cross-validated difference against OST: <strong>+0.063 [+0.046, +0.082]</strong> for
-          osteopenia-or-worse, and <strong>+0.031 [−0.013, +0.077]</strong> for osteoporosis. Not the
-          leaderboard's 0.810 and 0.833 — those were chosen partly because they looked good on those
-          particular rows. For osteopenia the two agree exactly, which is itself reassuring. For osteoporosis
-          they do not, and the nested one is right.</dd>
+        <dd>The nested cross-validated difference against OST: <strong>+0.012 [−0.005, +0.030]</strong> for
+          osteopenia-or-worse, and <strong>+0.010 [−0.015, +0.035]</strong> for osteoporosis. Both cross
+          zero. Not the leaderboard's 0.755 and 0.782 — those were chosen partly because they looked good on
+          those particular rows — and certainly not 0.810 or 0.833, which were computed on the duplicated
+          cohort and are withdrawn. The four-row <code>nested_cv_verdict.csv</code> is the whole bottom line
+          and it is the first file to open.</dd>
 
         <dt>Is a two-variable formula really the benchmark?</dt>
         <dd>It is the right benchmark precisely because it is so cheap: weight minus age, times 0.2. It
-          scores 0.747 here. Any model that needs 23 variables, blood work and a diet survey has to justify
-          itself against that, and for osteoporosis specifically it currently cannot. If a specialist prefers
-          FRAX as the comparator, that is a fair challenge — FRAX is not implemented here, and it predicts
-          fracture rather than density, so it is not directly substitutable.</dd>
+          scores 0.739 here for osteopenia and 0.780 for osteoporosis — both inside its published range,
+          which is a check on the implementation. A model that needs eighteen variables, blood work and a
+          diet survey has to justify itself against that, and <strong>on this cohort it does not</strong>. We
+          also ran a harsher second comparator, <em>weight alone</em> (0.737 / 0.766), and the panel is not
+          separable from that either. If a specialist prefers FRAX as the comparator, that is a fair
+          challenge — FRAX is not implemented here, and it predicts fracture rather than density, so it is
+          not directly substitutable.</dd>
+
+        <dt>So did the project fail?</dt>
+        <dd>No — it produced a negative result and caught its own error, which is a different thing. The
+          claim it started with does not survive; what it can say now is narrower and much more solid: on a
+          clean cohort of 1,111 postmenopausal women, clinic-available questionnaire data adds nothing
+          measurable to a scale and a date of birth for predicting hip bone density. That is worth knowing,
+          it is worth writing down, and it is the kind of finding that does not get published often enough.
+          The defect that produced the earlier number is documented, quantified and fixed in code
+          (<a href="#guards">guard 1</a>), and every artifact on disk now traces to the corrected cohort.</dd>
       </dl>
 
       <h3>Two things to ask them for</h3>
@@ -1901,9 +2380,12 @@
         <li><strong>The cutoff.</strong> The referral tables lay out the trade-off, but the acceptable number
           of missed cases per hundred, and the acceptable number of scans per case found, is a clinical
           judgement — not one to make from the code.</li>
-        <li><strong>Missing risk factors.</strong> Parental hip fracture, height loss, current smoking
-          intensity and weight change since 40 are all established and all absent here. If any are routinely
-          in their notes, they are candidates for the next iteration.</li>
+        <li><strong>Missing risk factors.</strong> Height loss, current smoking intensity and weight change
+          since 40 are all established and all absent here. (Parental hip fracture <em>is</em> in the panel
+          now, at 4.4% missing; deleting it costs −0.001 AUC.) If any of the absent three are routinely in
+          their notes, they are candidates for the next iteration — though the ablation grid sets a low
+          prior: sixteen of eighteen existing variables add nothing measurable, so a nineteenth would have to
+          be carrying information that body size does not.</li>
       </ol>
 
       <hr class="rule">
@@ -1985,8 +2467,8 @@
               <tr>
                 <td>Discrimination for <em>low BMD</em> is only modest</td>
                 <td>FRAX separated osteoporosis (T &le; &minus;2.5) with AUC 0.72–0.75 among 2,991
-                  community-dwelling adults aged 60+ — below both OST (0.773 on this cohort) and this model
-                  (0.806 nested).</td>
+                  community-dwelling adults aged 60+ — in the same range as OST (0.780 on this cohort) and
+                  this model (0.790 nested), neither of which is separable from the other.</td>
                 <td>Thai cohort, 2025 <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11846872/">[10]</a></td></tr>
               <tr>
                 <td>Its standard thresholds are too conservative for case-finding</td>
@@ -2071,7 +2553,7 @@
             <p style="margin-bottom:5px"><strong>Performance of the Osteoporosis Self-Assessment Tool (OST) in predicting osteoporosis — a review</strong></p>
             <p style="margin-bottom:5px;color:var(--ink-3);font-size:14px">2018. Pooled sensitivity 83%, specificity 63% in women; AUC 0.71–0.79 across cohorts.<br>
               <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6068473/">https://pmc.ncbi.nlm.nih.gov/articles/PMC6068473/</a></p>
-            <p style="margin-bottom:0"><strong>The benchmark.</strong> OST scores 0.747 (osteopenia) and 0.773 (osteoporosis) on this cohort — inside the published range, which independently validates the implementation rather than merely asserting it. Its high-sensitivity, moderate-specificity profile is the triage shape any new tool has to beat.</p>
+            <p style="margin-bottom:0"><strong>The benchmark — and, as it turns out, the winner.</strong> OST scores <strong>0.739</strong> (osteopenia) and <strong>0.780</strong> (osteoporosis) on this cohort — inside the published 0.71–0.79 range, which independently validates the implementation rather than merely asserting it. Its high-sensitivity, moderate-specificity profile is the triage shape any new tool has to beat, and on this cohort the eighteen-variable panel does not beat it: +0.012 [−0.005, +0.030]. A second, harsher comparator — weight alone — scores 0.737 and is also not beaten.</p>
           </dd>
         </div>
         <div>

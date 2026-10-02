@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Answers and Decisions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ink:#14181c; --ink-2:#4a545c; --ink-3:#79828a;
+    --paper:#fcfcfb; --surface:#f1f2ef; --surface-2:#e7e9e4;
+    --rule:#d5d8d2; --rule-soft:#e4e6e1;
+    --accent:#1f4e79; --accent-soft:#e6edf4;
+    --alarm:#a8332a; --alarm-soft:#f7e9e7;
+    --warn:#8a6a15;  --warn-soft:#f7f0dd;
+    --ok:#376655;    --ok-soft:#e6efeb;
+    --f-display:"Newsreader",Georgia,"Times New Roman",serif;
+    --f-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",Consolas,"Courier New",monospace;
+    --col:72ch; --wide:1180px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e7e9e6; --ink-2:#a6afa9; --ink-3:#7d8681;
+      --paper:#13161a; --surface:#1b1f23; --surface-2:#252a2f;
+      --rule:#323a40; --rule-soft:#262c31;
+      --accent:#86b8e0; --accent-soft:#1a2b3a;
+      --alarm:#e38375; --alarm-soft:#33211f;
+      --warn:#d4ac52;  --warn-soft:#2e2716;
+      --ok:#74b39a;    --ok-soft:#1a2b25;
+    }
+  }
+  :root[data-theme="dark"]{
+      --ink:#e7e9e6; --ink-2:#a6afa9; --ink-3:#7d8681;
+      --paper:#13161a; --surface:#1b1f23; --surface-2:#252a2f;
+      --rule:#323a40; --rule-soft:#262c31;
+      --accent:#86b8e0; --accent-soft:#1a2b3a;
+      --alarm:#e38375; --alarm-soft:#33211f;
+      --warn:#d4ac52;  --warn-soft:#2e2716;
+      --ok:#74b39a;    --ok-soft:#1a2b25;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);
+       font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:var(--wide);margin:0 auto;padding:0 16px 96px}
+  header.top{padding:56px 0 28px;border-bottom:2px solid var(--ink)}
+  h1{font-family:var(--f-display);font-weight:600;font-size:2.6rem;line-height:1.1;margin:0 0 .3em}
+  .sub{font-size:1.05rem;color:var(--ink-2);max-width:var(--col)}
+  .meta{font-family:var(--f-mono);font-size:.78rem;color:var(--ink-3);margin-top:1.4em;letter-spacing:.02em}
+  h2{font-family:var(--f-display);font-weight:600;font-size:1.75rem;line-height:1.2;
+     margin:2.6em 0 .2em;padding-top:.6em;border-top:1px solid var(--rule)}
+  h3{font-family:var(--f-body);font-weight:600;font-size:1.06rem;margin:2em 0 .4em;letter-spacing:.01em}
+  p,ul,ol{max-width:var(--col)}
+  p{margin:.7em 0}
+  ul,ol{margin:.6em 0;padding-left:1.3em}
+  li{margin:.3em 0}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--surface-2);
+       padding:.1em .34em;border-radius:3px}
+  table{border-collapse:collapse;width:100%;max-width:var(--wide);margin:1.1em 0;font-size:.9rem}
+  th,td{text-align:left;padding:.5em .7em;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+  th{font-weight:600;border-bottom:1.5px solid var(--rule);font-size:.82rem;
+     text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)}
+  td.num,th.num{text-align:right;font-family:var(--f-mono);font-size:.85rem;white-space:nowrap}
+  tbody tr:hover{background:var(--surface)}
+  .q{border:1px solid var(--rule);border-radius:6px;margin:1.6em 0;overflow:hidden;
+     max-width:var(--wide);background:var(--surface)}
+  .q > .qh{background:var(--surface-2);padding:.7em 1em;border-bottom:1px solid var(--rule);
+     font-weight:600;font-size:1.02rem;display:flex;gap:.7em;align-items:baseline;flex-wrap:wrap}
+  .qh .tag{font-family:var(--f-mono);font-size:.74rem;padding:.14em .5em;border-radius:3px;
+     letter-spacing:.04em;text-transform:uppercase;font-weight:500}
+  .tag.locked{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+  .tag.override{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn)}
+  .tag.open{background:var(--alarm-soft);color:var(--alarm);border:1px solid var(--alarm)}
+  .qb{padding:.3em 1em 1em}
+  .qb p, .qb ul{max-width:var(--col)}
+  .lab{font-family:var(--f-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+     color:var(--ink-3);margin:1.1em 0 .1em;font-weight:500}
+  blockquote{margin:.3em 0 .3em;padding:.45em .9em;border-left:3px solid var(--accent);
+     background:var(--accent-soft);font-family:var(--f-mono);font-size:.85rem;max-width:var(--col)}
+  .callout{border-left:4px solid var(--accent);background:var(--accent-soft);
+     padding:.9em 1.1em;margin:1.4em 0;border-radius:0 4px 4px 0;max-width:var(--wide)}
+  .callout.alarm{border-color:var(--alarm);background:var(--alarm-soft)}
+  .callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+  .callout.ok{border-color:var(--ok);background:var(--ok-soft)}
+  .callout > :first-child{margin-top:0}
+  .callout > :last-child{margin-bottom:0}
+  .callout h3{margin-top:0}
+  .callout p, .callout ul, .callout ol{max-width:var(--col)}
+  .strike{color:var(--alarm);text-decoration:line-through}
+  .fix{color:var(--ok);font-weight:600}
+  .toc{background:var(--surface);border:1px solid var(--rule);border-radius:6px;
+     padding:1em 1.3em;margin:1.8em 0;max-width:var(--col)}
+  .toc ol{margin:.2em 0;padding-left:1.4em;font-size:.93rem}
+  .toc a{color:var(--accent);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  footer{margin-top:3.5em;padding-top:1.2em;border-top:1px solid var(--rule);
+     font-size:.83rem;color:var(--ink-3);max-width:var(--col)}
+  @media print{
+    body{background:#fff;font-size:11pt}
+    .q,.callout,.toc{break-inside:avoid}
+    h2{break-after:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Answers and Decisions</h1>
+  <p class="sub">Every question put to the specialist, their answer as written, and the ruling we
+  are building to. Also records one structural defect found while checking the weighting
+  question, which changes the cohort and supersedes the published figures.</p>
+  <p class="meta">Screening before the scan &middot; NHANES osteoporosis risk &middot; decision log &middot; 28 September 2026</p>
+</header>
+
+<div class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#cycles">The overlapping-cycle defect &mdash; read first</a></li>
+    <li><a href="#decisions">The twelve decisions</a></li>
+    <li><a href="#errata">Errata in the answers document</a></li>
+    <li><a href="#open">Open items</a></li>
+  </ol>
+</div>
+
+<h2 id="cycles">1. The overlapping-cycle defect</h2>
+
+<div class="callout alarm">
+<h3>Two of the six survey cycles are the same women</h3>
+<p><code>CYCLES</code> contains both <code>2017_2018</code> (NHANES letter&nbsp;<code>J</code>) and
+<code>2017_2020</code> (prefix&nbsp;<code>P_</code>). The NHANES pre-pandemic release
+<em>is</em> 2017&ndash;2018 combined with 2019&ndash;March&nbsp;2020 &mdash; field work stopped in
+March&nbsp;2020, so NCHS pooled the partial 2019&ndash;2020 sample with the complete
+2017&ndash;2018 cycle to restore national representativeness. The 2017&ndash;2018 respondents are
+physically inside the <code>P_</code> files. CDC sanctions pooling the pre-pandemic files with
+<strong>1999&ndash;2016</strong>, not with 2017&ndash;2018.</p>
+</div>
+
+<p>A sequence-number check does not catch it. <code>DEMO_J</code> runs SEQN 93703&ndash;102956
+(n&nbsp;=&nbsp;9,254); <code>P_DEMO</code> runs 109263&ndash;124822 (n&nbsp;=&nbsp;15,560). The
+ranges are disjoint, so <code>SEQN.duplicated()</code> returns nothing. The people are
+nonetheless the same, which three independent checks establish:</p>
+
+<ul>
+  <li>All <strong>176</strong> women of the 1,484 cohort drawn from <code>2017_2018</code> match a
+  woman in <code>2017_2020</code> <em>exactly</em> on femoral neck BMD, total hip BMD, age,
+  weight and height. The same test between 2009&ndash;2010 and either cycle returns
+  <strong>0</strong>.</li>
+  <li>At whole-file scale, <strong>7,585 of 7,585</strong> distinct
+  <code>BMXWT</code>+<code>BMXHT</code>+<code>BMXBMI</code>+<code>BMXWAIST</code> fingerprints in
+  <code>BMX_J</code> also occur in <code>P_BMX</code> &mdash; every one.</li>
+  <li>The matched pairs agree on <strong>176 of 176</strong> for <code>bmi</code>,
+  <code>diabetes</code>, <code>any_prior_fracture</code>, <code>steroid_use</code>,
+  <code>postmenopausal</code>, <code>years_since_menopause</code> and
+  <code>ever_used_estrogen</code>.</li>
+</ul>
+
+<h3>What it costs</h3>
+
+<table>
+<thead><tr><th>Quantity</th><th class="num">As published</th><th class="num">Deduplicated</th></tr></thead>
+<tbody>
+<tr><td>Full cohort records</td><td class="num">1,484</td><td class="num"><strong>1,308</strong></td></tr>
+<tr><td>Postmenopausal analysis cohort</td><td class="num">1,272</td><td class="num"><strong>1,111</strong></td></tr>
+<tr><td>T&nbsp;&le;&nbsp;&minus;1.0 prevalence (postmenopausal)</td><td class="num">0.5904</td><td class="num">0.5806</td></tr>
+<tr><td>T&nbsp;&le;&nbsp;&minus;2.5 events (postmenopausal)</td><td class="num">91</td><td class="num"><strong>76</strong></td></tr>
+<tr><td>T&nbsp;&le;&nbsp;&minus;2.5 events (full cohort)</td><td class="num">94</td><td class="num">79</td></tr>
+</tbody>
+</table>
+
+<p>Two consequences go beyond the counts:</p>
+
+<ol>
+  <li><strong>The cross-validation leaks.</strong> <code>StratifiedKFold</code> splits rows, not
+  people. For 161 postmenopausal women an identical row can sit in a training fold while its twin
+  is scored in the test fold &mdash; exact-duplicate leakage across 12.7% of the cohort. That
+  inflates every cross-validated AUC, including the nested-CV figure we describe as the defensible
+  one.</li>
+  <li><strong>The published table is superseded.</strong> 0.810 and 0.806 were computed on
+  contaminated folds and on 1,272&nbsp;/&nbsp;91. The <code>apply_filters</code> assert at 1,484
+  will trip &mdash; which is the assert performing its stated function, not a bug.</li>
+</ol>
+
+<p>It also widens the Q8 margin retroactively: the osteoporosis target carries <strong>76</strong>
+events, not 91, so carrying T&nbsp;&le;&nbsp;&minus;2.5 by thresholding the T-score regression was
+right by more than was shown at the time.</p>
+
+<h3>Why both cycles were in the list</h3>
+
+<p>Serum vitamin D. Among the 176 matched pairs the <code>J</code> copy carries
+<strong>173</strong> serum values and the <code>P_</code> copy carries <strong>0</strong> &mdash;
+<code>VID</code> was never released for the pre-pandemic file. The 973-woman serum arm depends on
+those rows.</p>
+
+<div class="callout ok">
+<h3>Ruling &mdash; Option 1 plus the crosswalk</h3>
+<ul>
+  <li><strong>Drop <code>2017_2018</code> from <code>CYCLES</code>.</strong> 1,484&nbsp;&rarr;&nbsp;1,308
+  records, all distinct; the leakage goes; <code>P_</code> retains the additional
+  2019&ndash;March&nbsp;2020 women.</li>
+  <li><strong>Recover serum vitamin D by crosswalk, for the vitamin D arm only.</strong> Graft the
+  <code>VID_J</code> values onto their matched <code>P_</code> records using the
+  BMD&nbsp;+&nbsp;age&nbsp;+&nbsp;weight&nbsp;+&nbsp;height fingerprint. This is a non-standard
+  step and must be named plainly in methods, with the match rule and the count recovered stated, so
+  a reviewer can see exactly what was joined and on what.</li>
+  <li><strong>Re-run everything.</strong> Every <em>n</em> and every AUC in this document and in the
+  published table predates the deduplication and must be recomputed before use.</li>
+</ul>
+</div>
+
+<div class="callout warn">
+<p><strong>The weighting question cannot be answered as asked.</strong> The two-year cycles carry
+<code>WTMEC2YR</code>; <code>P_</code> carries <code>WTMECPRP</code> on a 3.2-year basis. The cycle
+set is non-contiguous (2011&ndash;2012 absent, 2015&ndash;2016 deliberately excluded) and, until the
+fix above, overlapping. NHANES pooled-weight guidance assumes contiguous, non-overlapping cycles
+sharing a design stratification, so no valid pooled weight exists for this set. See Q11.</p>
+</div>
+
+<h2 id="decisions">2. The twelve decisions</h2>
+
+<p>Each block gives the question as put, the specialist's answer verbatim, and the ruling being
+built. Cohort sizes quoted are pre-deduplication and are subject to &sect;1.</p>
+
+<div class="q">
+<div class="qh">Q1 &mdash; What is the outcome we are predicting?
+  <span class="tag override">overrides specialist</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Three candidates: low bone mass or worse (T&nbsp;&le;&nbsp;&minus;1.0, 751 of 1,272),
+osteoporosis (T&nbsp;&le;&nbsp;&minus;2.5, 91), or the T-score as a number. Which is primary?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>T-score</blockquote>
+<p class="lab">Ruling</p>
+<p>The <strong>binary is primary</strong>, with T&nbsp;&le;&nbsp;&minus;1.0 as the headline.
+Classifiers lead; the T-score is reported alongside. This departs from the written answer and the
+document must record that it was overridden deliberately, with the reason: the clinical question is
+a referral decision, and a binary primary with a continuous secondary is what the reporting
+conventions in this space expect.</p>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q2 &mdash; Which bone site defines the T-score? <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Femoral neck only (722&nbsp;/&nbsp;81), total hip only (495&nbsp;/&nbsp;43), or the lower of the
+two (751&nbsp;/&nbsp;91)? Both sites exist for all 1,272, so the choice is definitional.</p>
+<p class="lab">Specialist answered</p>
+<blockquote>Use the lowest of the 2 sites, but run prediction model for both sites</blockquote>
+<p class="lab">Ruling</p>
+<ul>
+  <li>Lowest-of-two is primary.</li>
+  <li>Femoral-neck-only and total-hip-only run as <strong>pre-specified sensitivity analyses</strong>,
+  <strong>headline models only</strong> &mdash; not the full leaderboard.</li>
+  <li>The ablation grid runs <strong>once</strong>, on lowest-of-two.</li>
+  <li>A <strong>Riley minimum computed per target</strong> gates whether an arm is modelled or
+  reported descriptively.</li>
+</ul>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q3 &mdash; Is 1,272 the group we report? <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Removing anyone with a cycle in the last twelve months drops 170 women who reported a period and
+a further 42 whose status cannot be determined at all. Confirm 1,272?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>Yes &mdash; we report on 1272.</blockquote>
+<p class="lab">Ruling</p>
+<p>Confirmed. The 42 indeterminate women <strong>stay excluded</strong>, but methods must state they
+were dropped because their status could not be determined &mdash; <em>not</em> because they were
+premenopausal &mdash; and must show their characteristics. They are statistically indistinguishable
+from the retained cohort (mean T &minus;1.167 against &minus;1.162; age 58 against 59), so this is a
+missing-data rule bundled inside a cohort definition and should be visible as such.</p>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q4 &mdash; Repeat on all 1,484? And how is years-since-menopause defined after
+hysterectomy? <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Two parts. Adding the 212 excluded women makes the mix easier independently of the model (age
+alone rises 0.555&nbsp;&rarr;&nbsp;0.588; OST 0.733&nbsp;&rarr;&nbsp;0.747). And of the 1,272, 460
+report a hysterectomy and 206 removal of the ovaries, for whom the menopause date is the operation.</p>
+<p class="lab">Specialist answered</p>
+<blockquote>(left blank &mdash; settled verbally)</blockquote>
+<p class="lab">Ruling &mdash; part A</p>
+<p><strong>No repeat run on 1,484.</strong> A limitations line records that the 212 were never used.</p>
+<p class="lab">Ruling &mdash; part B</p>
+<ul>
+  <li>Years since menopause is computed for <strong>all 1,248</strong> who have it.</li>
+  <li>A <code>menopause_type</code> categorical is added: natural / surgical&ndash;ovaries removed /
+  surgical&ndash;ovaries kept / unknown.</li>
+  <li><code>menopause_natural</code> is <strong>rebuilt</strong> &mdash; it currently flags only 242
+  of 1,272 as natural when roughly 800 should be, since only 460 had a hysterectomy.</li>
+</ul>
+<p>The confound is real and measurable: women whose hysterectomy kept the ovaries average 19.7
+&ldquo;postmenopausal&rdquo; years yet have <em>better</em> bone density (&minus;1.137) than
+natural-menopause women at 9.0 years (&minus;1.252). Recorded as the user's ruling, verbally
+confirmed by the specialist. <strong>A date for that conversation is still needed</strong> &mdash;
+an undated verbal confirmation is the line a reviewer picks at.</p>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q5 &mdash; How much detail on estrogen use? <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Yes/no for 1,270; usable duration for 272 of 532 users. Yes/no only, duration added, or both?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>Primary &ndash; Y/N, secondary less than 2 years vs &gt; 2 years</blockquote>
+<p class="lab">Ruling</p>
+<ul>
+  <li>Primary: ever-use Y/N.</li>
+  <li>Secondary: four levels &mdash; never / &lt;2&nbsp;y / &ge;2&nbsp;y / duration unknown &mdash;
+  on the full 1,272, so no one is silently dropped.</li>
+  <li>Derivation coalesces <strong>all three routes</strong>: <code>RHQ560Q/U</code> (pills),
+  <code>RHQ576Q/U</code> (patch), <code>RHQ586Q/U</code> (combined), covering
+  <strong>376</strong> users.</li>
+</ul>
+<p>The 272&nbsp;&rarr;&nbsp;376 correction goes back to the specialist (errata&nbsp;2).</p>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q6 &mdash; Depression score: subset analysis only? <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>The earlier &ldquo;20% available&rdquo; was a coding error &mdash; the nine PHQ items are stored
+as words in five of six cycles. Corrected, the score exists for 1,271 of 1,272, and 127 (10.0%)
+score 10 or above. Main analysis? And the threshold as yes/no alongside?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>Yes and Yes</blockquote>
+<p class="lab">Ruling</p>
+<ul>
+  <li>Continuous <code>phq9_score</code> in the main feature set.</li>
+  <li><code>phq9_ge10</code> as a <strong>substitution arm</strong> &mdash; never both in one model.
+  A score and its own dichotomisation in the same design is collinear by construction and makes
+  both coefficients uninterpretable.</li>
+  <li>The 10.0% positive rate appears in the demographic table.</li>
+</ul>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q7 &mdash; Rheumatoid arthritis: predictor or description? <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Only 49 women have RA, and 2009&ndash;10 was thought not to type arthritis, leaving 98
+unclassifiable. Predictor with an explicit unknown category, or demographic table only?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>Subset analysis for the group who have answered that they have RA or no RA (we just need
+to trust their answer)</blockquote>
+<p class="lab">Ruling</p>
+<ul>
+  <li>Keep the subset ruling: the RA arm runs on <strong>1,142</strong> women with
+  <strong>84</strong> cases &mdash; not 49 (errata&nbsp;3 and&nbsp;4).</li>
+  <li><strong>Descriptive only</strong> at T&nbsp;&le;&nbsp;&minus;2.5.</li>
+  <li>The non-random exclusion of the 130 must be stated <em>wherever the arm appears</em>. Those
+  women are not missing at random &mdash; mean T &minus;0.934, better than every other group &mdash;
+  so the 1,142 arm carries a harder case mix than the main cohort and its AUC is not comparable to
+  the headline.</li>
+</ul>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q8 &mdash; Diabetes runs opposite to the prediction <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Mean T &minus;0.807 in diabetics against &minus;1.211 in non-diabetics; the relationship
+disappears once age and BMI are accounted for (p&nbsp;=&nbsp;0.79). Only 7 osteoporosis cases among
+diabetics. Does describing side-by-side, testing the BMI interaction, and building in non-diabetics
+match what you want?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>check if sample size of DM too less to be of significance</blockquote>
+<p>&hellip;and, separately, advised that diabetes is a predictor of low bone mass.</p>
+<p class="lab">Ruling</p>
+<ul>
+  <li><strong>Diabetes stays a predictor</strong>, judged by the with/without ablation rather than
+  by the direction of its coefficient. Dropping a variable because it went the wrong way is the
+  sign-fishing the diagnostics exist to catch.</li>
+  <li><strong>No <code>diabetes</code> entry in <code>EXPECTED_SIGNS</code>.</strong> Adding
+  <code>+1</code> on clinical intuition would fire the leak alarm on a correct finding.</li>
+  <li>The diabetic bone paradox &mdash; higher BMD alongside higher fracture risk, which a T-score
+  cannot show &mdash; goes <strong>near the front of limitations</strong>, not buried in it.</li>
+  <li>A pre-specified <strong>&minus;0.5&nbsp;SD T-score offset</strong> sensitivity arm for
+  diabetic women.</li>
+  <li>State that type&nbsp;1 and type&nbsp;2 cannot be separated in this survey.</li>
+  <li>The 33 borderline cases fold into <strong>non-diabetic (1,142)</strong>, with a
+  reclassification sensitivity run.</li>
+  <li>Descriptive side-by-side plus an interaction test on 1,272; modelling in non-diabetics only.</li>
+  <li>T&nbsp;&le;&nbsp;&minus;2.5 is carried by <strong>thresholding the T-score regression</strong>,
+  so that all 1,272 women contribute information rather than only the 91 positives. The 91-case
+  classifier is retained in METHODS as a labelled comparison.</li>
+</ul>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q9 &mdash; Vitamin D: blood level or dietary intake? <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Serum for 974, intake for 1,090. Serum primary, intake run separately, never in the same score?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>Use vitamin D level</blockquote>
+<p class="lab">What the data shows</p>
+<table>
+<thead><tr><th>Cycle</th><th class="num">n</th><th class="num">Serum</th><th class="num">Intake</th></tr></thead>
+<tbody>
+<tr><td>2005&ndash;2006</td><td class="num">173</td><td class="num">170</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>2007&ndash;2008</td><td class="num">228</td><td class="num">205</td><td class="num">224</td></tr>
+<tr><td>2009&ndash;2010</td><td class="num">227</td><td class="num">223</td><td class="num">226</td></tr>
+<tr><td>2013&ndash;2014</td><td class="num">219</td><td class="num">217</td><td class="num">216</td></tr>
+<tr><td>2017&ndash;2018</td><td class="num">161</td><td class="num">158</td><td class="num">160</td></tr>
+<tr><td>2017&ndash;2020</td><td class="num">264</td><td class="num"><strong>0</strong></td><td class="num">263</td></tr>
+</tbody>
+</table>
+<p>The two measures are missing in <strong>complementary</strong> cycles: serum is absent for all of
+2017&ndash;2020, intake for all of 2005&ndash;2006 (no supplement questionnaire exists for that
+cycle). So the serum arm rests on five cycles and the intake arm on a <em>different</em> five.
+Comparing their AUCs compares survey eras.</p>
+<p>Univariate association with the T-score is essentially nil:</p>
+<table>
+<thead><tr><th>Variable</th><th class="num">n</th><th class="num">r with T-score</th></tr></thead>
+<tbody>
+<tr><td><code>weight_kg</code></td><td class="num">1,267</td><td class="num">+0.487</td></tr>
+<tr><td><code>bmi</code></td><td class="num">1,271</td><td class="num">+0.437</td></tr>
+<tr><td><code>age</code></td><td class="num">1,272</td><td class="num">&minus;0.117</td></tr>
+<tr><td><code>total_calcium_mg</code></td><td class="num">1,090</td><td class="num">+0.015</td></tr>
+<tr><td><code>serum_vitd_nmol</code></td><td class="num">973</td><td class="num"><strong>&minus;0.012</strong></td></tr>
+<tr><td><code>total_vitd_mcg</code></td><td class="num">1,089</td><td class="num">&minus;0.019</td></tr>
+</tbody>
+</table>
+<p>The women without a serum value are otherwise unremarkable (age 58.6 against 58.2; mean T
+&minus;1.176 against &minus;1.158), so this exclusion is benign on observables, unlike Q7's.</p>
+<p class="lab">Ruling</p>
+<ul>
+  <li>Serum is the primary vitamin D measure, as advised.</li>
+  <li><strong>Vitamin D is out of the headline model.</strong> Serum covers 973 of 1,272; carrying
+  it in the main feature set would mean median-imputing a quarter of a variable that shows no
+  signal.</li>
+  <li>The two arms stay <strong>separate</strong> &mdash; serum on 973, intake on 1,089, each
+  against its own internal baseline, <strong>never cross-compared</strong>.</li>
+  <li>The near-zero correlation is stated <strong>in advance</strong> as an expectation, not
+  presented as a discovery after the run. A well-documented null is a legitimate result; the
+  specialist nominated serum expecting it to carry weight and should know beforehand.</li>
+  <li><code>serum_vitd_nmol</code> may trip the <code>EXPECTED_SIGNS</code> alarm, which lists it as
+  <code>&minus;1</code>. Same situation as <code>total_vitd_mcg</code> already: a real finding, not
+  a bug.</li>
+</ul>
+<p>Serum recovery for the 2017&ndash;2018 women now depends on the crosswalk in &sect;1.</p>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q10 &mdash; Family history: how much? <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Father's hip fracture (53 of 1,213); family history of osteoporosis (365); parental fracture
+before 50; a combined either-parent variable. Which?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>no hip fracture vs 1 hip fracture vs both parents hip fracture &hellip; first degree family
+history Y/N</blockquote>
+<p class="lab">What the data shows</p>
+<p>Coverage is excellent &mdash; the opposite of vitamin D. <code>OSQ150</code>,
+<code>OSQ160A/B</code>, <code>OSQ170</code>, <code>OSQ200</code> exist in <strong>all six
+cycles</strong> and all 1,272 women merge. They sit in the same <code>OSQ_*</code> files already
+read for <code>OSQ010A/B/C</code> and <code>OSQ130</code>, so this is a cheap addition.</p>
+<p>The requested three-level ordinal does not survive the counts:</p>
+<table>
+<thead><tr><th>Parents with hip fracture</th><th class="num">n</th><th class="num">Mean T</th><th class="num">T&nbsp;&le;&nbsp;&minus;1.0</th><th class="num">T&nbsp;&le;&nbsp;&minus;2.5</th></tr></thead>
+<tbody>
+<tr><td>0</td><td class="num">1,016</td><td class="num">&minus;1.119</td><td class="num">585</td><td class="num">70</td></tr>
+<tr><td>1</td><td class="num">185</td><td class="num">&minus;1.329</td><td class="num">118</td><td class="num">11</td></tr>
+<tr><td><strong>2</strong></td><td class="num"><strong>6</strong></td><td class="num">&minus;1.231</td><td class="num"><strong>3</strong></td><td class="num"><strong>1</strong></td></tr>
+<tr><td>unusable</td><td class="num">65</td><td class="num">&minus;1.349</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+</tbody>
+</table>
+<p>Six women have two affected parents, and the third level earns nothing: ordinal AUC 0.5156
+against binary (&ge;1) 0.5158 &mdash; collapsing is <em>better</em>.</p>
+<table>
+<thead><tr><th>Construct</th><th class="num">Yes</th><th class="num">No</th><th class="num">Unusable</th><th class="num">&Delta; mean T</th><th class="num">r</th><th class="num">p</th></tr></thead>
+<tbody>
+<tr><td>First-degree FH of osteoporosis (<code>OSQ150</code>)</td><td class="num">365</td><td class="num">843</td><td class="num">64</td><td class="num">&minus;0.142</td><td class="num">&minus;0.067</td><td class="num">0.020</td></tr>
+<tr><td>Either parent hip fracture (FRAX input)</td><td class="num">196</td><td class="num">1,016</td><td class="num">60</td><td class="num">&minus;0.238</td><td class="num">&minus;0.089</td><td class="num">0.0018</td></tr>
+</tbody>
+</table>
+<p>Both are real and correctly signed (unadjusted OR 1.36 for parental hip fracture), and nearly all
+the signal is maternal &mdash; 149 mothers against 53 fathers, consistent with the literature. But
+neither adds anything on top of age and BMI. Out-of-fold logistic AUC on the same 1,160 rows:</p>
+<table>
+<thead><tr><th>Model</th><th class="num">AUC</th></tr></thead>
+<tbody>
+<tr><td>age + bmi</td><td class="num">0.7169</td></tr>
+<tr><td>age + bmi + parental hip fracture</td><td class="num">0.7171</td></tr>
+<tr><td>age + bmi + FH osteoporosis</td><td class="num">0.7166</td></tr>
+<tr><td>age + bmi + both</td><td class="num">0.7168</td></tr>
+</tbody>
+</table>
+<p class="lab">Ruling</p>
+<ul>
+  <li><strong>Collapse the ordinal to binary</strong> &mdash; parental hip fracture Y/N is the
+  modelled feature. The 0&nbsp;/&nbsp;1&nbsp;/&nbsp;2 table is shown descriptively with the
+  n&nbsp;=&nbsp;6 stated. This departs from the written answer.</li>
+  <li><strong>Keep both features</strong> &mdash; parental hip fracture and first-degree family
+  history of osteoporosis &mdash; and let the ablation judge them.</li>
+  <li><strong>Drop parental fracture before 50</strong> &mdash; 16 women (7 mothers, 9 fathers).
+  Descriptive footnote at most.</li>
+  <li>State in advance, as with Q9, that family history is expected to add little.</li>
+</ul>
+<p class="lab">Two implementation notes</p>
+<ul>
+  <li><strong>The coding defect appears a fifth time.</strong> <code>P_OSQ</code> is numeric
+  (<code>1</code>/<code>2</code>/<code>7</code>/<code>9</code>) while the other five cycles are
+  label-decoded (<code>"Yes"</code>/<code>"No"</code>/<code>"Don't know"</code>). Any string-only
+  match silently drops all 264 women in 2017&ndash;2020. After <code>MCQ195</code> and
+  <code>MCQ191</code> this is a pattern and wants one shared yes/no helper, not a fifth bespoke
+  fix.</li>
+  <li><strong><code>REFUSED</code> is unsafe on the age-at-parental-fracture fields.</strong>
+  <code>OSQ180</code> has 149 non-null cohort values, of which 2 are the <code>999</code> sentinel
+  &mdash; giving <strong>147</strong>, exactly the specialist's figure. But the global
+  <code>REFUSED = [7, 9, 77, 99, 777, 999, 7777, 9999]</code> at
+  <code>OsteoporosisML.py:90</code> strips it to <strong>144</strong>, because <code>77</code> and
+  <code>99</code> are plausible ages for a mother's hip fracture. These columns need a
+  column-specific sentinel rule.</li>
+</ul>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q11 &mdash; Should we use the survey's population weights?
+  <span class="tag open">needs restating</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Weights make results represent the US population; omitting them describes only the women
+sampled. Our suggestion was unweighted for prediction work, since the goal is ranking individual
+patients rather than estimating prevalence, with the demographic table shown both ways.</p>
+<p class="lab">Specialist answered</p>
+<blockquote>Use NHANES wights and without weights and compare</blockquote>
+<p class="lab">Ruling</p>
+<p>The comparison <strong>is not constructible for this cycle set</strong>, and this must go back to
+the specialist rather than be quietly dropped. Three reasons compound:</p>
+<ol>
+  <li>The two-year cycles carry <code>WTMEC2YR</code>; <code>P_</code> carries
+  <code>WTMECPRP</code>, built on a 3.2-year basis. They are not on a common footing.</li>
+  <li>The cycles are <strong>non-contiguous</strong> &mdash; 2011&ndash;2012 is absent and
+  2015&ndash;2016 is deliberately excluded. NHANES pooled-weight guidance covers contiguous cycles
+  sharing a design stratification; there is no sanctioned formula for gapped sets.</li>
+  <li>Until the &sect;1 fix, two cycles <strong>overlap</strong>, and no weighting scheme can
+  repair double-counted respondents.</li>
+</ol>
+<p>What can honestly be offered instead: unweighted prediction work as the primary, plus
+<strong>within-cycle weighted descriptive estimates</strong> reported per cycle rather than pooled.
+That answers the spirit of the request &mdash; showing whether the sampled women differ from the
+population they were drawn from &mdash; without asserting a pooled weight that does not exist.</p>
+</div>
+</div>
+
+<div class="q">
+<div class="qh">Q12 &mdash; Confirm the inclusion limits <span class="tag locked">locked</span></div>
+<div class="qb">
+<p class="lab">Asked</p>
+<p>Restricted to non-Hispanic White women aged 50&ndash;65 with a hip DXA scan. Narrow definition
+reduces ethnic confounding but limits generalisability. Anything missing?</p>
+<p class="lab">Specialist answered</p>
+<blockquote>No</blockquote>
+<p class="lab">Ruling</p>
+<p>Confirmed, nothing to change. The generalisability limit stands as written in limitations.</p>
+</div>
+</div>
+
+<h2 id="errata">3. Errata in the answers document</h2>
+
+<p>Six figures in <code>Specialist_Review_Answers.docx</code> do not match the data. Every other
+quantitative claim checked out. Each of these was verified against
+<code>data/processed/option_b_v4_final.csv</code>.</p>
+
+<table>
+<thead><tr><th class="num">#</th><th>Item</th><th>As written</th><th>Correct</th><th>Consequence</th></tr></thead>
+<tbody>
+<tr>
+  <td class="num">1</td>
+  <td>Attrition after the menopause filter</td>
+  <td class="strike">1,271 retained, 213 removed</td>
+  <td class="fix">1,272 retained, 212 removed</td>
+  <td>The specialist signed off next to the wrong cell. <code>postmenopausal == 1</code> is exactly
+  1,272; 170 zeros; 42 NaN.</td>
+</tr>
+<tr>
+  <td class="num">2</td>
+  <td>Estrogen duration available</td>
+  <td class="strike">272 of 532 users</td>
+  <td class="fix">376 of 532</td>
+  <td>Coalescing all three routes (<code>RHQ560</code>, <code>RHQ576</code>, <code>RHQ586</code>)
+  recovers 104 more. Changes the Q5 trade-off materially &mdash; 71% of users, not 51%.</td>
+</tr>
+<tr>
+  <td class="num">3</td>
+  <td>Rheumatoid arthritis cases</td>
+  <td class="strike">49</td>
+  <td class="fix">84</td>
+  <td>84 &minus; 16 (<code>MCQ191</code> never read for 2009&ndash;10) &minus; 19 (2017&ndash;2020
+  numeric-coded) = 49, reproducing the error exactly.</td>
+</tr>
+<tr>
+  <td class="num">4</td>
+  <td>&ldquo;2009&ndash;10 does not ask which type of arthritis at all&rdquo;</td>
+  <td class="strike">false</td>
+  <td class="fix">It types via <code>MCQ191</code></td>
+  <td>39 osteoarthritis, 16 RA, 14 other, 2 psoriatic, 27 don't know. The 98 &ldquo;unclassifiable&rdquo;
+  women were an artefact of an unread column.</td>
+</tr>
+<tr>
+  <td class="num">5</td>
+  <td>Serum vitamin D available</td>
+  <td class="strike">974</td>
+  <td class="fix">973</td>
+  <td>Cosmetic, but it is quoted in two places.</td>
+</tr>
+<tr>
+  <td class="num">6</td>
+  <td>FH of osteoporosis &ldquo;complete for all 1,272 &hellip; 365 (28.7%)&rdquo;</td>
+  <td class="strike">1,272 denominator</td>
+  <td class="fix">1,208; 365 = 30.2%</td>
+  <td>64 women answered don't know or refused. The 365 itself is right.</td>
+</tr>
+</tbody>
+</table>
+
+<p>Errata 3 and 4 are the same root cause and belong to the coding-defect family that Q10 now shows
+appearing a fifth time. They are not independent slips; they are one unread column and one
+numeric-versus-label mismatch.</p>
+
+<div class="callout warn">
+<p>None of these six outranks the overlapping-cycle defect in &sect;1, which changes the cohort
+itself. When this goes back to the specialist, &sect;1 leads and the errata follow.</p>
+</div>
+
+<h2 id="open">4. Open items</h2>
+
+<ol>
+  <li><strong>Re-run the pipeline after the cycle fix.</strong> Every <em>n</em>, prevalence and AUC
+  in this document and in the published results table predates deduplication. The
+  <code>apply_filters</code> assert moves from 1,484 to 1,308.</li>
+  <li><strong>Rebuild <code>Notes/rewrite_implementation_plan.html</code>.</strong> It is still the
+  version built from <code>SpecialistUpdate.docx</code> before the answers arrived &mdash; byte-identical
+  to <code>Notes/.rewrite_plan.bak</code>, which confirms a backup was taken but no revision made.</li>
+  <li><strong>Get a date for the verbal Q4 conversation.</strong> An undated verbal confirmation
+  standing behind a cohort-definition decision is the weakest line in the record.</li>
+  <li><strong>Send the specialist &sect;1, then the errata, then the two overrides</strong> (Q1
+  binary-primary; Q10 ordinal collapsed to binary), and get revised rulings where the corrected
+  numbers change the trade-off &mdash; principally Q5 (376 not 272) and Q7 (84 not 49).</li>
+  <li><strong>Restate Q11</strong> with the within-cycle weighted alternative.</li>
+  <li><strong>Write the shared yes/no decoder</strong> covering label-decoded and numeric cycles,
+  and retire the per-variable fixes. Five instances is a pattern.</li>
+  <li><strong>Give the age-at-event columns a column-specific sentinel rule</strong> so the global
+  <code>REFUSED</code> list stops deleting plausible ages.</li>
+  <li><strong>The calibration figure is still missing.</strong> Step&nbsp;13 depends on its
+  probabilities being trustworthy; the only calibration plotting code left with
+  <code>SF_new1.py</code> and is recoverable via <code>git show 94bec2f:SF_new1.py</code>.</li>
+</ol>
+
+<footer>
+<p>Cohort figures throughout are pre-deduplication unless stated. Sources for &sect;1:
+NHANES 2017&ndash;March&nbsp;2020 analytic guidance and the NCHS report on pre-pandemic file
+development (National Health Statistics Reports). Verified against
+<code>data/processed/option_b_v4_final.csv</code> and the raw cycle files under
+<code>data/raw/</code> on 28 September 2026.</p>
+</footer>
+
+</div>
+</body>
+</html>

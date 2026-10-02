@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statistician Brief</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper:#fbfcfd; --surface:#ffffff; --surface-2:#f3f6f8;
+    --ink:#12171f; --ink-2:#39424e; --slate:#5a6572;
+    --rule:#dde3ea; --rule-2:#eaeff3;
+    --accent:#0e6b78; --accent-2:#e2f0f2;
+    --rust:#9a3412; --rust-bg:#fbeee8;
+    --green:#1a6b4a; --green-bg:#e8f2ec;
+    --amber:#7c5410; --amber-bg:#fbf2df;
+    --ff-display:"Newsreader",Georgia,"Times New Roman",serif;
+    --ff-body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --ff-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --measure:68ch;
+    --s1:.375rem; --s2:.75rem; --s3:1.125rem; --s4:1.75rem; --s5:2.5rem; --s6:4rem;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0e1216; --surface:#151b21; --surface-2:#1b2329;
+      --ink:#e8edf1; --ink-2:#bcc7d1; --slate:#8d9aa7;
+      --rule:#2a343d; --rule-2:#212a32;
+      --accent:#58b6c2; --accent-2:#17323a;
+      --rust:#e8a184; --rust-bg:#2e1c14;
+      --green:#7cc4a0; --green-bg:#14281f;
+      --amber:#dcb469; --amber-bg:#2a2113;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1216; --surface:#151b21; --surface-2:#1b2329;
+    --ink:#e8edf1; --ink-2:#bcc7d1; --slate:#8d9aa7;
+    --rule:#2a343d; --rule-2:#212a32;
+    --accent:#58b6c2; --accent-2:#17323a;
+    --rust:#e8a184; --rust-bg:#2e1c14;
+    --green:#7cc4a0; --green-bg:#14281f;
+    --amber:#dcb469; --amber-bg:#2a2113;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ff-body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:58rem;margin:0 auto;padding:var(--s5) var(--s3) var(--s6)}
+
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:var(--s3);margin-bottom:var(--s4)}
+  .eyebrow{font-family:var(--ff-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 var(--s2)}
+  h1{font-family:var(--ff-display);font-weight:500;font-size:clamp(2rem,5vw,2.8rem);line-height:1.1;letter-spacing:-.02em;margin:0 0 var(--s2);text-wrap:balance}
+  .standfirst{font-family:var(--ff-display);font-size:1.1rem;color:var(--ink-2);max-width:var(--measure);margin:0}
+  .meta{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);font-family:var(--ff-mono);font-size:.72rem;color:var(--slate);margin-top:var(--s3);padding-top:var(--s2);border-top:1px solid var(--rule-2)}
+  .meta b{color:var(--ink-2);font-weight:500}
+
+  nav.toc{background:var(--surface-2);border:1px solid var(--rule);padding:var(--s3);margin-bottom:var(--s5)}
+  nav.toc h2{font-family:var(--ff-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);margin:0 0 var(--s2);font-weight:500;border:none;padding:0;display:block}
+  nav.toc ol{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:var(--s1) var(--s3)}
+  nav.toc li{display:flex;gap:var(--s2);align-items:baseline}
+  nav.toc .num{font-family:var(--ff-mono);font-size:.72rem;color:var(--accent);min-width:1.4rem}
+  nav.toc a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid transparent}
+  nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-bottom-color:var(--accent)}
+
+  section{margin-bottom:var(--s6);scroll-margin-top:var(--s3)}
+  h2{font-family:var(--ff-display);font-weight:500;font-size:1.55rem;line-height:1.2;letter-spacing:-.01em;margin:0 0 var(--s3);padding-bottom:var(--s2);border-bottom:1px solid var(--rule);text-wrap:balance;display:flex;align-items:baseline;gap:var(--s2)}
+  h2 .sn{font-family:var(--ff-mono);font-size:.78rem;color:var(--accent);font-weight:500;flex-shrink:0}
+  h3{font-family:var(--ff-body);font-weight:600;font-size:.93rem;margin:var(--s4) 0 var(--s2);color:var(--ink)}
+  h4{font-family:var(--ff-mono);font-weight:500;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin:var(--s3) 0 var(--s2)}
+  p,ul,ol{max-width:var(--measure)}
+  p{margin:0 0 var(--s2)}
+  ul,ol{margin:0 0 var(--s2);padding-left:1.25rem}
+  li{margin-bottom:var(--s1)}
+  code{font-family:var(--ff-mono);font-size:.855em;background:var(--surface-2);padding:.1em .34em;border:1px solid var(--rule-2);border-radius:2px;white-space:nowrap}
+  strong{font-weight:600}
+  a{color:var(--accent)}
+
+  .chip{display:inline-block;font-family:var(--ff-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;padding:.15em .5em;border:1px solid currentColor;border-radius:2px;white-space:nowrap;font-weight:500}
+  .chip.locked{color:var(--green);background:var(--green-bg)}
+  .chip.open{color:var(--amber);background:var(--amber-bg)}
+  .chip.defect{color:var(--rust);background:var(--rust-bg)}
+
+  .tscroll{overflow-x:auto;margin:var(--s3) 0;border:1px solid var(--rule);background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:.815rem;min-width:32rem}
+  caption{text-align:left;font-family:var(--ff-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);padding:var(--s2) var(--s2) var(--s1)}
+  th{text-align:left;font-family:var(--ff-body);font-weight:600;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--slate);padding:var(--s2);border-bottom:1.5px solid var(--rule);vertical-align:bottom;background:var(--surface-2);white-space:nowrap}
+  td{padding:var(--s2);border-bottom:1px solid var(--rule-2);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  .num,td.n,th.n{font-family:var(--ff-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  td.vname{font-family:var(--ff-mono);font-size:.78rem;white-space:nowrap}
+  tr.tot td{border-top:1.5px solid var(--rule);font-weight:600;background:var(--surface-2)}
+  tr.hl td{background:var(--accent-2)}
+  .sub{color:var(--slate);font-size:.92em}
+  .was{color:var(--slate);text-decoration:line-through;font-size:.92em}
+
+  .note{border-left:3px solid var(--accent);background:var(--surface);padding:var(--s3);margin:var(--s3) 0;max-width:var(--measure)}
+  .note.warn{border-left-color:var(--rust);background:var(--rust-bg)}
+  .note.ok{border-left-color:var(--green);background:var(--green-bg)}
+  .note.wide{max-width:none}
+  .note>:last-child{margin-bottom:0}
+  .note h4{margin-top:0}
+
+  .press{border:1px solid var(--rule);background:var(--surface);padding:var(--s3);margin-bottom:var(--s3)}
+  .press.major{border-color:var(--rust);border-width:2px}
+  .press header{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:baseline;margin-bottom:var(--s2)}
+  .press h3{margin:0;font-size:1rem}
+  .press .qa{display:grid;grid-template-columns:auto 1fr;gap:var(--s2) var(--s3);margin-top:var(--s2)}
+  .press .qa dt{font-family:var(--ff-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);padding-top:.2rem;white-space:nowrap}
+  .press .qa dd{margin:0;font-size:.9rem}
+
+  .ladder{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);margin:var(--s3) 0}
+  .rung{background:var(--surface);padding:var(--s2) var(--s3);display:grid;grid-template-columns:3.2rem 1fr auto;gap:var(--s3);align-items:baseline}
+  .rung .id{font-family:var(--ff-mono);font-weight:500;color:var(--accent);font-size:.85rem}
+  .rung .def{font-size:.86rem;color:var(--ink-2)}
+  .rung .fig{font-family:var(--ff-mono);font-variant-numeric:tabular-nums;font-size:.82rem;white-space:nowrap;text-align:right}
+  .rung .fig b{font-size:1.02rem;color:var(--ink)}
+  .rung.primary{background:var(--accent-2)}
+  .rung.thin .fig b{color:var(--rust)}
+
+  .schema{font-family:var(--ff-mono);font-size:.76rem;background:var(--surface-2);border:1px solid var(--rule);padding:var(--s3);overflow-x:auto;margin:var(--s2) 0 var(--s3);line-height:1.75;white-space:pre}
+  .schema .fn{color:var(--accent);font-weight:500}
+
+  .signoff{border:2px solid var(--ink);padding:var(--s4);margin-top:var(--s5)}
+  .signoff h2{border-bottom-color:var(--rule)}
+  .qlist{list-style:none;padding:0;margin:0;max-width:none}
+  .qlist>li{padding:var(--s3) 0;border-bottom:1px solid var(--rule-2);display:grid;grid-template-columns:auto 1fr;gap:var(--s3);align-items:start;margin:0}
+  .qlist>li:last-child{border-bottom:none;padding-bottom:0}
+  .qlist .who{font-family:var(--ff-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);padding-top:.25rem;white-space:nowrap}
+  .qlist p{margin:0}
+  .qlist p+p{margin-top:var(--s1)}
+
+  footer{margin-top:var(--s6);padding-top:var(--s3);border-top:1px solid var(--rule);font-family:var(--ff-mono);font-size:.7rem;color:var(--slate)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media (max-width:34rem){
+    .rung{grid-template-columns:2.6rem 1fr}
+    .rung .fig{grid-column:2;text-align:left}
+    .qlist>li,.press .qa{grid-template-columns:1fr;gap:var(--s1)}
+  }
+  @media print{
+    body{background:#fff;font-size:10.5pt}
+    .press,.note,.tscroll,.ladder{break-inside:avoid}
+    h2{break-after:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Statistical review brief &middot; 29 September 2026</p>
+  <h1>Predicting Low Bone Density Without DXA</h1>
+  <p class="standfirst">The design, the model panel, the validation scheme and the three places where we think you will push hardest &mdash; each with what we did about it and what we still need ruled on.</p>
+  <div class="meta">
+    <span><b>Cohort</b> n = 1,111</span>
+    <span><b>Events</b> 645 at T &le; &minus;1.0 &middot; 76 at T &le; &minus;2.5</span>
+    <span><b>Models</b> 5 classifiers + 3 regressors + OST</span>
+    <span><b>Status</b> pre-specified, not yet run</span>
+  </div>
+</header>
+
+<div class="note wide warn">
+  <h4>Read this first: no results are quoted here</h4>
+  <p>Earlier versions of this analysis reported an AUC of 0.810 at T&nbsp;&le;&nbsp;&minus;1.0 and 0.806 at T&nbsp;&le;&nbsp;&minus;2.5. <b>Both are withdrawn.</b> Two of the six survey cycles turned out to be the same respondents under re-numbered identifiers, so 161 women appeared twice and exact duplicates straddled cross-validation folds (&sect;06). This brief describes a <b>pre-specified plan awaiting its first clean run</b>. Every count in it is recomputed on the deduplicated cohort; no AUC is asserted.</p>
+</div>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><span class="num">01</span><a href="#design">The design in one page</a></li>
+    <li><span class="num">02</span><a href="#panel">Model panel</a></li>
+    <li><span class="num">03</span><a href="#cohorts">Cohort ladder</a></li>
+    <li><span class="num">04</span><a href="#arms">Analysis arms</a></li>
+    <li><span class="num">05</span><a href="#validation">Validation &amp; multiplicity</a></li>
+    <li><span class="num">06</span><a href="#pressure">Three pressure points</a></li>
+    <li><span class="num">07</span><a href="#ask">What we need ruled on</a></li>
+  </ol>
+</nav>
+
+<!-- ================= 01 -->
+<section id="design">
+  <h2><span class="sn">01</span> The design in one page</h2>
+  <p><b>Question.</b> Can routinely-available clinical and questionnaire variables identify women who should be referred for a DXA scan, in a group where screening guidelines are ambiguous?</p>
+  <p><b>Data.</b> NHANES, five survey cycles (2005&ndash;06, 2007&ndash;08, 2009&ndash;10, 2013&ndash;14, 2017&ndash;20). Cross-sectional.</p>
+  <p><b>Cohort.</b> Non-Hispanic White women aged 50&ndash;65, postmenopausal, with a femoral-neck DXA result. <b>n = 1,111.</b></p>
+  <p><b>Outcome.</b> T-score derived from femoral-neck and total-hip BMD against fixed NHANES III young-adult reference means and SDs; <code>t_score</code> is the <b>minimum</b> of the two sites (ISCD convention), rounded to three decimals before thresholding.</p>
+  <div class="tscroll">
+    <table>
+      <caption>Targets</caption>
+      <thead><tr><th>Target</th><th>Definition</th><th class="n">Events</th><th class="n">Prevalence</th><th class="n">EPV @ 17</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>Primary</b> &mdash; osteopenia or worse</td><td class="vname">t_score &le; &minus;1.0</td><td class="n">645</td><td class="n">58.1%</td><td class="n">27.4 <span class="sub">*</span></td></tr>
+        <tr><td><b>Secondary</b> &mdash; osteoporosis</td><td class="vname">t_score &le; &minus;2.5</td><td class="n">76</td><td class="n">6.8%</td><td class="n">4.5</td></tr>
+        <tr><td><b>Continuous</b></td><td class="vname">t_score</td><td class="n">1,111</td><td class="n">&mdash;</td><td class="n">65.4</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="sub">* At T &le; &minus;1.0 the minority class is the <em>non</em>-events (466), so EPV is computed on those. The binding constraint throughout is the osteoporosis target.</p>
+  <p><b>Critically: the DXA measurement is excluded from the feature set.</b> Both BMD columns, both site T-scores, the combined T-score and both binary labels are removed before modelling &mdash; the scan is the thing being predicted away. Feature selection is being rewritten from an exclusion list to an <b>allowlist</b> so that a new BMD-derived column cannot enter by omission.</p>
+  <p><b>Comparator.</b> OST &mdash; <code>0.2 &times; (weight_kg &minus; age)</code> &mdash; a validated two-input screening formula. No AUC is reported without it; the primary inferential quantity is <b>&Delta;AUC versus OST with a bootstrap confidence interval</b>, not AUC alone.</p>
+  <p><b>Features.</b> 17 in the primary set, spanning anthropometry, reproductive history, comorbidity, medication, lifestyle, diet, socioeconomic position and family history. Full per-variable specification &mdash; source, valid range, sentinel codes, derivation, transform, imputation rule &mdash; is &sect;05 of <code>rewrite_implementation_plan.html</code>.</p>
+</section>
+
+<!-- ================= 02 -->
+<section id="panel">
+  <h2><span class="sn">02</span> Model panel</h2>
+  <p>Eight estimators plus the comparator. Everything is wrapped in a single pipeline so that every fitted transformation is learned inside the training fold.</p>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>#</th><th>Estimator</th><th>Target</th><th>Regularisation / imbalance</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>Logistic regression, L2</td><td>binary</td><td><code>class_weight='balanced'</code></td></tr>
+        <tr><td class="n">2</td><td>Elastic-net logistic</td><td>binary</td><td>&alpha;, &lambda; by inner CV; <code>class_weight='balanced'</code></td></tr>
+        <tr><td class="n">3</td><td>Random forest</td><td>binary</td><td><code>class_weight='balanced'</code>, <code>min_samples_leaf=1</code>, OOB on</td></tr>
+        <tr><td class="n">4</td><td>LightGBM</td><td>binary</td><td><code>max_depth=2</code>, <code>reg_lambda=50</code>, balanced</td></tr>
+        <tr><td class="n">5</td><td>XGBoost</td><td>binary</td><td><code>max_depth=2</code>, <code>reg_lambda=50</code>, <code>scale_pos_weight</code></td></tr>
+        <tr><td class="n">6</td><td>RidgeCV</td><td><code>t_score</code></td><td>&lambda; by inner CV; never sees a label</td></tr>
+        <tr><td class="n">7</td><td>Random forest regressor</td><td><code>t_score</code></td><td>&mdash;</td></tr>
+        <tr><td class="n">8</td><td>LightGBM regressor</td><td><code>t_score</code></td><td><code>max_depth=2</code>, <code>reg_lambda=50</code></td></tr>
+        <tr class="hl"><td class="n">&mdash;</td><td>OST <span class="sub">0.2 &times; (weight &minus; age)</span></td><td>comparator</td><td>fixed formula, no fitting</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="schema"><span class="fn">Pipeline</span> = ColumnTransformer( impute -> encode -> scale ) -> estimator
+           median for continuous, mode for categorical
+           ALL fitted inside the training fold, refit per fold
+<span class="fn">Seed</span>     = 42 throughout; the run reproduces exactly</div>
+  <p><b>The boosters are deliberately over-regularised.</b> Depth 2 with <code>reg_lambda=50</code> on n = 1,111 is not a tuned optimum; it is a constraint against trivial overfitting at this sample size. We would rather under-fit a booster than present a tuned one on 76 events.</p>
+  <div class="note">
+    <h4>Two things about the random forest that usually get queried</h4>
+    <p><b>The in-sample AUC is 1.000 by construction</b> &mdash; on <em>shuffled</em> labels it still reaches 0.997. So the leaderboard reports train, test and <b>out-of-bag</b> AUC side by side, and models are not ranked by their train/test gap. OOB is the honest in-sample figure for a bagged ensemble.</p>
+    <p><b><code>min_samples_leaf=1</code> was selected by nested CV, not assumed.</b> Raising it to close the gap lowers test AUC monotonically across the grid. The gap is the price of the performance rather than a defect to regularise away. The tuning curve ships as <code>rf_leaf_tuning.csv</code>.</p>
+  </div>
+  <p><b>One regressor fit serves both cutoffs.</b> The T-score regressors are fitted once on the continuous outcome and thresholded twice. They never see a binary label, which is what makes them the route of choice for the osteoporosis target &mdash; see <a href="#pressure">&sect;06</a>.</p>
+</section>
+
+<!-- ================= 03 -->
+<section id="cohorts">
+  <h2><span class="sn">03</span> Cohort ladder</h2>
+  <p>Each model is reported on the largest cohort its variables permit. Missingness is structural rather than scattered for several variables &mdash; whole survey cycles lack whole instruments &mdash; so a single complete-case cohort would discard about a third of the sample for variables that are secondary.</p>
+  <div class="ladder">
+    <div class="rung primary"><span class="id">C0</span><span class="def">Near-complete variables only &mdash; <b>primary</b></span><span class="fig"><b>1,111</b> &middot; 645 / 76 &middot; EPV 4.5</span></div>
+    <div class="rung primary"><span class="id">C1</span><span class="def"><span class="sub">branch A &mdash;</span> + activity, calcium, vitamin D intake <span class="sub">drops 2005&ndash;06</span></span><span class="fig"><b>929</b> &middot; 548 / 67 &middot; EPV 3.9</span></div>
+    <div class="rung primary"><span class="id">C2</span><span class="def"><span class="sub">branch B &mdash;</span> + serum 25(OH)D <span class="sub">keeps all of 2005&ndash;06</span></span><span class="fig"><b>972</b> &middot; 566 / 68 &middot; EPV 4.0</span></div>
+    <div class="rung"><span class="id">C3</span><span class="def">C1 &cap; C2</span><span class="fig"><b>793</b> &middot; 470 / 59 &middot; EPV 3.5</span></div>
+    <div class="rung"><span class="id">C4</span><span class="def">Rheumatoid arthritis resolvable</span><span class="fig"><b>988</b> &middot; 71 RA &middot; 5 osteo</span></div>
+    <div class="rung thin"><span class="id">C5</span><span class="def">Strict complete case &mdash; nothing imputed</span><span class="fig"><b>711</b> &middot; 419 / 51 &middot; EPV 3.0</span></div>
+  </div>
+  <p class="sub">n &middot; events at T &le; &minus;1.0 / T &le; &minus;2.5 &middot; events per predictor at 17 features on the osteoporosis target.</p>
+  <div class="note warn">
+    <h4>C1 and C2 branch; they do not nest</h4>
+    <p>Only C0 contains all the others. <b>C1 and C2 are parallel restrictions that discard different cycles</b> &mdash; C1 drops all of 2005&ndash;06 for want of activity and supplement instruments; C2 loses the 2017&ndash;20 women with no recoverable serum value. <b>136 women are in C1 but not C2; 179 are in C2 but not C1.</b></p>
+    <p>An AUC on C1 and an AUC on C2 therefore describe different populations and must not be read as a progression. <b>Every comparison in this plan that carries a claim holds one cohort fixed and varies only the feature set</b> &mdash; the ablation grid, the two vitamin D arms, the diabetes strata.</p>
+  </div>
+  <h3>Imputation principle</h3>
+  <p><b>Scattered nonresponse is imputed; structural absence is not.</b> Nine variables are missing for under 6% of the cohort in a pattern unrelated to cycle &mdash; those get in-fold median or mode. Four are missing for an entire cycle because the instrument did not exist, and imputing those would mean inventing one era's values from another era's women; those drive the cohort tiers instead. The split ships as <code>missingness_by_variable.csv</code>.</p>
+  <p>Median means the 50th percentile of observed values, recomputed from training rows within each fold &mdash; never once over the full dataset.</p>
+</section>
+
+<!-- ================= 04 -->
+<section id="arms">
+  <h2><span class="sn">04</span> Analysis arms</h2>
+  <p>Eight arms. The <b>claim-bearing</b> column is what we intend to make an inferential statement about; everything else is descriptive or confirmatory and will be labelled as such in the output.</p>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Arm</th><th>What it does</th><th>Cohort</th><th>Claim-bearing?</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>A</b> Primary</td><td>Full panel, nested CV, &Delta;AUC vs OST with bootstrap CI. <b>The study result.</b></td><td>C0</td><td><b>Yes</b> &mdash; one primary comparison</td></tr>
+        <tr><td><b>B</b> Ablation</td><td>Leave-one-variable-out; &Delta;AUC per variable per model. Runs once, on lowest-of-two.</td><td>C0</td><td>Exploratory &mdash; see multiplicity below</td></tr>
+        <tr><td><b>C</b> Diabetes</td><td>Descriptive strata + diabetes&times;BMI interaction + modelling in non-diabetics + a pre-specified &minus;0.5 SD T-score offset arm.</td><td>C0</td><td>Interaction test only</td></tr>
+        <tr><td><b>D</b> Vitamin D</td><td>Two arms: serum, and intake. Each with/without its own variable at constant n, against its own baseline. <b>Never cross-compared.</b></td><td>C2 / C1</td><td>Two within-cohort contrasts</td></tr>
+        <tr><td><b>E</b> Depression, sleep</td><td>Categorical versions <em>substituted</em> for the continuous ones &mdash; never both in one model.</td><td>C0</td><td>No &mdash; specification check</td></tr>
+        <tr><td><b>F</b> Site sensitivity</td><td>Femoral-neck-only and total-hip-only targets, headline models only.</td><td>C0</td><td>No &mdash; confirmatory</td></tr>
+        <tr><td><b>G</b> Rheumatoid arthritis</td><td>Subset with resolvable RA status. Descriptive only at T &le; &minus;2.5.</td><td>C4</td><td>Conditional on the Riley gate</td></tr>
+        <tr><td><b>H</b> Weighting</td><td>Within-cycle weighted descriptives, reported per cycle. <b>Not</b> a weighted-vs-unweighted model comparison &mdash; see &sect;07.</td><td>per cycle</td><td>No &mdash; descriptive</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Why E is a substitution and not an addition</h3>
+  <p>PHQ-9 continuous and PHQ-9 &ge; 10 are a score and its own dichotomisation. Entered together they are collinear by construction, both coefficients become uninterpretable, and the diagnostic table we use to detect exactly that pathology would be firing on our own specification. Same for sleep hours against the five sleep bands.</p>
+  <h3>Why D is two arms and not one</h3>
+  <p>The two vitamin D measures are missing in <em>complementary</em> cycles: serum was unreleased for 2017&ndash;20, and intake is absent for 2005&ndash;06, which has no supplement questionnaire. A serum AUC against an intake AUC would compare survey eras, not measures. Note also that <b>neither variable enters the headline model</b> &mdash; serum covers 972 of 1,111, and carrying it in the primary set would mean imputing 12.5% of a variable that shows no marginal association:</p>
+  <div class="tscroll">
+    <table>
+      <caption>Pearson r with t_score, postmenopausal cohort &mdash; stated in advance</caption>
+      <thead><tr><th>Variable</th><th class="n">n</th><th class="n">r</th><th class="n">p</th></tr></thead>
+      <tbody>
+        <tr><td class="vname">weight_kg</td><td class="n">1,107</td><td class="n">+0.501</td><td class="n">&lt;0.001</td></tr>
+        <tr><td class="vname">bmi</td><td class="n">1,110</td><td class="n">+0.456</td><td class="n">&lt;0.001</td></tr>
+        <tr><td class="vname">age</td><td class="n">1,111</td><td class="n">&minus;0.112</td><td class="n">0.0002</td></tr>
+        <tr class="hl"><td class="vname">serum_vitd_nmol</td><td class="n">972</td><td class="n">&minus;0.012</td><td class="n">0.70</td></tr>
+        <tr class="hl"><td class="vname">total_vitd_mcg</td><td class="n">929</td><td class="n">&minus;0.012</td><td class="n">0.73</td></tr>
+        <tr class="hl"><td class="vname">total_calcium_mg</td><td class="n">930</td><td class="n">+0.009</td><td class="n">0.77</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The clinical collaborator nominated serum expecting it to carry weight. Recording the null <em>before</em> the run is what makes it a finding rather than a disappointment.</p>
+  <h3>Why C keeps diabetes in the model despite an inverted sign</h3>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th></th><th class="n">n</th><th class="n">Mean BMI</th><th class="n">Mean T</th><th class="n">T &le; &minus;2.5</th></tr></thead>
+      <tbody>
+        <tr><td>Diabetic</td><td class="n">112</td><td class="n">33.6</td><td class="n">&minus;0.727</td><td class="n">5 <span class="sub">(4.5%)</span></td></tr>
+        <tr><td>Non-diabetic</td><td class="n">969</td><td class="n">28.1</td><td class="n">&minus;1.197</td><td class="n">70 <span class="sub">(7.2%)</span></td></tr>
+        <tr><td>Borderline / unknown</td><td class="n">30</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td class="n">&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Diabetic women have <em>better</em> density, and it is body weight: 5.5 kg/m&sup2; more BMI, and BMI is the second-strongest predictor in the dataset. Adjusted for age and BMI the association disappears. This is the documented <b>type-2 diabetes bone paradox</b> &mdash; normal-to-high BMD with <em>higher</em> fracture risk, mediated by bone quality and falls rather than density.</p>
+  <p>Consequences for the build: diabetes is judged by its ablation &Delta;AUC rather than by coefficient direction; it gets <b>no entry</b> in the expected-sign diagnostic, since adding one on clinical intuition would fire a leak alarm on a correct finding; <code>DIQ010</code> cannot separate type 1 from type 2, and methods says so; the 30 borderline respondents fold into non-diabetic with a reclassification sensitivity run; and the caveat that BMD under-detects fracture risk in diabetes sits at the <b>front</b> of the limitations register.</p>
+</section>
+
+<!-- ================= 05 -->
+<section id="validation">
+  <h2><span class="sn">05</span> Validation &amp; multiplicity</h2>
+  <h3>Nested cross-validation for the headline</h3>
+  <div class="schema"><span class="fn">Outer</span>  5-fold StratifiedKFold, seed 42        -> the reported AUC
+<span class="fn">Inner</span>  3-fold on the outer training rows only -> selects the model
+<span class="fn">Group</span>  respondent key travels with every split
+       no two records from one person can straddle a fold
+<span class="fn">Refit</span>  impute + encode + scale refitted per fold</div>
+  <p>Fitting eight models and reporting the best is biased upward, because the held-out data helped choose the winner. Nested CV moves the choosing inside the scoring, so no test row contributes to selecting the model that is scored on it. On the superseded cohort this moved the osteoporosis figure from 0.833 to 0.806 &mdash; which is precisely why the leaderboard is <b>not</b> the number we quote, and why 0.833 was never quotable.</p>
+  <h3>Interval estimation</h3>
+  <ul>
+    <li><b>Primary.</b> Bootstrap CI on <b>&Delta;AUC versus OST</b>, paired on the same resampled rows, so the model and the comparator are always evaluated on identical data.</li>
+    <li><b>Ablation.</b> Bootstrap CIs only for variables whose point &Delta;AUC actually moves; we are not computing 136 intervals to find the ones that are zero.</li>
+    <li><b>Calibration.</b> A calibration curve ships with the threshold sweep. The referral thresholds come from a <code>CalibratedClassifierCV</code> fit, so the probabilities have to be shown to be trustworthy rather than asserted.</li>
+  </ul>
+  <div class="note warn">
+    <h4>Multiplicity &mdash; we want your ruling, and we have not chosen a correction</h4>
+    <p>The structure is deliberately asymmetric. <b>Arm A is one primary comparison</b>: one target, one cohort, model chosen inside the nested loop, one &Delta;AUC against OST. That is the confirmatory test and it is not corrected because it is not multiple.</p>
+    <p><b>Arm B is the hotspot:</b> 17 variables &times; 8 models &asymp; 136 &Delta;AUC estimates. We currently treat it as <b>exploratory and rank within model</b>, with no family-wise correction and no p-values attached to individual variables. Arms C&ndash;H add a further handful of contrasts, each labelled.</p>
+    <p>Two questions for you. <b>Is within-model ranking without correction the right treatment for the ablation grid</b>, or do you want a formal procedure (and if so, over which family)? And <b>does the diabetes&times;BMI interaction test count as confirmatory</b> &mdash; it is the one pre-specified hypothesis test outside Arm A, and it is currently uncorrected.</p>
+  </div>
+  <h3>Leakage controls</h3>
+  <ul>
+    <li><b>Target.</b> BMD columns, both site T-scores, the combined T-score and both labels are excluded from features. Being rewritten as an allowlist so omission cannot leak.</li>
+    <li><b>Preprocessing.</b> Imputation, encoding and scaling are inside the pipeline, refit per fold.</li>
+    <li><b>Person-level.</b> Group-aware folds plus a load-time uniqueness assertion on a physical-measurement fingerprint. This is the guard that was missing (&sect;06).</li>
+    <li><b>Diagnostic alarm.</b> Any standardised coefficient above 2.0 in magnitude raises a leak flag, on the reasoning that no non-BMD variable in this domain should carry that much standardised signal.</li>
+  </ul>
+  <div class="note">
+    <h4>On <code>coefficient_diagnostics.csv</code></h4>
+    <p>It exists to detect leaks and sign errors, is in standardised units, and is unstable across collinear predictors. <b>It is not a findings table</b> and the script says so in its own output. Two variables are expected to trip the sign check &mdash; both vitamin D measures &mdash; and we read that as reverse causation (supplementation follows diagnosis) rather than as a defect.</p>
+  </div>
+  <h3>Reported instead of tree importances</h3>
+  <p>Gini importance and split counts are unsigned and biased toward continuous features over binary ones; in this dataset they inverted the ranking that permutation importance gives. <b>Permutation importance</b> &mdash; mean out-of-fold AUC lost when a column is shuffled &mdash; is what appears in the clinical predictor table, because it is model-agnostic and comparable across the five model families.</p>
+</section>
+
+<!-- ================= 06 -->
+<section id="pressure">
+  <h2><span class="sn">06</span> Three pressure points</h2>
+  <p>These are the three we expect you to go after, stated as problems rather than as solutions.</p>
+
+  <div class="press major">
+    <header><h3>1 &mdash; The osteoporosis target is underpowered and no cohort fixes it</h3><span class="chip defect">4.5 events per predictor</span></header>
+    <p><b>76 events, 17 features.</b> The best available cohort gives 4.5 EPV; the strict cohort gives 3.0. Deduplication cost 15 osteoporosis events and took a thin target thinner. No cohort in the ladder clears a Riley <em>et al.</em> minimum for this target.</p>
+    <dl class="qa">
+      <dt>What we do</dt>
+      <dd>A <b>Riley gate</b> runs before any arm is modelled. It computes a minimum sample size for that arm's target, cohort and feature count; an arm that clears it is modelled and reported with an AUC, and an arm that does not is reported <b>descriptively with the shortfall stated</b>. It applies uniformly &mdash; site arms, the RA subset, the diabetic stratum.</dd>
+      <dt>For T &le; &minus;2.5</dt>
+      <dd>Carried by <b>thresholding the T-score regression</b>, which is fitted on all 1,111 women rather than on 76 events. The direct 76-event classifier is retained in the METHODS tier as a labelled comparison and is <b>not presented as a result</b>.</dd>
+      <dt>Your call</dt>
+      <dd>Is the regression-and-threshold route acceptable as the primary estimator for the osteoporosis cutoff, and is the Riley gate's minimum the criterion you would use? We have not fixed the gate's parameterisation.</dd>
+    </dl>
+  </div>
+
+  <div class="press">
+    <header><h3>2 &mdash; The feature-availability cohorts branch rather than nest</h3><span class="chip open">comparability</span></header>
+    <p>C1 and C2 each drop a different survey cycle for a different missing instrument. 136 women sit in C1 alone and 179 in C2 alone. Any table listing C0, C1 and C2 AUCs down a column invites reading them as a progression, which would be wrong.</p>
+    <dl class="qa">
+      <dt>What we do</dt>
+      <dd>Every claim-bearing contrast holds the cohort fixed and varies only the feature set, at constant n. The output carries <code>cohort</code> and <code>n</code> on every row, and the branching is stated wherever the ladder appears.</dd>
+      <dt>Residual risk</dt>
+      <dd>It is a presentation hazard as much as a statistical one. We would welcome a view on whether the cohorts should be reported in separate tables rather than separate rows.</dd>
+    </dl>
+  </div>
+
+  <div class="press">
+    <header><h3>3 &mdash; Serum vitamin D is partly recovered by record linkage</h3><span class="chip open">non-standard</span></header>
+    <p>Two of the original six cycles were the same respondents (below). Dropping the duplicate removed 157 women who had a serum 25(OH)D value, because that assay was never released for the pre-pandemic file. We recover them by matching each record in the dropped release to its counterpart in the retained one on an exact fingerprint of <b>femoral-neck BMD + total-hip BMD + age + weight + height</b>. <b>175 pairs match; 172 carry a serum value</b>; coverage goes from 815 to 972 of 1,111.</p>
+    <dl class="qa">
+      <dt>Safeguards</dt>
+      <dd>Applied only where the retained record's value is null, never overwriting an observed value; used only in the vitamin D arm; audited to <code>vitd_crosswalk_audit.csv</code> with the match rule, pairs found, values transferred and any one-to-many match (currently none); named explicitly in methods.</dd>
+      <dt>Known objection</dt>
+      <dd>The match key contains BMD, which is target-derived. It is a record-linkage key rather than a feature, and the crosswalk runs before feature construction so the intermediates cannot reach the design matrix &mdash; but it is a real thing to be uneasy about, and the fallback is to accept 815 and a smaller arm.</dd>
+      <dt>Your call</dt>
+      <dd>Is the crosswalk defensible with those safeguards, or should the vitamin D arm run on observed values only?</dd>
+    </dl>
+  </div>
+
+  <div class="note wide warn">
+    <h4>Background to all three: the duplicated cycle</h4>
+    <p>The pipeline listed both the 2017&ndash;2018 cycle and the 2017&ndash;March 2020 pre-pandemic release. The latter <em>contains</em> the former: field work stopped in March 2020, so the partial 2019&ndash;20 sample was pooled with the complete 2017&ndash;18 cycle to restore representativeness. Respondent identifiers were re-issued in disjoint ranges, so a duplicate check on the ID found nothing.</p>
+    <p>Three independent confirmations: all 176 cohort women from the smaller release match a woman in the larger one exactly on five continuous physical measurements, while the same test between non-overlapping cycles returns zero; 7,585 of 7,585 body-measurement fingerprints in one file recur in the other; and the matched pairs agree on all seven derived variables tested.</p>
+    <p>Effect on the published analysis: <b>161 postmenopausal women were present twice, 12.7% of the cohort, with exact duplicates able to straddle training and test folds.</b> That inflates every cross-validated estimate, nested CV included. Cohort 1,484 &rarr; 1,308; analysis cohort 1,272 &rarr; <b>1,111</b>; osteoporosis events 91 &rarr; <b>76</b>. All prior AUCs are withdrawn, and group-aware folds plus a fingerprint assertion are now standing guards.</p>
+  </div>
+</section>
+
+<!-- ================= 07 -->
+<section id="ask" class="signoff">
+  <h2><span class="sn">07</span> What we need ruled on</h2>
+  <ul class="qlist">
+    <li><span class="who">Power</span><div><p><b>The osteoporosis cutoff.</b> Is thresholding the T-score regression the right primary estimator at T&nbsp;&le;&nbsp;&minus;2.5 given 76 events, and how would you parameterise the Riley gate that decides which arms get an AUC at all?</p></div></li>
+    <li><span class="who">Multiplicity</span><div><p><b>The ablation grid.</b> 17 variables &times; 8 models. Currently exploratory, ranked within model, no correction, no per-variable p-values. Is that the right treatment, or do you want a formal procedure over a defined family? And should the diabetes&times;BMI interaction &mdash; the one pre-specified test outside the primary &mdash; be corrected?</p></div></li>
+    <li><span class="who">Linkage</span><div><p><b>The vitamin D crosswalk.</b> Acceptable as a documented non-standard step with the stated safeguards, or should that arm run on observed serum only (815 of 1,111)?</p></div></li>
+    <li><span class="who">Weights</span><div><p><b>Survey weighting.</b> We do not believe a valid pooled weight exists for this cycle set: the two-year cycles carry <code>WTMEC2YR</code> while the pre-pandemic file carries <code>WTMECPRP</code> on a 3.2-year basis; the cycles are non-contiguous, with 2011&ndash;12 absent and 2015&ndash;16 excluded; and NHANES pooled-weight guidance covers contiguous cycles sharing a design stratification. We propose unweighted prediction as primary, on the grounds that the target of inference is individual ranking rather than population prevalence, plus <b>within-cycle</b> weighted descriptives reported per cycle and never pooled. <b>Do you agree, and would you construct it differently?</b></p></div></li>
+    <li><span class="who">Imputation</span><div><p><b>Single in-fold imputation versus multiple imputation.</b> Nine variables are imputed, all under 6% missing, in a pattern unrelated to cycle. We use single in-fold median/mode because it composes cleanly with nested CV and because the prediction target is a ranking rather than a coefficient. Is MICE worth the complication here, and if so for which variables?</p></div></li>
+    <li><span class="who">Exclusions</span><div><p><b>Two non-random exclusions.</b> The RA arm drops 123 women who cannot recall their arthritis type, and their mean T-score (&minus;0.871) is <em>better</em> than the arm retains (&minus;1.174), so the arm carries a harder case mix and its AUC is not comparable to the headline. Separately, 41 women with unresolvable menopausal status are excluded and are statistically indistinguishable from those retained (&minus;1.155 vs &minus;1.140). Is stating both sufficient, or would you want a sensitivity analysis?</p></div></li>
+    <li><span class="who">Calibration</span><div><p><b>Referral thresholds.</b> Two cutoff tables coexist by design and must not be merged: one leads with the fraction of the cohort flagged, taken as a quantile of an uncalibrated forest's scores; the other reports probability cutoffs from a separately sigmoid-calibrated forest with lower discrimination. Is presenting both, on separate axes with the model and its AUC on every row, the right way to hand a clinician a threshold?</p></div></li>
+  </ul>
+</section>
+
+<footer>
+  <p>Companion documents: <code>Notes/rewrite_implementation_plan.html</code> &mdash; the full pre-specified plan, per-variable specification, build order and limitations register. <code>Notes/specialist_answers_and_decisions.html</code> &mdash; the twelve clinical rulings behind the design, with the six errata. <code>Notes/project_walkthrough.html</code> &mdash; plain-language study overview. Counts recomputed on the deduplicated five-cycle cohort of 1,111 against <code>data/processed/option_b_v4_final.csv</code> and the raw NHANES files, 28&ndash;29 September 2026. No model has been run on the corrected cohort; every AUC in the earlier record is withdrawn.</p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+variable,kind,n_absent,mean_or_mode,median,skew
+age,number,0,58.3,59.0,-0.24
+ever_smoked,yes/no,0,Yes (53% of answers),-,-
+prior_fracture,yes/no,0,No (84% of answers),-,-
+bmi,number,1,28.9,28.0,0.68
+ever_estrogen,yes/no,2,No (58% of answers),-,-
+sleep_hrs,number,5,7.2,7.0,-0.16
+steroid_use,yes/no,5,No (91% of answers),-,-
+years_since_menopause,number,24,12.3,10.0,0.96
+mother_hip_fx,yes/no,25,No (88% of answers),-,-
+diabetes,yes/no,33,No (90% of answers),-,-
+father_hip_fx,yes/no,59,No (96% of answers),-,-
+poverty_income_ratio,number,64,3.2,3.4,-0.24
+alcohol_cat,yes/no,90,under 3/day (63% of answers),-,-
+rheumatoid_arthritis,yes/no,99,No (96% of answers),-,-
+vigorous_min_wk,number,175,113.2,0.0,5.0
+moderate_min_wk,number,176,387.6,150.0,3.32
+met_min_week,number,177,2456.1,720.0,4.04
+sitting_hrs_day,number,177,6.4,6.0,0.71
+vitd_intake_IU,number,182,996.1,439.0,13.46
+total_calcium_mg,number,182,1168.3,1028.0,1.14
+phq9_score,number,265,3.9,2.0,1.95
+serum_vitd_ngml,number,298,30.9,29.8,1.2
