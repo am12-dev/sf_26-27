@@ -1,0 +1,5 @@
+Stage,What changed,n,Events (T<=-1.0),Best model,Best AUC,OST AUC,Delta vs OST,95% CI,Beats OST
+"A. 6 cycles, all DXA (as published)",baseline: contains 176 duplicated respondents,1484,836,Random Forest,0.84,0.747,0.093,"[+0.075, +0.113]",True
+"B. 6 cycles, postmenopausal only",cohort narrowed; duplicates still present,1272,751,Random Forest,0.837,0.733,0.104,"[+0.081, +0.126]",True
+"C. 5 cycles, all DXA",duplicates removed; cohort still unrestricted,1308,724,RF -> t_score,0.766,0.753,0.013,"[-0.001, +0.026]",False
+"D. 5 cycles, postmenopausal (shipped)",both changes applied — this is the analysis cohort,1111,645,Ridge -> t_score,0.757,0.739,0.018,"[+0.001, +0.034]",True

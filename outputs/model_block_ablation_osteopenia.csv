@@ -1,0 +1,7 @@
+Test,Variables in model,Full panel AUC,Reduced AUC,Delta AUC,95% CI,p (one-sided),Primary model,Full panel better
+drop body size (bmi + weight_kg),16,0.757,0.606,0.15,"[+0.114, +0.184]",0.0,Ridge -> t_score,True
+drop all menopause/hormone vars,15,0.757,0.753,0.004,"[-0.003, +0.011]",0.116,Ridge -> t_score,False
+drop all lifestyle vars,14,0.757,0.756,0.001,"[-0.005, +0.007]",0.34,Ridge -> t_score,False
+drop all history/family vars,14,0.757,0.753,0.003,"[-0.004, +0.010]",0.162,Ridge -> t_score,False
+KEEP only age + weight (OST inputs),2,0.757,0.739,0.018,"[+0.001, +0.035]",0.014,Ridge -> t_score,True
+KEEP only age + bmi,2,0.757,0.718,0.039,"[+0.018, +0.060]",0.0,Ridge -> t_score,True

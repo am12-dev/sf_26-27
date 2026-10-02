@@ -1,0 +1,21 @@
+Predictor,Std coef,Expected sign,Observed sign,Flag
+weight_kg,-1.214,-,-,ok
+ever_used_estrogen,-0.2324,-,-,ok
+any_prior_fracture,0.1961,+,+,ok
+age,0.1884,+,+,ok
+poverty_income_ratio,-0.182,n/a,-,ok
+sedentary_min_day,0.1739,n/a,+,ok
+bmi,0.1705,-,+,SIGN
+years_since_menopause,0.1684,+,+,ok
+steroid_use,0.1145,+,+,ok
+meno_unknown,-0.1128,n/a,-,ok
+sleep_hrs,-0.1112,n/a,-,ok
+phq9_score,0.0704,n/a,+,ok
+family_hx_osteoporosis,0.0677,+,+,ok
+parental_hip_fracture,0.0566,+,+,ok
+diabetes,-0.0395,n/a,-,ok
+meno_surgical_oophorectomy,-0.039,n/a,-,ok
+ever_smoked,0.038,n/a,+,ok
+vigorous_activity,0.0328,n/a,+,ok
+meno_hysterectomy_ovaries_kept,-0.026,n/a,-,ok
+alcohol_drinks_day,-0.0169,n/a,-,ok

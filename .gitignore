@@ -1,6 +1,5 @@
 .DS_Store
 data/
-outputs/
 __pycache__/
 *.pyc
 .env
