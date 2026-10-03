@@ -25,6 +25,8 @@ ORANGE = RGBColor(0xeb, 0x68, 0x34)
 INK = RGBColor(0x0b, 0x0b, 0x0b)
 INK2 = RGBColor(0x52, 0x51, 0x4e)
 LIGHT = RGBColor(0xf0, 0xef, 0xec)
+PALEBLUE = RGBColor(0xdc, 0xe9, 0xf8)
+GREEN = RGBColor(0x1b, 0x7f, 0x5a)
 WHITE = RGBColor(0xff, 0xff, 0xff)
 FONT = "Segoe UI"
 
@@ -142,6 +144,55 @@ def callout(slide, text, x, y, w, h, fill=LIGHT, color=INK, size=15, bold=False)
     return box
 
 
+def table2(slide, rows, x, y, w, col_w=None, size=12, row_h=0.36, hi_rows=()):
+    """Table with optional highlighted rows (used by the plain-English slides)."""
+    nr, nc = len(rows), len(rows[0])
+    t = slide.shapes.add_table(nr, nc, Inches(x), Inches(y), Inches(w), Inches(row_h * nr)).table
+    if col_w:
+        for i, cw in enumerate(col_w):
+            t.columns[i].width = Inches(cw)
+    for r in range(nr):
+        t.rows[r].height = Inches(row_h)
+        for c in range(nc):
+            cell = t.cell(r, c)
+            cell.margin_left = cell.margin_right = Inches(0.07)
+            cell.margin_top = cell.margin_bottom = Inches(0.02)
+            cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+            tf = cell.text_frame; tf.word_wrap = True
+            if r == 0:
+                _run(tf.paragraphs[0], str(rows[r][c]), size, True, WHITE)
+                cell.fill.solid(); cell.fill.fore_color.rgb = NAVY
+            else:
+                _run(tf.paragraphs[0], str(rows[r][c]), size, r in hi_rows, INK)
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = PALEBLUE if r in hi_rows else (WHITE if r % 2 else LIGHT)
+    return t
+
+
+def box(slide, text, x, y, w, h, fill=LIGHT, color=INK, size=15, bold=False, align=PP_ALIGN.LEFT,
+        shape=MSO_SHAPE.ROUNDED_RECTANGLE):
+    b = slide.shapes.add_shape(shape, Inches(x), Inches(y), Inches(w), Inches(h))
+    if shape == MSO_SHAPE.ROUNDED_RECTANGLE:
+        b.adjustments[0] = 0.08
+    b.fill.solid(); b.fill.fore_color.rgb = fill; b.line.fill.background()
+    tf = b.text_frame; tf.word_wrap = True
+    tf.margin_left = tf.margin_right = Inches(0.12)
+    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+    for i, ln in enumerate(text.split("\n")):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        p.alignment = align
+        _run(p, ln, size, bold, color)
+    return b
+
+
+def ci(v):
+    return str(v).replace("-", "−")
+
+
+def f3(v):
+    return f"{v:.3f}"
+
+
 # ---------------------------------------------------------------- data
 nv = pd.read_csv(os.path.join(OUT, "nested_cv_verdict.csv"))
 lb1 = pd.read_csv(os.path.join(OUT, "model_leaderboard_osteopenia.csv"))
@@ -150,6 +201,16 @@ arms = pd.read_csv(os.path.join(OUT, "prespecified_arms.csv"))
 ref = pd.read_csv(os.path.join(OUT, "referral_table.csv"))
 cpt = pd.read_csv(os.path.join(OUT, "clinical_predictor_table.csv"))
 
+
+def vrow(target_prefix, comp_prefix):
+    m = nv[nv["Target"].str.startswith(target_prefix) & nv["Comparator"].str.startswith(comp_prefix)]
+    return m.iloc[0]
+
+
+op_ost, op_w = vrow("Osteopenia", "OST"), vrow("Osteopenia", "Weight")
+os_ost, os_w = vrow("Osteoporosis", "OST"), vrow("Osteoporosis", "Weight")
+N, E1, E2 = 1111, int(op_ost["Events"]), int(os_ost["Events"])
+
 # ================================================================ 1 title
 s = prs.slides.add_slide(BLANK)
 bg = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, SW, SH)
@@ -157,19 +218,19 @@ bg.fill.solid(); bg.fill.fore_color.rgb = NAVY; bg.line.fill.background()
 tb = s.shapes.add_textbox(Inches(0.9), Inches(2.0), Inches(11.5), Inches(3.5))
 tf = tb.text_frame; tf.word_wrap = True
 _run(tf.paragraphs[0], "Screening for Low Bone Mass Without a DXA Scan", 40, True, WHITE)
-p = tf.add_paragraph(); _run(p, "An NHANES machine-learning pipeline: data, cohort, models and an honest null result", 22, False, WHITE)
+p = tf.add_paragraph(); _run(p, "An NHANES machine-learning pipeline: data, cohort, models and results", 22, False, WHITE)
 p = tf.add_paragraph(); p.space_before = Pt(30)
 _run(p, "Technical briefing for a Senior AI/ML Data Engineer  ·  sf_26-27 / OsteoporosisML.py", 16, False, RGBColor(0xb7, 0xd3, 0xf6))
 p = tf.add_paragraph()
-_run(p, "Results from the 2 Oct 2026 pipeline run (deduplicated, postmenopausal cohort, n = 1,111)", 14, False, RGBColor(0xb7, 0xd3, 0xf6))
+_run(p, "Postmenopausal women aged 50–65, NHANES 2005–2020, n = 1,111", 14, False, RGBColor(0xb7, 0xd3, 0xf6))
 notes(s, "Title", """
 Purpose of this session: walk a senior ML/data engineer through the whole project end to end — where the data comes from, how it is downloaded and cleaned, how the analysis cohort is built, which clinical decisions were made with the osteoporosis specialist, how the models are coded and evaluated, what the final results are, and where we want help.
 
 Frame it up front: this is a research pipeline, not a production system. It is one Python file (OsteoporosisML.py, ~2,060 lines, blocks A–G), runs end to end in roughly 25–40 minutes, seed 42, fully reproducible.
 
-The punchline, so nobody waits for it: on the corrected cohort the ML model is NOT statistically distinguishable from a two-input clinical formula (OST = 0.2 × (weight − age)). We will show why we believe that result, how we found the data defect that had made earlier numbers look much better, and what we want to do next.
+The punchline, so nobody waits for it: the ML model is NOT statistically distinguishable from a two-input clinical formula (OST = 0.2 × (weight − age)). We will show how the models were built and tested, why we believe that result, and what we want to do next.
 
-All numbers in this deck come from the current outputs/ folder (2 Oct 2026 run). Any older AUCs (0.810, 0.806, 0.833) are withdrawn — if someone has seen them in earlier material, explain they were computed on a cohort with duplicated respondents (slide on the duplicate defect).
+All numbers in this deck come from the outputs/ folder of OsteoporosisML.py.
 """)
 
 # ================================================================ 2 TL;DR
@@ -178,10 +239,10 @@ bullets(s, [
     (0, "Question:", "can routinely collected survey answers flag women likely to have low bone mass, so DXA is ordered for the right people?"),
     (0, "Data:", "NHANES, 5 survey cycles 2005–2020 → 1,111 postmenopausal non-Hispanic White women aged 50–65 with a hip DXA."),
     (0, "Target:", "T-score ≤ −1.0 (osteopenia or worse; 645 cases, 58%) and ≤ −2.5 (osteoporosis; 76 cases, 6.8%)."),
-    (0, "Models:", "5 classifiers + 3 T-score regressors, 17 variables (17 columns), 5-fold stratified CV, nested CV for model choice, paired bootstrap CIs."),
-    (0, "Result:", "nested-CV AUC 0.751 vs OST formula 0.739 → Δ +0.012 [−0.005, +0.030]. Not separable. Same story at T ≤ −2.5 (0.794 vs 0.780)."),
-    (0, "Why:", "body weight carries nearly all the signal. Drop weight + BMI → AUC 0.606; drop any other block → no measurable change."),
-    (0, "Engineering lesson:", "an earlier 'beats OST by +0.063' claim was an artifact of 176 respondents loaded twice under different IDs. Fixed and now asserted."),
+    (0, "Models:", "5 classifiers + 3 T-score regressors, 15 variables (15 columns), 5-fold stratified CV, nested CV for model choice, paired bootstrap CIs."),
+    (0, "Result:", "nested-CV AUC 0.749 vs OST formula 0.739 → Δ +0.010 [−0.007, +0.027]. Not separable. Same story at T ≤ −2.5 (0.790 vs 0.780)."),
+    (0, "Why:", "body weight carries nearly all the signal. Drop weight + BMI → AUC 0.605; drop any other block → no measurable change."),
+    (0, "Engineering point:", "NHANES ships 2017–18 twice under different IDs; the pipeline uses one copy and asserts one row per woman."),
     (0, "Ask:", "help us decide whether this is a publishable null, and what data / design changes could move the needle."),
 ], size=17)
 notes(s, "The one-slide summary", """
@@ -190,9 +251,9 @@ Read this slide slowly; everything after it is supporting detail.
 Key framing for an ML audience:
 - The comparator matters more than the AUC. A 0.75 AUC sounds respectable until you see that weight alone gets 0.737 and the two-input OST formula gets 0.739.
 - The result is a null, and we are reporting it as one. The confidence interval on the improvement over OST crosses zero for both targets.
-- The most interesting engineering story is the data defect: NHANES released 2017–2018 twice (once on its own and again inside the pooled 2017–March 2020 'P_' files) with re-numbered respondent IDs, so ID-based de-duplication could not see it. Those 176 women landed in both training and test folds and inflated every cross-validated AUC. That is classic train/test leakage through duplicated entities.
+- The most interesting engineering point is a data trap: NHANES releases 2017–2018 twice (once on its own and again inside the pooled 2017–March 2020 'P_' files) with re-numbered respondent IDs, so ID-based de-duplication cannot see it. If both were loaded, the same women could sit in training and test folds — classic leakage through duplicated entities. The pipeline loads only the pooled file and asserts one row per woman.
 
-Counts to remember: 1,111 women; 645 at T ≤ −1.0; 76 at T ≤ −2.5; 17 variables / 17 model columns; 8 models.
+Counts to remember: 1,111 women; 645 at T ≤ −1.0; 76 at T ≤ −2.5; 15 variables / 15 model columns; 8 models.
 """)
 
 # ================================================================ 3 Question
@@ -211,7 +272,7 @@ callout(s, "Primary estimand: ΔAUC (model − OST) with a paired bootstrap 95% 
 notes(s, "The clinical problem", """
 Explain the T-score: T = (measured BMD − young-adult reference mean) / reference SD. A T-score of −1.0 means one standard deviation below a healthy 20-to-29-year-old. The WHO thresholds are −1.0 (osteopenia / low bone mass) and −2.5 (osteoporosis).
 
-Why OST: it is the established, cheap screening tool that already uses only weight and age. If a model using 18 survey variables cannot beat a formula you can do in your head, it adds nothing clinically. So the estimand is the DIFFERENCE in AUC between the model and OST, measured on the same women, with a paired bootstrap confidence interval.
+Why OST: it is the established, cheap screening tool that already uses only weight and age. If a model using 15 survey variables cannot beat a formula you can do in your head, it adds nothing clinically. So the estimand is the DIFFERENCE in AUC between the model and OST, measured on the same women, with a paired bootstrap confidence interval.
 
 Important limitation to state now: this is cross-sectional. NHANES does not follow these women forward for fractures, so we predict a measurement (low BMD), not a clinical event. Most fragility fractures actually occur in women above T −2.5, so this is a proxy outcome.
 
@@ -239,7 +300,7 @@ table(s, [
     ["DEMO", "sex, race/ethnicity, age, poverty-income ratio"],
     ["BMX", "weight, height, BMI"],
     ["DXXFEM", "femoral-neck & total-hip BMD (label source)"],
-    ["RHQ", "periods, menopause, hysterectomy, ovaries, estrogen"],
+    ["RHQ", "periods, age at last period, estrogen"],
     ["OSQ", "prior fractures, steroids, family history"],
     ["MCQ / DIQ", "arthritis type, diabetes"],
     ["SMQ / ALQ", "smoking, alcohol"],
@@ -248,7 +309,7 @@ table(s, [
     ["DSQTOT", "dietary supplements"],
     ["VID", "serum 25(OH) vitamin D (lab)"],
 ], 7.2, 1.5, 5.5, col_w=[1.8, 3.7], size=12, row_h=0.36)
-callout(s, "Not used: 2011–12 (no hip DXA), 2015–16 & 2021–23 (excluded by design choice),\n2017–18 standalone (duplicate of P_ — see slide 6).", 0.6, 6.45, 12.1, 0.55, size=12)
+callout(s, "Not used: 2011–12, 2015–16 and 2021–23 (no hip DXA was done);\n2017–18 standalone file (the same women are inside the pooled P_ file — see slide 6).", 0.6, 6.45, 12.1, 0.55, size=12)
 notes(s, "Data source: NHANES", """
 NHANES is run by the CDC's National Center for Health Statistics. Each two-year cycle is a fresh, nationally representative sample, released as many separate files (modules). Every file has the respondent ID, SEQN, and we left-join everything onto the demographics file (DEMO) within each cycle, then stack the cycles.
 
@@ -256,7 +317,7 @@ Cycle suffixes: D = 2005–06, E = 2007–08, F = 2009–10, H = 2013–14. The 
 
 Modules used (from MODULE_COLS in block B): DEMO, BMX, DXXFEM, DR1TOT, VID, PAQ, DPQ, SMQ, ALQ, DIQ, MCQ, OSQ, RHQ, SLQ, plus the runtime downloads DSQTOT (supplements) and DR2TOT (day-2 diet). VID does not exist for the P_ cycle (declared as KNOWN_ABSENT).
 
-Which cycles are in: five cycles, 1,111 women. 2011–2012 has no femur DXA. 2015–2016 and 2021–2023 data are on disk but were deliberately left out by the project lead's choice — a good discussion point (could add events; slide on directions). The standalone 2017–2018 cycle must NOT be added — that is the duplicate defect.
+Which cycles are in: five cycles, 1,111 women. Hip (femur) DXA was only done in 2005–2010, 2013–2014 and 2017–March 2020, so 2011–12, 2015–16 and 2021–23 cannot supply an outcome. The standalone 2017–2018 file is not loaded because the same women are already inside the pooled P_ files.
 
 Note on survey design: NHANES provides sampling weights, strata and PSUs. This analysis is unweighted (a prediction model, not a prevalence estimate) — a question for the statistician.
 """)
@@ -271,15 +332,15 @@ bullets(s, [
     (1, "Cache rule: file exists AND > 2,048 bytes (a truncated download is re-fetched). Failures are logged and skipped, never fatal."),
     (0, "Two encodings in one dataset:", "2005–2014 CSVs were exported with value labels ('Female', 'Yes'); P_ files are numeric codes (2, 1). decode() handles both."),
     (0, "Per-variable sentinel SPEC:", "kind (num / yesno / cat), refusal codes and a valid range per column."),
-    (1, "Example: 99 is 'refused' for RHQ060 (age at last period) but a legitimate value for PAD680 (sedentary minutes). A single global list was deleting real data (sleep of 7 or 9 h, weights of 77 or 99 kg)."),
+    (1, "Example: 99 is 'refused' for RHQ060 (age at last period) but a legitimate value for PAD680 (sedentary minutes). A single global sentinel list would delete real data (sleep of 7 or 9 h, weights of 77 or 99 kg)."),
     (0, "Denormal floats:", "NHANES encodes zero as 5.4e-79 in P_ and nutrient files; sanitise_denormals() snaps |v| < 1e-30 to 0.0 on every frame."),
 ], size=15)
 notes(s, "Data acquisition", """
-This slide is aimed squarely at a data engineer — these are the ingestion traps we actually hit.
+This slide is aimed squarely at a data engineer — these are the ingestion traps the loader is built to handle.
 
-1. File discovery. Filenames are built explicitly from the CYCLES table (block A): {prefix}{module}.csv for P_ or {module}_{suffix}.csv otherwise. We originally globbed; OSQ_*.csv does not match P_OSQ.csv, so the most recent cycle silently vanished from the fracture/steroid variables. There is also a stray 'P_DEMO (1).csv' in that folder that a glob would pick up.
+1. File discovery. Filenames are built explicitly from the CYCLES table (block A): {prefix}{module}.csv for P_ or {module}_{suffix}.csv otherwise. Globbing is deliberately avoided: OSQ_*.csv does not match P_OSQ.csv, so a glob would silently drop the most recent cycle from the fracture/steroid variables, and a stray 'P_DEMO (1).csv' in that folder would be picked up.
 
-2. Runtime downloads. Two module families are fetched on demand: DSQTOT (total dietary supplement intake) for E, F, H and P_, and DR2TOT (day-2 24-hour dietary recall) for D, E, F, H and P_. Download is requests.get with a 90-second timeout, raise_for_status, write to a temporary .xpt, read with pandas.read_sas(format='xport'), keep only SEQN plus the nutrient columns, save as CSV, delete the temp file. The cache check is 'exists and larger than 2 KB'. Any exception prints '!! download failed' and returns an empty frame, so the pipeline still completes. In the final run every cache was hit. There is no 2005–06 DSQTOT release in the URL table, so supplements are unobserved for that cycle.
+2. Runtime downloads. Two module families are fetched on demand: DSQTOT (total dietary supplement intake) for E, F, H and P_, and DR2TOT (day-2 24-hour dietary recall) for D, E, F, H and P_. Download is requests.get with a 90-second timeout, raise_for_status, write to a temporary .xpt, read with pandas.read_sas(format='xport'), keep only SEQN plus the nutrient columns, save as CSV, delete the temp file. The cache check is 'exists and larger than 2 KB'. Any exception prints '!! download failed' and returns an empty frame, so the pipeline still completes. With the committed caches, every download is a cache hit. There is no 2005–06 DSQTOT release in the URL table, so supplements are unobserved for that cycle.
 
 3. Label-decoded vs numeric. The older CSVs were exported with value labels, so RIAGENDR is 'Female' not 2 and yes/no items are 'Yes'/'No'; the P_ files are numeric. decode() normalises strings (lower-case, strip, treat '', 'nan', '.', 'none' as missing, strip a trailing '.0'), then maps per the SPEC entry. Refused / don't-know words map to NaN.
 
@@ -289,33 +350,32 @@ This slide is aimed squarely at a data engineer — these are the ingestion trap
 """)
 
 # ================================================================ 6 Merge
-s = new_slide("Merge, then a data-quality defect that ID checks could not see", section="Data")
+s = new_slide("Merging cycles, and keeping one row per woman", section="Data")
 bullets(s, [
     (0, "Merge:", "within a cycle, functools.reduce of left joins on SEQN starting from DEMO; then pd.concat across cycles + a survey_cycle column. 56,769 respondents in 5 cycles."),
-    (0, "The defect:", "NCHS re-released the complete 2017–2018 cycle inside the pooled P_ 2017–2020 files with re-numbered SEQNs."),
-    (1, "DEMO_J SEQN 93,703–102,956 vs P_DEMO 109,263–124,822 → no ID ever collides, so SEQN de-duplication passes."),
-    (1, "Loading both cycles put 176 cohort women in the data twice (161 of them postmenopausal = 12.7% of that cohort)."),
-    (1, "StratifiedKFold splits rows, not people → each duplicate pair could sit in train AND test. Every CV AUC was inflated."),
-    (0, "Fix:", "2017_2018 removed from CYCLES permanently."),
+    (0, "The trap:", "NCHS re-released the complete 2017–2018 cycle inside the pooled P_ 2017–2020 files with re-numbered SEQNs."),
+    (1, "DEMO_J SEQN 93,703–102,956 vs P_DEMO 109,263–124,822 → IDs never collide, so SEQN de-duplication cannot see repeats."),
+    (1, "Loading both would put 176 cohort women in the data twice, and StratifiedKFold could place the two copies in train AND test."),
+    (0, "Design:", "only the pooled P_ file is loaded; the standalone 2017_2018 cycle is not in CYCLES."),
     (0, "Guard:", "audit_duplicates() asserts zero duplicates on a physical fingerprint: femoral-neck BMD, total-hip BMD, weight, height, age."),
-    (1, "1,306 of 1,308 rows have a complete fingerprint; 0 duplicates. The defect cannot come back silently."),
+    (1, "1,306 of 1,308 rows have a complete fingerprint; 0 duplicates. A repeat cannot enter silently."),
 ], size=16, h=4.6)
-callout(s, "Effect: ‘best model beats OST by +0.095’ (duplicated cohort) → +0.012, CI crossing zero (deduplicated).\nRemoving duplicates alone cost −0.077 AUC.",
-        0.6, 6.0, 12.1, 0.85, fill=RGBColor(0xfd, 0xe3, 0xd6), color=INK, size=15, bold=True)
-notes(s, "The duplicate defect", """
-This is the single most important engineering finding of the project, and a good story for an ML audience because it is a textbook entity-leakage bug that no standard check caught.
+callout(s, "One row per woman is what makes ordinary stratified cross-validation valid here.",
+        0.6, 6.0, 12.1, 0.75, fill=RGBColor(0xcd, 0xe2, 0xfb), color=NAVY, size=16, bold=True)
+notes(s, "One row per woman", """
+This is a good story for an ML audience because it is a textbook entity-leakage trap that no standard ID check catches.
 
-How it was found: the 2017–2018 standalone cycle (suffix J) and the pooled 2017–March 2020 cycle (prefix P_) were both in the cycle list. Because COVID cut 2019–2020 short, NCHS folded all of 2017–2018 into the P_ files, but gave everyone new respondent numbers. Our de-duplication was by SEQN, and the two ID ranges are disjoint, so it found nothing.
+The trap: NHANES publishes a standalone 2017–2018 cycle (suffix J) and a pooled 2017–March 2020 cycle (prefix P_). Because COVID cut 2019–2020 short, NCHS folded all of 2017–2018 into the P_ files, but gave everyone new respondent numbers. De-duplicating by SEQN finds nothing, because the two ID ranges are disjoint.
 
 Evidence the rows are the same people: all 176 cohort women from J have an exact match in P_ on femoral-neck BMD, total-hip BMD, age, weight and height; 7,585 of 7,585 body-measure fingerprints match; and the matched pairs agree 176/176 on seven derived variables.
 
-Why it inflated the AUC: StratifiedKFold assigns rows to folds. When the same woman appears twice, one copy can be in training and the other in test, so the model is effectively tested on someone it has already seen. Tree ensembles in particular memorise these.
+Why it matters: StratifiedKFold assigns rows to folds. If the same woman appeared twice, one copy could be in training and the other in test, so the model would be tested on someone it has already seen. Tree ensembles in particular memorise such rows.
 
-Fix and guard: the J cycle is permanently out of CYCLES (CLAUDE.md says it must not come back), and audit_duplicates asserts zero duplicates on a physical fingerprint — five measurements that will not coincide by chance. It runs on the 1,308 DXA cohort.
+Design and guard: J is not in CYCLES (CLAUDE.md says it must not be added), and audit_duplicates asserts zero duplicates on a physical fingerprint — five measurements that will not coincide by chance. It runs on the 1,308 DXA cohort.
 
-One more use of 2017–2018: the P_ cycle has no vitamin D lab file, so serum vitamin D for those 2017–18 women is copied from the J lab file by exact fingerprint match ('crosswalk'). 161 matches, 159 with a serum value; coverage 815 → 974. It only fills nulls and only for the serum vitamin D arm, not the headline model.
+One legitimate use of 2017–2018: the P_ cycle has no vitamin D lab file, so serum vitamin D for those 2017–18 women is copied from the J lab file by exact fingerprint match ('crosswalk'). 161 matches, 159 with a serum value; coverage 815 → 974. It only fills missing values and only for the serum vitamin D arm, not the headline model.
 
-Alternative we should mention: in a general setting you would use GroupKFold on a person key. Here, once the duplicates are removed there is one row per person, so StratifiedKFold is valid.
+Alternative we should mention: in a general setting you would use GroupKFold on a person key. Here there is one row per person, so StratifiedKFold is valid.
 """)
 
 # ================================================================ 7 Cohort
@@ -333,16 +393,16 @@ callout(s, "Excluded at the menopause gate:\n156 still cycling (mean T −0.47, 
         8.55, 5.4, 4.4, 1.45, size=12)
 notes(s, "Cohort construction", """
 Walk the funnel top to bottom (numbers from the final run log):
-- 56,769 respondents across the five cycles. (Note: CLAUDE.md and some older notes say 66,023; that was the six-cycle count including the duplicated 2017–2018 cycle. The code and log say 56,769.)
+- 56,769 respondents across the five cycles.
 - 28,644 female.
 - 10,672 non-Hispanic White. The cohort is deliberately narrow: the T-score reference values used are for non-Hispanic White women, and the specialist confirmed these inclusion limits.
 - 1,639 aged 50–65 inclusive.
 - 1,308 with a valid femoral-neck DXA (value inside 0.2–1.8 g/cm²). The code asserts exactly 1,308 (N_DXA_COHORT).
 - 1,111 postmenopausal. The gate uses one question, RHQ031 'Have you had at least one menstrual period in the past 12 months?'. No → kept (1,111). Yes → dropped as still cycling (156; younger, median age 52, much better bone: mean T −0.47). Missing / refused / don't know → dropped as undeterminable (41; their mean T −1.16 is almost identical to the kept group, so excluding them is unlikely to bias anything). We are careful never to call these 41 'premenopausal'.
 
-Engineering point: these asserts pin the published numbers. If a refactor or data change alters the cohort, the run fails loudly instead of quietly producing a different study.
+Engineering point: these asserts pin the cohort counts. If a refactor or data change alters the cohort, the run fails loudly instead of quietly producing a different study.
 
-The narrowing to postmenopausal women was a clinical decision (specialist Q3). The AUC decomposition later shows the gate itself costs almost nothing (−0.006).
+The narrowing to postmenopausal women was a clinical decision (specialist Q3).
 """)
 
 # ================================================================ 8 Target
@@ -371,11 +431,11 @@ callout(s, "Note the class balance: the ‘positive’ class is the MAJORITY at 
 notes(s, "Prediction target", """
 T-score computation is in compute_tscores (block C). The reference means and SDs are fixed constants from the NHANES III young-adult reference population (non-Hispanic White women aged 20–29): femoral neck 0.858 g/cm² SD 0.120, total hip 0.942 SD 0.122. Mean T-score in the cohort is −1.14 (femoral neck −1.09, total hip −0.65).
 
-The final t_score is the lower of the two sites, which is the clinical convention. It is rounded to three decimals before thresholding — an earlier version used pd.cut and misclassified three women sitting exactly on −2.5.
+The final t_score is the lower of the two sites, which is the clinical convention. It is rounded to three decimals before thresholding, so women sitting exactly on −2.5 are classified consistently.
 
 Specialist interaction: the specialist said the outcome should be the T-score itself (continuous). We kept the binary T ≤ −1.0 as the headline because the clinical decision is binary (refer for DXA or not) and reporting conventions expect a binary primary, and we model the continuous T-score with regressors alongside. That override still needs the specialist's sign-off.
 
-Class balance is unusual: at T ≤ −1.0 the positive class is the majority (58%), so 'class_weight=balanced' actually DOWN-weights positives there and XGBoost's scale_pos_weight is below 1. At T ≤ −2.5 there are only 76 events — events per predictor is 4.5 against a rule-of-thumb floor of 10, so that target is flagged as underpowered before any modelling (power_gate.csv).
+Class balance is unusual: at T ≤ −1.0 the positive class is the majority (58%), so 'class_weight=balanced' actually DOWN-weights positives there and XGBoost's scale_pos_weight is below 1. At T ≤ −2.5 there are only 76 events — events per predictor is 5.1 against a rule-of-thumb floor of 10, so that target is flagged as underpowered before any modelling (power_gate.csv).
 """)
 
 # ================================================================ 9-10 Specialist
@@ -394,7 +454,7 @@ Two rounds of questions went to the clinical specialist (documented in Notes/Spe
 
 Q1 Outcome. The specialist preferred the continuous T-score. We kept binary T ≤ −1.0 as primary because the use case is a yes/no referral, and we model continuous T with regressors; the regressors actually win the nested CV in several folds, so the specialist's preference is reflected in the modelling. This override has to be re-confirmed with the specialist.
 
-Q2 Site. Lowest of femoral neck and total hip, per WHO/ISCD. Each site separately is run as a pre-specified sensitivity arm (H1 femoral neck: 618 events, AUC 0.747; H2 total hip: 424 events, AUC 0.776). These are different outcomes so no delta is reported.
+Q2 Site. Lowest of femoral neck and total hip, per WHO/ISCD. Each site separately is run as a pre-specified sensitivity arm (H1 femoral neck: 618 events, AUC 0.745; H2 total hip: 424 events, AUC 0.777). These are different outcomes so no delta is reported.
 
 Q3 Cohort. Postmenopausal only, confirmed. The 41 women whose status cannot be determined are described separately and never called premenopausal.
 
@@ -402,7 +462,7 @@ Q4 Menopause timing after hysterectomy. A hysterectomy ends periods without endi
 
 Q5 Estrogen. Ever-use yes/no is in the model. Duration (< 2 years vs ≥ 2 years) is built but kept descriptive; duration is known for about 71% of users.
 
-Q6 PHQ-9. An earlier version showed ~80% missing; that was a decoding bug (items stored as words in some cycles). After the fix the score exists for 1,110 of 1,111.
+Q6 PHQ-9. The nine items are stored as words in some cycles and as codes in others; decode() handles both, so the score exists for 1,110 of 1,111.
 """)
 
 s = new_slide("Decisions put to the osteoporosis specialist (2 of 2)", section="Clinical decisions")
@@ -431,7 +491,7 @@ Round 1 items: the specialist asked that prior fracture be limited to the last 5
 """)
 
 # ================================================================ 11 Features
-s = new_slide("The model feature panel: 17 variables, one column each", "Allowlist (FEATURE_GROUPS, block E): nothing enters a model unless it is named here", section="Features")
+s = new_slide("The model feature panel: 15 variables, one column each", "Allowlist (FEATURE_GROUPS, block E): nothing enters a model unless it is named here", section="Features")
 fv = [
     ["Variable", "NHANES source", "Type", "n observed", "Missing"],
     ["age", "RIDAGEYR", "cont.", "1,111", "0%"],
@@ -444,8 +504,6 @@ fv = [
     ["alcohol_drinks_day", "ALQ130 (+0 non-drinkers)", "cont.", "960", "13.6%"],
     ["any_prior_fracture", "OSQ010A/B/C", "bin.", "1,111", "0%"],
     ["steroid_use", "OSQ130", "bin.", "1,106", "0.5%"],
-    ["vigorous_activity", "PAQ650", "bin.", "938", "15.6%"],
-    ["sedentary_min_day", "PAD680", "cont.", "935", "15.8%"],
     ["poverty_income_ratio", "INDFMPIR", "cont.", "1,055", "5.0%"],
     ["parental_hip_fracture", "OSQ170 / OSQ200", "bin.", "1,062", "4.4%"],
     ["family_hx_osteoporosis", "OSQ150", "bin.", "1,059", "4.7%"],
@@ -459,13 +517,14 @@ bullets(s, [
     (1, "serum 25(OH)D — n = 974"),
     (1, "rheumatoid arthritis — n = 988"),
     (1, "PHQ-9 ≥ 10 (substitutes score)"),
+    (1, "physical activity: log MET-min/week + sedentary min — n = 932 (2007 onward)"),
     (0, "Denylist", "(asserted): BMD, site T-scores, t_score, labels, bone_status."),
-    (0, "Benched:", "height (enters via BMI), age at menopause (= age − years since), education, supplement-availability flag."),
+    (0, "Benched:", "height (enters via BMI), age at menopause (= age − years since), education, supplement-availability flag, vigorous-activity yes/no (MET-min/week is used instead, in arm I)."),
 ], x=9.05, y=1.45, w=3.9, h=5.5, size=13)
 notes(s, "Feature panel", """
-This is the complete headline feature set: 17 variables, one model column each. There is no menopause-type variable — per the specialist, menopause is defined only by the 12-month gate.
+This is the complete headline feature set: 15 variables, one model column each. There is no menopause-type variable — per the specialist, menopause is defined only by the 12-month gate.
 
-The n observed column answers 'how many of the cohort have each variable' — out of 1,111. Most variables are near-complete. Three are notably incomplete: sedentary minutes (935), vigorous activity (938) and alcohol (960). The activity gap is structural: 2005–06 used a different physical-activity instrument, so 173 of the missing are an entire cycle.
+The n observed column answers 'how many of the cohort have each variable' — out of 1,111. Most variables are near-complete. Only alcohol (960) is notably incomplete. Physical activity is not in the headline panel: the 2005–06 cycle used a different activity questionnaire, so activity is missing for that entire cycle (173 women). Rather than impute a whole cycle, activity has its own arm (I) on the 2007+ women.
 
 Derivation details worth mentioning to an engineer:
 - years_since_menopause = age − age at last period (RHQ060), kept only if ≥ 0.
@@ -474,8 +533,9 @@ Derivation details worth mentioning to an engineer:
 - sleep_hrs: SLD012 (newer cycles) coalesced with SLD010H (older cycles).
 - any_prior_fracture: yes if any of hip / spine / wrist fracture questions is yes; no only if all three are answered no.
 - parental_hip_fracture: mother (OSQ170) or father (OSQ200).
+- met_min_week (arm I only): the specialist's references (PMC9858810, PMC12851727; WHO GPAQ): 8 METs × days × minutes for vigorous work and vigorous recreation, 4 METs for moderate work, moderate recreation and walking/cycling, summed. A domain answered 'No' counts as 0. Minutes valid 10–960/day, days 1–7. Modelled as log(1 + MET-min/week) because it is heavily skewed (median 720, max 43,680 = 728 MET-h/week).
 
-Why an allowlist: the old code admitted every column not explicitly excluded, so every new derived column was a potential target leak unless someone remembered to exclude it. Now adding a variable means adding it to FEATURE_GROUPS on purpose. The BMD denylist is asserted on top as a second gate.
+Why an allowlist: if a pipeline admits every column not explicitly excluded, every new derived column is a potential target leak unless someone remembers to exclude it. Here adding a variable means adding it to FEATURE_GROUPS on purpose. The BMD denylist is asserted on top as a second gate.
 
 Arm-only variables are evaluated on complete-case sub-cohorts (slide on arms).
 """)
@@ -492,7 +552,7 @@ bullets(s, [
     (1, "alcohol = 0 for confirmed non-drinkers"),
     (1, "supplement intake = 0 if respondent is in a DSQTOT file but reported none; NaN if absent from every file"),
     (0, "Coalescing:", "sleep (2 items), serum vit D (2 lab vars + 2017–18 crosswalk), arthritis type (3 items)."),
-    (0, "Complete-case:", "only in the prespecified arms (vit D, RA)."),
+    (0, "Complete-case:", "only in the arms (vit D, RA, physical activity)."),
     (0, "OST / weight baselines:", "median fill (0 rows affected)."),
 ], x=7.9, y=1.35, w=5.1, h=5.6, size=13)
 notes(s, "Missing data and imputation", """
@@ -504,18 +564,18 @@ Directly answering 'was any mean/median/imputation done?':
 
 3. Logical zero-fills that are not imputation but correct coding: alcohol drinks/day = 0 for women who said they did not drink in the past 12 months (ALQ130 is skipped for them); supplement calcium/vitamin D = 0 for women who are in a supplement file but report no supplement (NHANES codes non-users as blank).
 
-4. Complete-case analysis is used only in the arms: vitamin D intake (930), serum vitamin D (974), RA (988).
+4. Complete-case analysis is used only in the arms: vitamin D intake (930), serum vitamin D (974), RA (988), physical activity (932).
 
-Known weakness to raise: the activity variables (sedentary minutes, vigorous activity) are missing for the whole 2005–06 cycle (instrument change), which is structural, not random. The plan said structural absence should not be imputed, but the shipped code median-imputes them. sedentary_min_day is one of the six 'significant' odds ratios, so that finding partly rests on imputed values. Options: missing-indicator, drop those variables, drop the cycle, or multiple imputation — a statistician question.
+Structural missingness is not imputed: the activity variables are missing for the whole 2005–06 cycle because that survey used a different questionnaire. Median-filling them would code all 173 of those women as 'no vigorous activity'. So activity is kept out of the headline model and tested only in arm I (log MET-min/week + sedentary minutes) on the 932 women from 2007 onward, with nothing imputed.
 
-Also no multiple imputation (MICE); with < 6% missing on most variables single imputation is defensible, but the 13–16% variables are where MI would matter.
+Also no multiple imputation (MICE); with < 6% missing on most variables single imputation is defensible, but alcohol (13.6%) is where MI would matter most.
 """)
 
 # ================================================================ 13 Leakage
 s = new_slide("Guard-rails against leakage and silent drift", section="Modelling")
 table(s, [
     ["Risk", "Guard in code"],
-    ["Same person in train and test", "2017_2018 out of CYCLES; audit_duplicates asserts 0 on a 5-field physical fingerprint"],
+    ["Same person in train and test", "standalone 2017_2018 not loaded; audit_duplicates asserts 0 on a 5-field physical fingerprint"],
     ["Target leaking into features", "FEATURE_GROUPS allowlist + BMD_DENYLIST assertion in build_feature_matrix"],
     ["Leak via preprocessing", "Imputer + scaler inside the Pipeline → fitted per training fold"],
     ["Model selection on test rows", "nested_cv_selection: choose among 8 models inside each outer training fold"],
@@ -527,75 +587,194 @@ table(s, [
     ["Tree importance bias", "Gini / split importances never reported; permutation importance + refit ablation instead"],
 ], 0.6, 1.4, 12.1, col_w=[3.6, 8.5], size=13, row_h=0.48)
 notes(s, "Guard-rails", """
-An ML engineer will care most about this slide. The pipeline is written defensively because the project was burned once.
+An ML engineer will care most about this slide. The pipeline is written defensively.
 
 Highlights:
 - The allowlist means no column can enter a model by accident.
-- The leak alarm: with standardised features, a coefficient above 2.0 in absolute value would be extraordinary for survey variables; it would suggest a BMD-derived column slipped in. Currently the largest is weight_kg at −1.21. The only sign flag is BMI (positive), which is explained: BMI and weight correlate at 0.94, so weight absorbs the effect and BMI's residual sign is meaningless.
-- OOB AUC subtlety: scikit-learn ≥ 1.9 makes the bootstrap sample_weight-aware, and class_weight='balanced' is applied as a sample weight, so at T ≤ −2.5 the minority class is oversampled into nearly every tree and only 28% of cases are ever out-of-bag. sklearn returns uncovered rows as all-zero decision rows (not NaN), so a naive isnan guard scores them as lowest-risk and produced an OOB AUC of 0.108 — an inverted model in the leaderboard. _oob_auc now drops uncovered rows and refuses to report when coverage of either class is < 80%.
-- Tree importances (Gini, split counts) were removed because they were biased toward continuous features and inverted the real ranking here.
+- The leak alarm: with standardised features, a coefficient above 2.0 in absolute value would be extraordinary for survey variables; it would suggest a BMD-derived column slipped in. The largest is weight_kg at −1.18. The only sign flag is BMI (positive), which is explained: BMI and weight correlate at 0.94, so weight absorbs the effect and BMI's residual sign is meaningless.
+- OOB AUC subtlety: scikit-learn ≥ 1.9 makes the bootstrap sample_weight-aware, and class_weight='balanced' is applied as a sample weight, so at T ≤ −2.5 the minority class is oversampled into nearly every tree and only 28% of cases are ever out-of-bag. sklearn returns uncovered rows as all-zero decision rows (not NaN), so a naive isnan guard would score them as lowest-risk and report an inverted OOB AUC. _oob_auc drops uncovered rows and refuses to report when coverage of either class is < 80%.
+- Tree importances (Gini, split counts) are not reported because they are biased toward continuous features; permutation importance and refit ablation are used instead.
 
 Note: global warnings are suppressed (warnings.filterwarnings('ignore')), which would also hide convergence warnings — a small item for the backlog.
 """)
 
-# ================================================================ 14 Models
-s = new_slide("Eight models on one fold structure", "Every estimator wrapped as Pipeline(median imputer → StandardScaler → model); seed 42 everywhere", section="Modelling")
-table(s, [
-    ["Model", "Trained on", "Key settings", "Imbalance"],
-    ["Logistic regression (L2)", "binary label", "C = 1.0, lbfgs, max_iter 1000", "class_weight='balanced'"],
-    ["Elastic-net logistic", "binary label", "saga, l1_ratio 0.5, C = 1.0, max_iter 2000", "class_weight='balanced'"],
-    ["Random forest", "binary label", "500 trees, min_samples_leaf 1, OOB on", "class_weight='balanced'"],
-    ["LightGBM", "binary label", "150 trees, max_depth 2, 4 leaves, min_child 50, λ 50", "class_weight='balanced'"],
-    ["XGBoost", "binary label", "150 trees, max_depth 2, min_child_weight 15, λ 50", "scale_pos_weight = neg/pos"],
-    ["RidgeCV → T-score", "continuous t_score", "alphas logspace(−3, 3, 13), efficient LOO", "n/a"],
-    ["RF regressor → T-score", "continuous t_score", "500 trees, min_samples_leaf 5", "n/a"],
-    ["LightGBM regressor → T", "continuous t_score", "same as LightGBM classifier", "n/a"],
-], 0.6, 1.55, 12.1, col_w=[2.7, 1.9, 4.9, 2.6], size=12.5, row_h=0.46)
+# ================================================================ 4 AUC
+s = new_slide("How we score a model: AUC", "One number for 'how well does the score sort women by risk?'",
+              section="Modelling")
+box(s, "Pick one woman WITH low bone density and one WITHOUT, at random.\n"
+       "AUC = how often the model gives the first woman the higher risk score.",
+    0.6, 1.6, 12.1, 1.1, PALEBLUE, INK, 18, True, PP_ALIGN.CENTER)
+table2(s, [["AUC", "What it means"],
+          ["0.50", "coin flip — the score is useless"],
+          ["0.70 – 0.80", "useful but imperfect — typical for screening questionnaires"],
+          ["0.80 – 0.90", "good"],
+          ["1.00", "perfect — always ranks the right woman higher"]],
+      0.6, 3.0, 7.0, col_w=[1.6, 5.4], size=14, row_h=0.5, hi_rows=(2,))
 bullets(s, [
-    (0, "Regressors never see a label:", "the score is −(predicted T-score); one fit serves both cutoffs and is evaluated by AUC against each label."),
-    (0, "Boosters are deliberately over-regularised", "(depth 2, λ = 50): with ~1,100 rows they overfit trivially; we would rather under-fit than present a tuned booster on 76 events."),
-], x=0.6, y=5.85, w=12.1, h=1.2, size=14)
-notes(s, "Models", """
-All eight models come from get_model_dictionary and get_regressor_dictionary in block F, and are wrapped by _pipe() into Pipeline([('imputer', SimpleImputer('median')), ('scaler', StandardScaler()), ('model', estimator)]).
+    "AUC only cares about ORDER, not the exact number. That is why a risk probability, a predicted T-score and the OST formula can all be compared on the same scale.",
+    "A difference of 0.01 in AUC means the model sorts 1 more pair in 100 correctly.",
+], x=7.9, y=3.0, w=4.9, h=3.8, size=15)
+notes(s, "AUC", """
+AUC stands for 'area under the ROC curve', but the plain-English meaning is more useful: take every possible pair of one woman who has low bone density and one who does not. AUC is the fraction of those pairs where the model gives the higher risk score to the woman who actually has low bone density.
 
-Classifiers (5): L2 logistic regression; elastic-net logistic (saga, l1_ratio 0.5 — C was left at the default 1.0 and never tuned, worth noting); random forest (500 trees, min_samples_leaf 1, balanced class weights); LightGBM and XGBoost both heavily constrained (max depth 2, L2 penalty 50, 150 trees).
+0.5 is a coin flip. 1.0 is perfect. Screening questionnaires in osteoporosis usually land between 0.70 and 0.80 — that is where OST and our models are.
 
-Regressors (3): RidgeCV over 13 alphas from 0.001 to 1000, random-forest regressor (leaf 5), LightGBM regressor. They predict the continuous T-score. To compare with classifiers, the predicted T-score is negated (lower T = higher risk) and used as a ranking score, scored by AUC against each binary label. Docs say 'thresholded twice', but technically they are rank-scored, not thresholded.
+Because AUC only looks at order, we can compare very different kinds of score fairly: a probability from a classifier, a predicted T-score from a regressor, or the OST formula itself.
 
-Why include regressors: the continuous T carries more information than a binary label, and at T ≤ −2.5 with 76 events a regressor trained on all 1,111 values is more stable than a classifier trained on 76 positives. In nested CV the winners were mostly the regressors (Ridge → T and RF → T).
-
-Class imbalance: balanced class weights, or scale_pos_weight for XGBoost. At T ≤ −1.0 the positive class is the majority, so these weights slightly down-weight positives.
-
-RF leaf size: RF_MIN_SAMPLES_LEAF = 1 is shipped. rf_leaf_tuning.csv now shows leaf 1 best on the grid (0.7536 vs 0.7533 for leaf 5), but inner-CV picks per outer fold are [20, 2, 1, 1, 20] — the grid differences are negligible and the per-fold choice is unstable, so 'chosen by nested CV' overstates it.
+Scale of differences: +0.01 AUC means one more correctly ordered pair per hundred. That is small; it matters only if we are confident it is real, which is what the later slides test.
 """)
 
-# ================================================================ 15 Evaluation
-s = new_slide("Evaluation design", section="Modelling")
+# ================================================================ 5 Eight models
+s = new_slide("The 8 models, in two families",
+              "Same 15 inputs for all eight; they differ only in HOW they turn inputs into a score", section="Modelling")
+box(s, "FAMILY 1 — five 'yes / no' models\nlearn the label directly: low bone density, yes or no",
+    0.6, 1.55, 6.0, 0.95, NAVY, WHITE, 14, True)
+table2(s, [["Model", "In plain English"],
+          ["Logistic regression", "Adds up the inputs, each with a weight. The classic medical-statistics model."],
+          ["Elastic net", "Logistic regression that may shrink weak inputs to zero."],
+          ["Random forest", "500 decision trees, each on a resampled set of women; they vote."],
+          ["LightGBM", "Small trees built one after another, each fixing the last one's mistakes."],
+          ["XGBoost", "Same idea as LightGBM, a different implementation."]],
+      0.6, 2.6, 6.0, col_w=[1.8, 4.2], size=12, row_h=0.62)
+box(s, "FAMILY 2 — three 'predict the T-score' models\npredict the actual bone-density number, then compare it to the cutoff",
+    6.85, 1.55, 5.9, 0.95, ORANGE, WHITE, 14, True)
+table2(s, [["Model", "In plain English"],
+          ["Ridge → T-score", "A straight-line formula for the T-score, kept modest so it does not over-fit."],
+          ["Random forest → T-score", "500 trees that each guess the T-score; the guesses are averaged."],
+          ["LightGBM → T-score", "Small trees in sequence, predicting the T-score."]],
+      6.85, 2.6, 5.9, col_w=[2.0, 3.9], size=12, row_h=0.62)
+box(s, "Why family 2? A woman at T = −0.9 and one at T = +1.5 are both 'no' to a yes/no model, "
+       "but the T-score model sees that the first is close to the line. One T-score model also serves BOTH cutoffs.",
+    6.85, 5.25, 5.9, 1.4, LIGHT, INK, 13)
+notes(s, "Eight models", """
+All eight models get exactly the same 15 inputs and the same women. The only difference is the method.
+
+Family 1, five classifiers, learn the yes/no label directly.
+- Logistic regression: each input gets a weight, the weighted inputs are added up, and the total is turned into a probability. It is the standard model in medical research and the easiest to explain.
+- Elastic net: logistic regression with a built-in penalty that can push a weak input's weight all the way to zero, so it does its own variable selection.
+- Random forest: 500 decision trees. Each tree is a flowchart of yes/no questions ('weight under 65 kg? age over 60?'), grown on a different random resample of the women. The forest averages their votes. It can capture interactions a straight-line model cannot.
+- LightGBM and XGBoost: 'gradient boosting'. Very small trees are built one at a time, each one trying to correct the errors of the ones before. We kept them deliberately small and heavily restrained (depth 2, strong penalty), because with about 1,100 women they otherwise memorise the data.
+
+Family 2, three regressors, predict the T-score itself as a number, then we use the predicted number as the risk score (lower predicted T = higher risk).
+- Why bother: turning bone density into yes/no throws information away. A woman just above the line and a woman far above it look identical to a yes/no model. Predicting the number keeps that detail, and one model answers both questions (T ≤ −1.0 and T ≤ −2.5) at once.
+- Ridge is a straight-line formula with a penalty; the random forest and LightGBM versions are the tree methods applied to the number.
+
+Why eight at all: different methods suit different data. Trying a range — simple to flexible — tells us whether the limit is the method or the information in the inputs. (Spoiler: it is the information.)
+
+Shared settings: missing values are filled with the median and inputs are put on a common scale; the yes/no models give extra weight to the less common class so they do not ignore it.
+""")
+
+# ================================================================ 6 Cross-validation
+s = new_slide("Testing fairly, step 1: 5-fold cross-validation",
+              "A model is only ever scored on women it has never seen", section="Modelling")
+labels = ["Round 1", "Round 2", "Round 3", "Round 4", "Round 5"]
+for r in range(5):
+    y0 = 1.75 + r * 0.72
+    tb = s.shapes.add_textbox(Inches(0.6), Inches(y0), Inches(1.2), Inches(0.55))
+    _run(tb.text_frame.paragraphs[0], labels[r], 14, True, INK2)
+    for c in range(5):
+        test = (c == r)
+        box(s, "TEST" if test else "train", 1.85 + c * 1.12, y0, 1.05, 0.55,
+            ORANGE if test else PALEBLUE, WHITE if test else INK, 12, test, PP_ALIGN.CENTER,
+            MSO_SHAPE.RECTANGLE)
+tb = s.shapes.add_textbox(Inches(1.85), Inches(5.4), Inches(5.6), Inches(0.5))
+_run(tb.text_frame.paragraphs[0], "each block = one-fifth of the 1,111 women (≈ 222)", 12, False, INK2)
 bullets(s, [
-    (0, "Cross-validation:", "StratifiedKFold(5, shuffle, random_state 42), identical folds for every model."),
-    (0, "Leaderboard:", "mean per-fold test AUC, plus train AUC and (for RF) OOB AUC side by side. Do NOT rank by train/test gap — RF train AUC is 1.000 by construction (0.997 even on shuffled labels)."),
-    (0, "Nested CV (the defensible number):", "outer 5-fold; inside each outer training fold, all 8 models compete by inner 3-fold OOF AUC; the winner is refit and scores the outer test fold."),
-    (1, "rank_within_folds() converts probabilities and −T predictions to percentile ranks per fold so they can be pooled into one AUC."),
-    (0, "Comparators:", "OST = 0.2 × (weight − age) and weight alone, scored on the same women."),
-    (0, "Uncertainty:", "paired, stratified bootstrap of ΔAUC on fixed out-of-fold scores (1,000 resamples headline; 500 for ablations/arms); one-sided p = share of Δ ≤ 0."),
-    (0, "Explaining the model:", "permutation importance (5 folds × 5 repeats); single-variable and block refit ablation across all 8 models with Holm correction; bootstrapped odds ratios from L2 LR."),
-    (0, "Clinical utility:", "sigmoid calibration (CalibratedClassifierCV), referral table by top-k%, probability threshold sweep."),
-    (0, "Power gate:", "events per predictor vs a floor of 10, checked before any arm is modelled."),
-], size=15)
-notes(s, "Evaluation design", """
-Walk through why each piece exists.
+    "Split the women into 5 equal groups, keeping the share of cases the same in each.",
+    "Train on 4 groups, score the 5th. Repeat until every group has been the test group once.",
+    "Result: every woman gets ONE score from a model that never saw her.",
+    "AUC is computed on those 'unseen' scores.",
+    (0, "Inside each round:", "filling in missing values and scaling are learned from the training groups only — the test group never leaks in."),
+], x=7.7, y=1.6, w=5.2, h=5.2, size=15)
+notes(s, "Cross-validation", """
+The single most important rule in evaluating a prediction model: never score it on the data it learned from. A model can memorise the women it trained on and look perfect, then fail on new women.
 
-Leaderboard vs nested CV: fitting eight models and reporting the best is optimistically biased (winner's curse). Nested CV puts model selection inside each outer training fold, so no test row helps pick the model that scores it. The nested AUC is the number we stand behind. Fold-level winners were: osteopenia [RF→T, RF, Ridge→T, RF, Ridge→T]; osteoporosis [RF→T, RF→T, Ridge→T, Ridge→T, RF→T].
+5-fold cross-validation solves this without needing a separate dataset:
+1. Split the 1,111 women into five groups of about 222. 'Stratified' means each group has the same share of low-bone-density cases as the whole.
+2. Train the model on four groups, then score the fifth group, which it has never seen.
+3. Rotate so each group takes a turn as the test group.
+Every woman ends up with exactly one 'out-of-fold' score, produced by a model that did not see her. AUC is calculated on those scores.
 
-Pooling different model types: classifier probabilities and negated regressor predictions are on different scales, and the winning model can differ by fold, so scores are converted to within-fold percentile ranks before computing one pooled AUC.
+A subtle but important detail: steps like filling in missing values (with the median) and putting inputs on a common scale are part of the model. They are learned from the four training groups only and then applied to the test group. If we computed the median using all 1,111 women first, a little information about the test women would leak into training.
 
-Bootstrap: cases and non-cases are resampled separately (stratified), with model and OST evaluated on the same resampled rows (paired). Important caveat for the engineer: it resamples fixed out-of-fold predictions; it does not refit models, so model-fitting variance is not in the interval. Also the reported Δ is the bootstrap mean, not the observed difference (they differ in the third decimal at most).
+Everything uses the same random seed (42), so the splits — and every number in this deck — are reproducible.
+""")
 
-Subtle point: the leaderboard AUC is the mean of per-fold AUCs, while nested / ablation AUCs are pooled out-of-fold AUCs. 'Optimism' (leaderboard − nested) therefore mixes two aggregation methods — small, but worth knowing.
+# ================================================================ 7 Nested CV
+s = new_slide("Testing fairly, step 2: nested cross-validation",
+              "The honest score for 'try 8 models and keep the best'", section="Modelling")
+box(s, "THE TRAP\nIf we try 8 models and report the best score, part of that 'best' is luck — "
+       "we picked whichever model happened to suit these particular women.",
+    0.6, 1.6, 5.6, 1.6, LIGHT, INK, 15)
+box(s, "THE FIX\nMake 'pick the best model' part of the training, and score the pick on women "
+       "that were not used for picking.", 0.6, 3.4, 5.6, 1.4, PALEBLUE, INK, 15)
+# diagram
+box(s, "Outer round (×5): hold out one-fifth of the women", 6.6, 1.6, 6.15, 0.6, NAVY, WHITE, 14, True)
+box(s, "Inner contest on the other four-fifths:\nall 8 models compete in a 3-fold cross-validation\n→ the winner is chosen",
+    6.9, 2.35, 5.85, 1.25, ORANGE, WHITE, 14, False)
+box(s, "Winner is refit and scores the held-out fifth\n(women it has never seen, and who played no part in choosing it)",
+    6.9, 3.75, 5.85, 1.05, PALEBLUE, INK, 14)
+box(s, "Combine the 5 held-out fifths → NESTED AUC", 6.6, 4.95, 6.15, 0.6, NAVY, WHITE, 14, True)
+bullets(s, [
+    (0, "Leaderboard AUC:", "best of the 8 on ordinary cross-validation — slightly optimistic."),
+    (0, "Nested AUC:", "the number we report as the result."),
+    (0, "Optimism:", "leaderboard minus nested — how much the pick flattered itself."),
+], x=0.6, y=5.05, w=5.8, h=1.9, size=14)
+notes(s, "Nested cross-validation", """
+Cross-validation gives each model an honest score. But we have eight models, and we want to report 'the best one'. Choosing the best and then quoting its score is a little dishonest: some of its lead is luck — it happened to fit these particular women well.
 
-Permutation importance answers 'how much does this model rely on the column'; refit ablation answers 'how much do we lose if we never collect this variable'. With collinear predictors (weight / BMI) the two disagree, which is why block ablation exists.
+Nested cross-validation moves the choosing inside the training:
+- Outer loop: split the women into five fifths. Hold one fifth out completely.
+- Inner loop: using only the other four-fifths, run all eight models through their own 3-fold cross-validation and pick the winner.
+- Refit the winner on those four-fifths and score the held-out fifth — women who neither trained the model nor helped choose it.
+- Repeat for all five fifths and combine the scores into one AUC.
 
-Holm correction is applied to the 18 single-variable ablation p-values for the primary model.
+So the nested AUC is not the score of one particular model. It is the honest score of the whole recipe: 'try eight models, keep the best'. That is exactly what we would do in practice, so it is the right number to report.
+
+Different outer rounds can pick different winners; the run log lists which model won each round. The winners vary between the forest, logistic-style and T-score models, which itself says the models are close to interchangeable.
+
+'Optimism' is the leaderboard best minus the nested AUC. Small optimism means picking the winner did not inflate the result much.
+""")
+
+# ================================================================ 8 Comparing to OST
+s = new_slide("Testing fairly, step 3: is the model really better than OST?",
+              "A difference only counts if it survives the play of chance", section="Modelling")
+bullets(s, [
+    (0, "Same women, same comparison.", "The model's nested scores and OST are compared on the identical 1,111 women ('paired')."),
+    (0, "Bootstrap:", "re-draw the 1,111 women at random with replacement, 1,000 times, and recompute model AUC − OST AUC each time."),
+    (0, "95% confidence interval:", "the middle 95% of those 1,000 differences — the range the true difference plausibly lies in."),
+    (0, "The rule:", "if the whole interval is above zero → 'beats OST'. If it includes zero → 'not separable'."),
+], x=0.6, y=1.6, w=7.2, h=4.4, size=16)
+# number line illustration
+box(s, "Reading an interval", 8.2, 1.6, 4.6, 0.55, NAVY, WHITE, 14, True)
+line = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(8.4), Inches(3.35), Inches(4.2), Inches(0.04))
+line.fill.solid(); line.fill.fore_color.rgb = INK2; line.line.fill.background()
+zero = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.6), Inches(2.4), Inches(0.03), Inches(2.6))
+zero.fill.solid(); zero.fill.fore_color.rgb = INK; zero.line.fill.background()
+tb = s.shapes.add_textbox(Inches(9.35), Inches(5.0), Inches(0.6), Inches(0.4))
+_run(tb.text_frame.paragraphs[0], "0", 13, True, INK)
+box(s, "", 10.0, 2.55, 2.3, 0.3, GREEN, WHITE, 10, shape=MSO_SHAPE.RECTANGLE)
+tb = s.shapes.add_textbox(Inches(10.0), Inches(2.85), Inches(2.8), Inches(0.4))
+_run(tb.text_frame.paragraphs[0], "all above 0 → beats OST", 12, True, GREEN)
+box(s, "", 9.1, 3.75, 2.2, 0.3, ORANGE, WHITE, 10, shape=MSO_SHAPE.RECTANGLE)
+tb = s.shapes.add_textbox(Inches(9.1), Inches(4.05), Inches(3.4), Inches(0.4))
+_run(tb.text_frame.paragraphs[0], "crosses 0 → not separable", 12, True, ORANGE)
+box(s, "'Not separable' does not mean 'equal'. It means we cannot tell them apart with this many women.",
+    0.6, 6.1, 12.1, 0.65, LIGHT, INK, 15, True)
+notes(s, "Bootstrap comparison", """
+Suppose the model's AUC is 0.01 higher than OST's. Is that a real advantage, or just luck in which 1,111 women happened to be surveyed? The bootstrap answers that.
+
+How it works:
+- Draw 1,111 women at random from our 1,111, with replacement (some women appear twice, some not at all). Keep the number of cases and non-cases fixed.
+- On that resampled group, compute the model's AUC and OST's AUC, and take the difference.
+- Do this 1,000 times. We now have 1,000 plausible values of the difference.
+- The 95% confidence interval is the range covering the middle 950 of them.
+
+It is 'paired' because the model and OST are always scored on the same resampled women, so the comparison is like-for-like.
+
+The decision rule: if the entire interval sits above zero, the model beats OST. If the interval includes zero, the difference could plausibly be nothing, and we call it 'not separable'.
+
+Be careful with wording. 'Not separable' is not proof that the two are equal; it means this study is not big enough to tell them apart. A one-sided p-value is also reported (the share of bootstrap differences at or below zero), but the verdict is based on the interval.
 """)
 
 # ================================================================ 16 Code
@@ -623,111 +802,100 @@ bullets(s, [
 notes(s, "Code organisation", """
 The whole study is one script. It is intentionally linear: each step function takes a DataFrame and returns one, and prints a banner via print_section. To debug a step you import the module with importlib and call the functions in sequence (CLAUDE.md shows the snippet) rather than adding flags.
 
-The script writes data/processed/analysis_cohort_postmenopausal.csv (1,111 rows × 113 columns) — the analysis input — and everything else goes to outputs/ through save_csv, which stamps a tier: PRESENT (for clinicians), METHODS (defends choices), DIAGNOSTIC (leak/sign detectors, not findings).
+The script writes data/processed/analysis_cohort_postmenopausal.csv (1,111 rows × 131 columns) — the analysis input — and everything else goes to outputs/ through save_csv, which stamps a tier: PRESENT (for clinicians), METHODS (defends choices), DIAGNOSTIC (leak/sign detectors, not findings).
 
 Dependencies: pandas, numpy, matplotlib, scikit-learn, lightgbm, xgboost, requests — installed in the system Python, no requirements file. stdout is reconfigured to UTF-8 before imports because the progress output uses emoji and the Windows cp1252 console would raise.
 
-What an engineer will notice is missing, and where they could help: no unit tests (the asserts act as integration tests), no dependency lockfile, no CI, no experiment tracking, no data versioning beyond git. There are also ~20 leftover scratch scripts (_build_*.py, _edit_wt*.py, _stage.py) in the repo root from the rewrite session that should be cleaned up.
+What an engineer will notice is missing, and where they could help: no unit tests (the asserts act as integration tests), no dependency lockfile, no CI, no experiment tracking, no data versioning beyond git. There are also ~20 scratch scripts (_build_*.py, _edit_wt*.py, _stage.py) in the repo root that should be cleaned up.
 """)
 
-# ================================================================ 17 Leaderboard
-s = new_slide("Results: model leaderboard (5-fold CV)", "Mean test AUC across folds; RF in-sample AUC is 1.000 by construction — read OOB instead", section="Results")
-def lbrows(df):
-    out = [["Model", "Test AUC", "Train AUC", "OOB AUC", "Sens", "Spec"]]
-    for _, r in df.iterrows():
-        oob = f"{r.oob_auc:.3f}" if pd.notna(r.oob_auc) else ("withheld" if "withheld" in str(r.oob_note) else "—")
-        out.append([r.Model.replace(" (Aggressive Reg)", "").replace("Elastic Net Logistic Regression", "Elastic-net LR").replace("Logistic Regression (L2)", "Logistic (L2)"),
-                    f"{r.auc:.3f}", f"{r.train_auc:.3f}", oob, f"{r.sens:.2f}", f"{r.spec:.2f}"])
+# ================================================================ 9 Leaderboard
+s = new_slide("Results 1: all 8 models land in the same place",
+              "Ordinary 5-fold cross-validation AUC for the five yes/no models", section="Results")
+
+
+def lb_rows(lb):
+    out = []
+    for _, r in lb.iterrows():
+        out.append([r["Model"].replace(" (Aggressive Reg)", "").replace("Elastic Net Logistic Regression", "Elastic net")
+                    .replace("Logistic Regression (L2)", "Logistic regression"), f3(r["auc"])])
     return out
-tb = s.shapes.add_textbox(Inches(0.6), Inches(1.4), Inches(6), Inches(0.4))
-_run(tb.text_frame.paragraphs[0], "Osteopenia or worse (T ≤ −1.0), 645 / 1,111", 15, True, NAVY)
-table(s, lbrows(lb1), 0.6, 1.85, 6.0, col_w=[1.8, 0.85, 0.9, 0.9, 0.7, 0.85], size=12, row_h=0.4)
-tb = s.shapes.add_textbox(Inches(6.9), Inches(1.4), Inches(6), Inches(0.4))
-_run(tb.text_frame.paragraphs[0], "Osteoporosis (T ≤ −2.5), 76 / 1,111", 15, True, NAVY)
-table(s, lbrows(lb2), 6.9, 1.85, 6.0, col_w=[1.8, 0.85, 0.9, 0.9, 0.7, 0.85], size=12, row_h=0.4)
+
+
+rows = [["Model", "Low bone mass\n(T ≤ −1.0)", "Osteoporosis\n(T ≤ −2.5)"]]
+for a, b in zip(lb_rows(lb1), lb_rows(lb2)):
+    rows.append([a[0], a[1], b[1]])
+rows.append(["OST formula (for reference)", f3(op_ost["Comparator AUC"]), f3(os_ost["Comparator AUC"])])
+table2(s, rows, 0.6, 1.6, 7.0, col_w=[3.4, 1.8, 1.8], size=14, row_h=0.6, hi_rows=(len(rows) - 1,))
+spread1 = lb1["auc"].max() - lb1["auc"].min()
 bullets(s, [
-    "All five classifiers sit within 0.015 AUC of each other at T ≤ −1.0 — model family barely matters; the features set the ceiling.",
-    "Linear models are best or tied; the constrained boosters are lowest. Consistent with a mostly linear, low-dimensional signal (weight, age).",
-    "RF at T ≤ −2.5: sensitivity 0.18 at the default 0.5 cutoff, and OOB withheld (only 28% of cases ever out-of-bag).",
-    "Sensitivity/specificity use the default 0.5 probability cutoff — see the referral table for operating points.",
-], x=0.6, y=4.55, w=12.1, h=2.4, size=14)
-notes(s, "Leaderboard", """
-These are the per-model numbers from model_leaderboard_*.csv. At T ≤ −1.0: logistic L2 0.756, elastic net 0.756, RF 0.754 (OOB 0.750 — close to test, good sign), LightGBM 0.741, XGBoost 0.738. At T ≤ −2.5: LR 0.781, EN 0.781, RF 0.787, LightGBM 0.771, XGBoost 0.744.
+    f"For low bone mass, all five sit within {spread1:.3f} of each other.",
+    "Simple logistic regression does as well as the complex tree models.",
+    "When very different methods agree, the limit is the information in the inputs, not the method.",
+    "The three T-score models are judged inside the nested test (next slide), where they often win a round.",
+], x=7.9, y=1.6, w=4.9, h=5.0, size=15)
+notes(s, "Leaderboard", f"""
+This table is the 'leaderboard': each yes/no model's AUC from ordinary 5-fold cross-validation.
 
-Two lessons for the ML audience:
-1. Model family hardly matters. A regularised logistic regression is as good as anything. That points to a feature ceiling, not a modelling problem — more tuning will not help.
-2. Train/test gap is not a quality metric here. A random forest with leaf size 1 always fits training data perfectly. The honest in-sample number for a bagged ensemble is OOB AUC.
+For low bone mass (T ≤ −1.0), the five models range from {lb1['auc'].min():.3f} to {lb1['auc'].max():.3f}. Logistic regression, the simplest, is at the top with elastic net; the boosted-tree models are slightly lower. For osteoporosis the spread is wider ({lb2['auc'].min():.3f} to {lb2['auc'].max():.3f}), but with only {E2} cases those numbers bounce around a lot.
 
-Remember the leaderboard is still optimistic because we pick the best of eight. That is why the next slide uses nested CV. Also the three regressors are not shown here; in the ablation runs Ridge → T-score had the best full-panel AUC (0.757) and was used as the 'primary model' for ablations and arms.
+The important reading: methods that work in completely different ways all hit the same ceiling, and that ceiling is barely above OST. That tells us more modelling cleverness is unlikely to help — the inputs simply do not contain much more information about bone density than weight and age already do.
+
+The three T-score models are not in this table because this leaderboard is for yes/no models; they compete in the nested cross-validation, where they won several rounds.
+
+Reminder: the leaderboard best is slightly optimistic (we picked it after seeing the scores). The result we report is the nested AUC on the next slide.
 """)
 
-# ================================================================ 18 Headline
-s = new_slide("Headline result: the full panel does not beat OST", "Nested cross-validation, out-of-fold, paired bootstrap 95% CI (1,000 resamples)", section="Results")
-picture(s, os.path.join(CH, "nested_verdict.png"), 1.3, 1.3, w=10.7)
-table(s, [
-    ["Target", "Comparator", "Comp. AUC", "Nested AUC", "Δ", "95% CI", "p (1-sided)", "Verdict"],
-] + [[r.Target.replace("Osteopenia+ (T<=-1.0)", "T ≤ −1.0").replace("Osteoporosis (T<=-2.5)", "T ≤ −2.5"),
-      r.Comparator.replace("  0.2x(weight-age)", ""), f"{r['Comparator AUC']:.3f}", f"{r['Nested AUC']:.3f}",
-      f"{r['Delta vs comparator']:+.3f}", r["95% CI"], f"{r['p (one-sided)']:.3f}", r.Verdict] for _, r in nv.iterrows()],
-    0.6, 5.3, 12.1, col_w=[1.2, 1.7, 1.2, 1.3, 0.9, 1.9, 1.3, 2.6], size=12, row_h=0.33)
-notes(s, "Headline result", """
-This is the bottom line (nested_cv_verdict.csv — the first file to open).
+# ================================================================ 10 Headline
+s = new_slide("Results 2: the headline — model vs OST",
+              "Nested AUC (the honest score) against the two simple rules", section="Results")
+vt = [["Target", "Model\n(nested)", "OST", "Model − OST\n[95% CI]", "Verdict"]]
+for lab, o in [("Low bone mass (T ≤ −1.0)", op_ost), ("Osteoporosis (T ≤ −2.5)", os_ost)]:
+    vt.append([lab, f3(o["Nested AUC"]), f3(o["Comparator AUC"]),
+               f"{o['Delta vs comparator']:+.3f}\n{ci(o['95% CI'])}", o["Verdict"].replace("Beats comparator", "Beats OST")])
+table2(s, vt, 0.6, 1.6, 7.6, col_w=[2.5, 1.1, 0.9, 1.7, 1.4], size=13, row_h=0.8)
+wt = [["Target", "Weight alone", "Model − weight [95% CI]", "Verdict"]]
+for lab, o in [("Low bone mass", op_w), ("Osteoporosis", os_w)]:
+    wt.append([lab, f3(o["Comparator AUC"]), f"{o['Delta vs comparator']:+.3f} {ci(o['95% CI'])}",
+               o["Verdict"].replace("Beats comparator", "Beats weight*")])
+table2(s, wt, 0.6, 4.3, 7.6, col_w=[2.0, 1.3, 2.8, 1.5], size=12, row_h=0.5)
+tb = s.shapes.add_textbox(Inches(0.6), Inches(5.85), Inches(7.6), Inches(0.9))
+tf = tb.text_frame; tf.word_wrap = True
+_run(tf.paragraphs[0], f"* Osteoporosis has only {E2} cases; the interval only just clears zero, so treat this as fragile.", 12, False, INK2)
+box(s, "IN PLAIN ENGLISH\n\nThe model is about 0.01 AUC ahead of OST on both targets, "
+       "but the uncertainty is larger than the gap.\n\nWe cannot say the model is better than "
+       "a formula that uses only weight and age.", 8.5, 1.6, 4.25, 4.2, NAVY, WHITE, 16)
+notes(s, "Headline result", f"""
+This is the main result.
 
-T ≤ −1.0 (645 events): nested AUC 0.751. OST 0.739. Weight alone 0.737. Model minus OST = +0.012, 95% CI −0.005 to +0.030, one-sided p 0.083. Not separable. Versus weight alone: +0.014 [−0.004, +0.031].
+Low bone mass (T ≤ −1.0, {E1} cases): nested AUC {f3(op_ost['Nested AUC'])} versus OST {f3(op_ost['Comparator AUC'])}. The model is {op_ost['Delta vs comparator']:+.3f} ahead, but the 95% interval is {ci(op_ost['95% CI'])} — it includes zero. Verdict: not separable from OST.
 
-T ≤ −2.5 (76 events): nested AUC 0.794 vs OST 0.780 → +0.014 [−0.013, +0.040]. Not separable, and underpowered (events per predictor 4.5). Versus weight alone +0.028 [−0.001, +0.059], p 0.032 — the p is under 0.05 but the CI includes zero; the verdict keys on the CI, which is the conservative and consistent choice (p is the fraction of bootstrap deltas ≤ 0, so any p above 0.025 puts the 2.5th percentile below zero).
+Osteoporosis (T ≤ −2.5, {E2} cases): nested AUC {f3(os_ost['Nested AUC'])} versus OST {f3(os_ost['Comparator AUC'])}, difference {os_ost['Delta vs comparator']:+.3f}, interval {ci(os_ost['95% CI'])}. Also not separable.
 
-Optimism (leaderboard − nested) is +0.005 at T ≤ −1.0 and −0.007 at T ≤ −2.5. A negative optimism at 76 events is noise, not a sign that nesting improves things.
+Against weight alone: for low bone mass the model is also not separable from weight alone ({op_w['Delta vs comparator']:+.3f}, {ci(op_w['95% CI'])}). For osteoporosis the interval against weight alone is {ci(os_w['95% CI'])}, which just clears zero. Do not over-read that: there are only {E2} cases, the lower end is a hair above zero, and the comparison that matters clinically is OST, where it is not separable.
 
-How to say it: '18 survey variables and eight machine-learning models do not measurably improve on a formula that uses weight and age.' That is a legitimate, useful finding — it says the cheap tool is already near the ceiling for this data. Note the y-axis on the chart starts at 0.70 to make the small differences visible.
-""")
-
-# ================================================================ 19 Decomposition
-s = new_slide("Where the earlier ‘beats OST’ claim went", "Same feature panel and model set; only the cycle list and cohort gate change (auc_decomposition.csv)", section="Results")
-picture(s, os.path.join(CH, "auc_decomposition.png"), 0.4, 1.4, w=8.2)
-table(s, [
-    ["Stage", "n", "Δ vs OST [95% CI]"],
-    ["A  6 cycles, all DXA", "1,484", "+0.095 [+0.076, +0.114]"],
-    ["B  6 cycles, postmeno", "1,272", "+0.103 [+0.081, +0.125]"],
-    ["C  5 cycles, all DXA", "1,308", "+0.012 [−0.003, +0.025]"],
-    ["D  5 cycles, postmeno", "1,111", "+0.018 [+0.001, +0.034]"],
-], 8.75, 1.55, 4.3, col_w=[1.55, 0.6, 2.15], size=11, row_h=0.42)
-callout(s, "Duplicate fix alone (A→C): −0.077\nMenopause gate alone (A→B): −0.006\n\nThe ‘beats OST’ claim dies at stage C, before the menopause gate.",
-        8.75, 3.9, 4.3, 2.0, fill=RGBColor(0xfd, 0xe3, 0xd6), size=13, bold=True)
-notes(s, "AUC decomposition", """
-Two things changed at once in the rewrite (duplicates removed, cohort narrowed to postmenopausal), so we separated them with a 2×2 holding everything else fixed.
-
-A. Six cycles including duplicated 2017–18, all DXA women: best AUC 0.841 vs OST 0.747, Δ +0.095.
-B. Same, postmenopausal only: 0.835 vs 0.733, Δ +0.103.
-C. Duplicates removed, all DXA: 0.764 vs 0.753, Δ +0.012, CI crosses zero.
-D. Shipped cohort: 0.757 vs 0.739, Δ +0.018 [+0.001, +0.034].
-
-Reading it: removing duplicates costs 0.077 AUC; narrowing to postmenopausal costs 0.006. The 'beats OST' claim disappears as soon as duplicates are removed. Note that OST's own AUC barely moves (0.747 → 0.753) — only the flexible models were exploiting the duplicates, exactly what you would expect from leakage: random forests memorise near-identical rows.
-
-Why stage D shows +0.018 with a CI just above zero while the headline says 'not separable': stage D uses the leaderboard best model (Ridge → T), chosen with knowledge of the test folds; the headline uses nested CV (+0.012, CI crossing zero). This is the winner's-curse effect in miniature — and the reason we quote nested CV.
-
-Stage A reads 0.841 rather than the originally published 0.810 because it runs the rebuilt (better-cleaned) feature panel on the old duplicated cohort.
+How to say it: 'With careful methods, machine learning on 15 routinely available inputs matches, but does not exceed, the two-input OST formula.' That is a legitimate finding, consistent with the published literature (simple tools like OST usually perform as well as complex ones).
 """)
 
 # ================================================================ 20 Ablation
-s = new_slide("What the model actually uses: body size", "Refit ablation, primary model Ridge → T-score, T ≤ −1.0, paired bootstrap 500", section="Results")
+s = new_slide("Results 3: what the model actually uses — body size", "Refit ablation, primary model Ridge → T-score, T ≤ −1.0, paired bootstrap 500", section="Results")
 picture(s, os.path.join(CH, "block_ablation.png"), 0.45, 1.35, w=8.6)
 bullets(s, [
-    (0, "Drop weight + BMI → 0.605", "(Δ +0.151 [+0.116, +0.185])."),
-    (0, "Drop any other block entirely → no measurable change", "(≤ 0.004, CIs cross 0)."),
-    (0, "Age + weight alone = 0.739", "= OST's AUC. The other 15 columns add +0.018."),
-    (0, "Single-variable ablation:", "only weight_kg survives Holm (+0.019 [+0.008, +0.031])."),
-    (0, "Permutation importance:", "weight +0.244 (LR) / +0.151 (RF); next best 0.027."),
+    (0, "Drop weight + BMI → 0.605", "(Δ +0.148 [+0.111, +0.185])."),
+    (0, "Drop any other block entirely → no measurable change", "(≤ 0.005, CIs cross 0)."),
+    (0, "Age + weight alone = 0.739", "= OST's AUC. The other 13 columns add +0.016 [−0.000, +0.030] — not measurable."),
+    (0, "Single-variable ablation:", "only weight_kg survives Holm (+0.018 [+0.007, +0.030])."),
+    (0, "Permutation importance:", "weight +0.239 (LR) / +0.139 (RF); next best 0.028."),
     (0, "BMI paradox:", "≈0 in single ablation but 2nd in RF permutation — weight substitutes for it (r = 0.94). Quote the block result."),
 ], x=9.2, y=1.4, w=3.85, h=5.6, size=12.5)
 notes(s, "Body size dominates", """
 From model_block_ablation_osteopenia.csv. Each row refits all models without the listed variables (or with only them), on the same folds.
 
-- Drop body size (BMI + weight): AUC 0.757 → 0.605. Δ +0.151 [+0.116, +0.185]. This block is nearly the whole model.
-- Drop all menopause/hormone variables (years since menopause, estrogen): 0.753, Δ +0.004 [−0.002, +0.010].
-- Drop all lifestyle variables (smoking, alcohol, vigorous activity, sedentary): 0.756, Δ +0.001.
-- Drop all history/family variables (prior fracture, steroids, parental hip fracture, family history): 0.754, Δ +0.003.
-- Keep only age + weight (OST's inputs): 0.739 — reproduces OST to three decimals.
+- Drop body size (BMI + weight): AUC 0.754 → 0.605. Δ +0.148 [+0.111, +0.185]. This block is nearly the whole model.
+- Drop all menopause/hormone variables (years since menopause, estrogen): 0.749, Δ +0.005 [−0.001, +0.011].
+- Drop all lifestyle variables (smoking, alcohol): 0.756, Δ −0.002.
+- Drop all history/family variables (prior fracture, steroids, parental hip fracture, family history): 0.751, Δ +0.003.
+- Keep only age + weight (OST's inputs): 0.739 — reproduces OST to three decimals. The full panel's +0.016 over it has a CI of [−0.000, +0.030], so the other 13 columns do not measurably add to OST's two inputs.
 - Keep only age + BMI: 0.718.
 
 Why single-variable ablation and permutation importance disagree on BMI: BMI and weight are 0.94 correlated. Remove BMI alone and weight covers it (Δ ≈ 0). Shuffle BMI inside a forest that also has weight and the forest loses a little (permutation rank 2 for RF). Only removing both shows the block's real value. Tell clinicians the block number.
@@ -736,27 +904,26 @@ Interpretation for the engineer: the signal is low-dimensional and largely captu
 """)
 
 # ================================================================ 21 ORs
-s = new_slide("Per-predictor effects (adjusted odds ratios)", "L2 logistic regression, all 17 columns together, bootstrap 500 refits; solid = 95% CI excludes 1", section="Results")
+s = new_slide("Results 4: per-predictor effects (adjusted odds ratios)", "L2 logistic regression, all 15 columns together, bootstrap 500 refits; solid = 95% CI excludes 1", section="Results")
 picture(s, os.path.join(OUT, "forest_plot_odds_ratios.png"), 0.4, 1.3, h=5.65)
 table(s, [
     ["Predictor (unit)", "OR (95% CI)", "Dir."],
-    ["weight (per 10 kg)", "0.50 (0.39–0.63)", "protective"],
-    ["ever used estrogen", "0.60 (0.45–0.79)", "protective"],
-    ["poverty-income ratio (per 1)", "0.89 (0.81–0.97)", "protective"],
-    ["age (per 5 y)", "1.28 (1.07–1.54)", "risk"],
-    ["any prior fracture", "1.72 (1.15–2.73)", "risk"],
-    ["sedentary (per h/day)", "1.06 (1.00–1.10)", "risk (lower bound ≈ 1)"],
-    ["steroid use", "1.49 (0.98–2.35)", "ns"],
+    ["weight (per 10 kg)", "0.51 (0.39–0.65)", "protective"],
+    ["ever used estrogen", "0.60 (0.44–0.77)", "protective"],
+    ["poverty-income ratio (per 1)", "0.91 (0.83–0.99)", "protective"],
+    ["age (per 5 y)", "1.28 (1.08–1.54)", "risk"],
+    ["any prior fracture", "1.72 (1.15–2.68)", "risk"],
+    ["steroid use", "1.49 (0.98–2.38)", "ns"],
 ], 6.75, 1.45, 6.2, col_w=[2.8, 1.9, 1.5], size=12, row_h=0.42)
-callout(s, "Caveats: ORs come from a penalised (C = 1), class-weighted sklearn model, so they are shrunk and not classical inference.\nsedentary_min_day is 15.8% median-imputed (mostly the whole 2005–06 cycle).",
+callout(s, "Caveats: ORs come from a penalised (C = 1), class-weighted sklearn model, so they are shrunk and not classical inference.\nActivity is not in this table: it is tested only in arm I (2005–06 not asked).",
         6.75, 5.0, 6.2, 1.6, size=12)
 notes(s, "Odds ratios", """
-Six of seventeen columns have a confidence interval excluding 1:
-- Protective: weight 0.50 per 10 kg (the dominant effect), ever used estrogen 0.60, poverty-income ratio 0.89 per unit (higher income, better bone).
-- Risk: age 1.28 per 5 years, any prior fracture 1.72, sedentary time 1.06 per hour/day (lower CI bound rounds to 1.00, so this one is marginal).
-- Steroid use 1.49 (0.98–2.35) is not significant.
+Five of fifteen columns have a confidence interval excluding 1:
+- Protective: weight 0.51 per 10 kg (the dominant effect), ever used estrogen 0.60, poverty-income ratio 0.91 per unit (higher income, better bone).
+- Risk: age 1.28 per 5 years, any prior fracture 1.72.
+- Steroid use 1.49 (0.98–2.38) is not significant.
 
-Everything else (BMI, years since menopause, family history, parental hip fracture, smoking, alcohol, activity, PHQ-9, sleep, diabetes) has a CI spanning 1.
+Everything else (BMI, years since menopause, family history, parental hip fracture, smoking, alcohol, PHQ-9, sleep, diabetes) has a CI spanning 1. Activity is arm-only, so it is not in this table.
 
 Method caveats a statistician will ask about: these are not statsmodels maximum-likelihood ORs. They come from scikit-learn's L2-penalised logistic regression with balanced class weights, coefficients back-transformed from standardised units to clinical units, with a 500-replicate stratified bootstrap that refits imputation and model each time. Penalisation shrinks ORs toward 1, and class weighting changes the intercept. Directions and relative sizes are reliable; exact values are not textbook ORs. A useful follow-up: refit with an unpenalised GLM (and possibly survey design) for the clinical table.
 
@@ -764,7 +931,7 @@ Associations are not causal and the study is cross-sectional (e.g., estrogen use
 """)
 
 # ================================================================ 22 Arms
-s = new_slide("Prespecified arms and power: all null, as stated in advance", section="Results")
+s = new_slide("Results 5: arms and power — no arm adds signal", section="Results")
 ar = [["Arm", "n", "Events", "Base AUC", "Arm AUC", "Δ AUC [95% CI]"]]
 for _, r in arms.iterrows():
     d = r["95% CI"]
@@ -778,33 +945,35 @@ for _, r in arms.iterrows():
 table(s, ar, 0.6, 1.4, 8.4, col_w=[3.0, 0.75, 0.75, 1.0, 1.0, 1.9], size=11, row_h=0.42)
 table(s, [
     ["Cohort", "EPP T≤−2.5", "EPP T≤−1.0"],
-    ["C0 base (17 cols)", "4.5", "27.4"],
-    ["C1 + vit D intake", "3.5", "20.1"],
-    ["C2 + serum 25(OH)D", "3.8", "22.7"],
-    ["C3 + both vit D", "3.0", "16.3"],
-    ["C4 + RA", "4.0", "22.4"],
+    ["C0 base (15 cols)", "5.1", "31.1"],
+    ["C1 + vit D intake", "3.9", "22.4"],
+    ["C2 + serum 25(OH)D", "4.3", "25.5"],
+    ["C3 + both vit D", "3.3", "18.1"],
+    ["C4 + RA", "4.5", "25.3"],
+    ["C5 + activity", "3.9", "22.5"],
 ], 9.25, 1.4, 3.7, col_w=[1.7, 1.0, 1.0], size=11, row_h=0.4)
 callout(s, "Events per predictor floor = 10.\nEvery T ≤ −2.5 cohort is under-powered → reported as ‘underpowered’, not as a negative finding.",
-        9.25, 4.0, 3.7, 1.7, size=12)
+        9.25, 4.45, 3.7, 1.7, size=12)
 notes(s, "Prespecified arms", """
-What an arm is: a planned side-experiment. Take the base model (the 17-variable panel), change exactly one thing, refit, and compare against the base model fitted on the same women and the same folds. The term comes from clinical trials, where each arm is one version of the treatment. 'Prespecified' means the list of arms and the expected result for each were written down before anything ran, which is what makes a null reportable rather than fishing.
+What an arm is: a planned side-experiment. Take the base model (the 15-variable panel), change exactly one thing, refit, and compare against the base model fitted on the same women and the same folds. The term comes from clinical trials, where each arm is one version of the treatment. 'Prespecified' means the list of arms and the expected result for each were written down before anything ran, which is what makes a null reportable rather than fishing. Arms C–H were prespecified; arm I (activity) comes from the analysis plan and was added when the MET calculation was built.
 
 Each arm adds or substitutes one clinical idea and refits on the same rows and folds as its base model (complete cases for the arm variable).
 
-- C. Calcium + vitamin D intake (diet two-day average + supplements), n 930: −0.002.
-- D. Serum 25(OH)D, n 974: −0.001.
+- C. Calcium + vitamin D intake (diet two-day average + supplements), n 930: −0.002 [−0.006, +0.001].
+- D. Serum 25(OH)D, n 974: −0.016 [−0.024, −0.007]. The primary model here is the random forest, and adding the serum value makes it slightly WORSE — an extra weak feature on a smaller sample. Still no gain.
 - E. Rheumatoid arthritis, n 988 (71 RA): 0.000.
+- I. Physical activity (log MET-min/week + sedentary minutes), n 932 women from 2007 on (2005–06 did not ask the questions): −0.001 [−0.010, +0.007].
 - F. PHQ-9 ≥ 10 instead of the continuous score: −0.001 [−0.002, +0.000] — a negligible loss.
-- G1/G2. Diabetes recoded (borderline as diabetic) or dropped: 0.000. Sensitivity only.
-- H1/H2. Outcome re-specified to femoral neck only (618 events, 0.747) or total hip only (424 events, 0.776). Different outcome, so no delta.
+- G1/G2. Diabetes recoded (borderline as diabetic) or dropped: +0.001 / 0.000. Sensitivity only.
+- H1/H2. Outcome re-specified to femoral neck only (618 events, 0.745) or total hip only (424 events, 0.777). Different outcome, so no delta.
 
-All nulls were written down before the run, which is what makes them reportable rather than fishing.
+The C–H nulls were written down before the run, which is what makes them reportable rather than fishing.
 
-Power gate: events per predictor (EPP) = min(events, non-events) / number of model columns. At T ≤ −1.0 the binding class is the 466 non-events → 466 / 17 = 27.4. At T ≤ −2.5, 76 / 17 = 4.5. The gate is named after Riley et al. but is really the classic 10-events-per-variable rule; Riley's sample-size criteria (shrinkage, optimism, precision of intercept) would be a better formal check — a statistician item.
+Power gate: events per predictor (EPP) = min(events, non-events) / number of model columns. At T ≤ −1.0 the binding class is the 466 non-events → 466 / 15 = 31.1. At T ≤ −2.5, 76 / 15 = 5.1. The gate is named after Riley et al. but is really the classic 10-events-per-variable rule; Riley's sample-size criteria (shrinkage, optimism, precision of intercept) would be a better formal check — a statistician item.
 """)
 
 # ================================================================ 23 Calibration & referral
-s = new_slide("Calibration and what a referral rule would look like", "Osteopenia+ target; prevalence in this cohort is 58% — PPV will not transfer to a clinic", section="Results")
+s = new_slide("Results 6: calibration and what a referral rule would look like", "Osteopenia+ target; prevalence in this cohort is 58% — PPV will not transfer to a clinic", section="Results")
 picture(s, os.path.join(OUT, "calibration_curve.png"), 0.4, 1.3, h=5.0)
 rr = [["Flag top", "Sensitivity", "DXAs", "Cases found", "PPV", "Scans/case"]]
 for _, r in ref.iterrows():
@@ -812,17 +981,17 @@ for _, r in ref.iterrows():
                r.Sensitivity, f"{int(r['DXAs ordered']):,}", r["Cases found"], r.PPV, f"{float(r['Scans per case']):.2f}"])
 table(s, rr, 6.35, 1.45, 6.6, col_w=[1.0, 1.2, 0.85, 1.25, 1.0, 1.3], size=12, row_h=0.4)
 bullets(s, [
-    "Sigmoid-calibrated RF: Brier 0.198 vs 0.199 raw — already well calibrated.",
-    "Flag the top 30% → find 44% of cases at 1.18 scans per case (vs 1.72 scanning everyone).",
+    "Sigmoid-calibrated RF: Brier 0.198 vs 0.200 raw (always guessing the 58% average scores ≈ 0.24).",
+    "Flag the top 30% → find 43% of cases at 1.21 scans per case (vs 1.72 scanning everyone).",
     "Referral table uses nested-CV ranks (quantiles), the threshold sweep uses calibrated probabilities — never merge them.",
-    "The cutoff choice is clinical; the osteoporosis referral table was withdrawn (underpowered).",
+    "The cutoff choice is clinical; no referral table is given for osteoporosis (76 cases — underpowered).",
 ], x=6.35, y=4.45, w=6.6, h=2.5, size=13)
 notes(s, "Calibration and referral", """
-Calibration: the random forest out-of-fold probabilities, raw and sigmoid-calibrated (CalibratedClassifierCV, 3-fold, inside the outer 5-fold), 10 quantile bins. Both track the diagonal; Brier 0.199 raw, 0.198 calibrated.
+Calibration: the random forest out-of-fold probabilities, raw and sigmoid-calibrated (CalibratedClassifierCV, 3-fold, inside the outer 5-fold), 10 quantile bins. Both track the diagonal; Brier 0.200 raw, 0.198 calibrated.
 
-Referral table (referral_table.csv): flag the top X% of women by nested-CV out-of-fold rank. For example, flagging the top 30% orders 335 scans, finds 284 of 645 cases (44% sensitivity), PPV 85%, 1.18 scans per case found. Scanning everyone finds all 645 at 1.72 scans per case.
+Referral table (referral_table.csv): flag the top X% of women by nested-CV out-of-fold rank. For example, flagging the top 30% orders 335 scans, finds 278 of 645 cases (43% sensitivity), PPV 83%, 1.21 scans per case found. Scanning everyone finds all 645 at 1.72 scans per case.
 
-Threshold sweep (threshold_sweep.csv) is a different object: literal probability cutoffs on the calibrated forest (e.g., cutoff 0.30 → 98% sensitivity, 1,039 scans). Same-looking numbers, different meaning; they are kept separate on purpose.
+Threshold sweep (threshold_sweep.csv) is a different object: literal probability cutoffs on the calibrated forest (e.g., cutoff 0.30 → 97.5% sensitivity, 1,022 scans). Same-looking numbers, different meaning; they are kept separate on purpose.
 
 Big caveat: 58% of this cohort is positive at T ≤ −1.0, so PPV and scans-per-case are inflated relative to a real clinic population. And OST would give almost the same table — the referral table illustrates utility, it does not show ML beats OST.
 
@@ -833,37 +1002,32 @@ A useful extension: decision-curve analysis (net benefit) of model vs OST vs sca
 s = new_slide("Known caveats from code review (our backlog)", "Found while preparing this briefing — none changes the headline null, all are worth fixing or disclosing", section="Critique")
 table(s, [
     ["Item", "Detail", "Impact"],
-    ["Structural missingness imputed", "sedentary & vigorous activity missing for all of 2005–06, median-imputed", "Moderate: one 'significant' OR rests partly on imputed values"],
     ["Prior-fracture window", "Specialist asked for a 5-year window; any-age fracture shipped", "Clinical validity"],
     ["No survey design", "Weights / strata / PSU unused; results not nationally representative", "Generalisability"],
     ["Bootstrap scope", "Resamples fixed OOF scores; no refit variance; reports mean Δ", "CIs somewhat too narrow"],
     ["Optimism metric", "Leaderboard = mean of fold AUCs; nested = pooled OOF AUC", "Small, mixes aggregations"],
     ["Odds ratios", "Penalised (C = 1), class-weighted LR — shrunk, not MLE", "Labelling"],
-    ["RF leaf size", "Shipped 1 = grid best (0.7536), but inner-CV picks vary [20, 2, 1, 1, 20]; docs say ‘nested-CV chosen’", "Negligible"],
+    ["RF leaf size", "Shipped 1; grid best 5 (0.7529 vs 0.7503); inner-CV picks [20, 1, 1, 1, 1]; docs say ‘nested-CV chosen’", "Negligible"],
     ["Power gate naming", "10-EPV rule labelled ‘Riley’", "Labelling"],
-    ["Docs drift", "CLAUDE.md says 66,023 start (actually 56,769), ‘clipped’ PHQ items, ‘thresholded’ regressors", "Documentation"],
     ["Hygiene", "Warnings globally suppressed; ~20 scratch scripts in repo root; no tests / lockfile", "Maintainability"],
 ], 0.6, 1.5, 12.1, col_w=[2.6, 6.0, 3.5], size=12, row_h=0.47)
 notes(s, "Known caveats", """
 Being upfront here builds credibility with an engineer. None of these would turn the null into a positive result — if anything, wider (refit) bootstrap intervals make the null more robust.
 
 Most substantive:
-1. The activity variables are missing for an entire cycle (2005–06 used a different questionnaire) yet are median-imputed. That violates the stated rule of not imputing structural absence, and sedentary_min_day is one of the six predictors with a CI excluding OR = 1. Fix options: add a missing indicator, restrict to cycles that collected it, or multiple imputation.
-2. The specialist's request for a 5-year prior-fracture window was never implemented and nothing records why. NHANES asks age at each fracture (OSQ020x / OSQ040), so it is constructible.
-3. No survey weights or design — fine for internal prediction, but any prevalence or 'representative' claim is off the table.
+1. The specialist's request for a 5-year prior-fracture window was never implemented and nothing records why. NHANES asks age at each fracture (OSQ020x / OSQ040), so it is constructible.
+2. No survey weights or design — fine for internal prediction, but any prevalence or 'representative' claim is off the table.
 
 Statistical scope: the bootstrap resamples the out-of-fold predictions, so it captures sampling variability of the test set but not refitting variability; repeated cross-validation with several seeds would give a fuller picture.
 
-Docs drift: CLAUDE.md quotes the old 66,023 starting count (six cycles); the code and log say 56,769. Also small wording mismatches (PHQ items are mapped, not clipped; regressors are rank-scored, not thresholded).
-
-Hygiene: warnings.filterwarnings('ignore') hides solver convergence warnings (saga on elastic net could be affected); ~20 scratch scripts from the rewrite clutter the repo root; no tests, lockfile or CI.
+Hygiene: warnings.filterwarnings('ignore') hides solver convergence warnings (saga on elastic net could be affected); ~20 scratch scripts clutter the repo root; no tests, lockfile or CI.
 """)
 
 # ================================================================ 25 Statistician questions
 s = new_slide("Questions to take to a statistician", section="Next steps")
 bullets(s, [
     (0, "Framing the null:", "should we test equivalence / non-inferiority to OST (e.g., TOST with a ±0.02 margin) instead of ‘not separable’? What margin is clinically meaningful?"),
-    (0, "Power:", "what n / events would detect ΔAUC = 0.02 over OST with 80% power, given model–OST correlation? Is adding 2015–16 and 2021–23 worth it?"),
+    (0, "Power:", "what n / events would detect ΔAUC = 0.02 over OST with 80% power, given model–OST correlation?"),
     (0, "Uncertainty:", "refit-inside bootstrap or repeated nested CV (e.g., 10 × 5-fold) instead of resampling fixed OOF scores? DeLong as a cross-check?"),
     (0, "Missing data:", "MICE vs in-fold median; how to treat whole-cycle structural absence (activity, supplements); missing indicators?"),
     (0, "Survey design:", "is unweighted prediction acceptable? Should Table 1 / ORs use design-based estimation per cycle?"),
@@ -875,9 +1039,9 @@ bullets(s, [
 notes(s, "Statistician questions", """
 These are the questions we most need help with, roughly in priority order.
 
-1. The headline is a null. A null from a confidence interval is 'absence of evidence'. The stronger, more publishable statement is equivalence: 'the ML model is within ±δ of OST'. That needs a pre-declared margin (δ = 0.02 or 0.03 AUC?) and a TOST-style test. With the current CI [−0.005, +0.030], we could already claim non-inferiority at a margin of 0.01 but not equivalence at 0.02 — worth a statistician's view.
+1. The headline is a null. A null from a confidence interval is 'absence of evidence'. The stronger, more publishable statement is equivalence: 'the ML model is within ±δ of OST'. That needs a pre-declared margin (δ = 0.02 or 0.03 AUC?) and a TOST-style test. With the current CI [−0.007, +0.027], we could already claim non-inferiority at a margin of 0.01 but not equivalence at 0.02 — worth a statistician's view.
 
-2. Power. With roughly 1,100 women and model–OST score correlation around 0.9, what is the minimum detectable ΔAUC? If even double the data could not detect a clinically meaningful gain, that is a decision to stop rather than add cycles. 2015–16 and 2021–23 are on disk but excluded by choice; the T ≤ −2.5 target especially would benefit.
+2. Power. With roughly 1,100 women and model–OST score correlation around 0.9, what is the minimum detectable ΔAUC? If even double the data could not detect a clinically meaningful gain, that is a decision to stop rather than add cycles. The T ≤ −2.5 target especially would benefit from more events.
 
 3. Uncertainty estimation. Our bootstrap resamples fixed predictions. Repeated CV (different seeds), or a bootstrap that refits, would include model-fitting variance. DeLong's test for correlated AUCs is a standard cross-check.
 
@@ -891,25 +1055,25 @@ These are the questions we most need help with, roughly in priority order.
 
 8. Clinical utility: decision curve analysis (net benefit across thresholds) and net reclassification vs OST often say more than ΔAUC.
 
-9. Inference details: unpenalised GLM for the ORs; is Holm over 18 ablations the right family; is matching vitamin D across releases on BMD (which is in the outcome) acceptable?
+9. Inference details: unpenalised GLM for the ORs; is Holm over 15 ablations the right family; is matching vitamin D across releases on BMD (which is in the outcome) acceptable?
 """)
 
 # ================================================================ 26 Directions
 s = new_slide("Suggested directions", section="Next steps")
 bullets(s, [
     (0, "1. Report the null properly.", "Pre-register an equivalence margin; add decision-curve analysis vs OST; publish ‘OST is near the ceiling for questionnaire data’."),
-    (0, "2. Get more events, carefully.", "Revisit the deliberately excluded 2015–16 and 2021–23 cycles (check DXA protocol comparability); consider broadening age or race/ethnicity with appropriate T-score references and interaction terms."),
+    (0, "2. Get more events, carefully.", "NHANES has no further hip-DXA cycles; consider broadening age or race/ethnicity with appropriate T-score references and interaction terms."),
     (0, "3. Bring in new kinds of signal, not more of the same.", "Height loss / height vs self-reported max height, weight change since age 25/40, grip strength (MGX, limited cycles), medications via RXQ_RX (PPIs, SSRIs, glucocorticoid detail, aromatase inhibitors), lab markers."),
     (0, "4. Change the target.", "Model continuous T-score as primary; long term, fracture outcomes need a prospective cohort (e.g., SOF, MrOS, UK Biobank) — also enables external validation."),
     (0, "5. External / temporal validation.", "Train on 2005–2014, test on 2017–2020 as a temporal hold-out."),
-    (0, "6. Engineering hardening.", "Fix structural imputation & fracture window; repeated-seed CV; pin deps (requirements.txt); unit tests for decode / SPEC / cohort asserts; remove scratch scripts; experiment tracking (e.g., MLflow)."),
+    (0, "6. Engineering hardening.", "Implement the 5-year fracture window; repeated-seed CV; pin deps (requirements.txt); unit tests for decode / SPEC / cohort asserts; remove scratch scripts; experiment tracking (e.g., MLflow)."),
 ], size=15)
 notes(s, "Suggested directions", """
 Directions, ordered by expected value.
 
 1. Treat the null as the result. The finding that a two-input formula is at the ceiling for questionnaire data is useful to clinicians — it says don't bother with a longer questionnaire. Strengthen it with an equivalence framing and decision-curve analysis.
 
-2. More events. The binding constraint is the 76 osteoporosis cases. The 2015–16 and 2021–23 cycles are already downloaded but were excluded by the project lead's choice; adding them needs care (check DXA scanner and protocol comparability; 2021–23 is a post-COVID design). Broadening race/ethnicity needs race-appropriate reference values or a single reference with race as a covariate — a clinical decision.
+2. More events. The binding constraint is the 76 osteoporosis cases. NHANES has no other cycles with hip DXA (2011–12, 2015–16 and 2021–23 did not scan the hip). Broadening race/ethnicity needs race-appropriate reference values or a single reference with race as a covariate — a clinical decision.
 
 3. New information. The ablation says body size is everything; more questionnaire items of the same type will not help. Candidates that are genuinely different: height loss (strong clinical marker of vertebral fracture), weight history, grip strength (only some cycles), medications (prescription file RXQ_RX — the specialist noted mapping is needed), biochemistry. Each must be checked for cycle availability — whole-cycle gaps are a recurring problem.
 
@@ -930,7 +1094,7 @@ bullets(s, [
     (0, "Reproducibility:", "dependency pinning, data versioning (DVC?), experiment tracking."),
     (0, "Modelling:", "anything we are missing given a near-linear, body-size-dominated signal? (We believe more model tuning will not help.)"),
 ], size=17, h=4.3)
-callout(s, "Bottom line: a careful pipeline, a real data defect found and fixed, and an honest null —\nOST (weight & age) is essentially as good as an 18-variable ML panel on NHANES data.",
+callout(s, "Bottom line: a careful pipeline and an honest null —\nOST (weight & age) is essentially as good as a 15-variable ML panel on NHANES data.",
         0.6, 5.7, 12.1, 1.05, fill=NAVY, color=WHITE, size=17, bold=True)
 notes(s, "Asks", """
 Close by turning the session into a working discussion. Specific asks for a senior ML/data engineer:
@@ -940,7 +1104,7 @@ Close by turning the session into a working discussion. Specific asks for a seni
 - Advise on structure: the single-file design is easy to audit for a clinical audience, but hard to test. A middle path: keep the step functions, move them into a small package, add pytest for decode/SPEC/cohort counts.
 - NHANES ingestion is reusable: cycle registry, label-vs-code decoding, denormal handling, cross-release duplicate detection.
 
-Final message: we built a defensible pipeline, found a subtle duplicated-entity leakage bug that had inflated earlier results, fixed and guarded it, and the honest conclusion is that a two-variable clinical formula is as good as our machine-learning panel. The next gains come from new data, not new models.
+Final message: we built a defensible pipeline, guarded against a subtle duplicated-entity leakage trap in NHANES, and the honest conclusion is that a two-variable clinical formula is as good as our machine-learning panel. The next gains come from new data, not new models.
 """)
 
 # ================================================================ Appendix
@@ -989,11 +1153,12 @@ d = docx.Document()
 st = d.styles["Normal"]; st.font.name = "Segoe UI"; st.font.size = DPt(10.5)
 d.add_heading("Presenter notes — Osteoporosis ML briefing for a Senior AI/ML Data Engineer", 0)
 d.add_paragraph("Companion to Osteoporosis_ML_Briefing_for_ML_Engineer.pptx. Numbers come from the 2 Oct 2026 run of "
-                "OsteoporosisML.py (outputs/ folder). Pre-rewrite AUCs (0.810, 0.806, 0.833) are withdrawn and must not be quoted.")
+                "OsteoporosisML.py (outputs/ folder).")
 d.add_heading("Suggested timing (≈ 50 min + discussion)", 1)
 for t in ["Overview & data (slides 1–6): 12 min", "Cohort, target, specialist decisions (7–10): 10 min",
-          "Features, missing data, guard-rails, models, evaluation, code (11–16): 12 min",
-          "Results (17–23): 12 min", "Caveats, statistician questions, directions, asks (24–27): 8 min + discussion"]:
+          "Features, missing data, guard-rails (11–13): 6 min",
+          "AUC, the 8 models, evaluation design, code (14–19): 14 min",
+          "Results (20–25): 12 min", "Caveats, statistician questions, directions, asks (26–29): 8 min + discussion"]:
     d.add_paragraph(t, style="List Bullet")
 d.add_heading("Slide-by-slide notes", 1)
 for i, (title, text) in enumerate(SLIDES, 1):
@@ -1005,15 +1170,15 @@ for i, (title, text) in enumerate(SLIDES, 1):
 
 d.add_heading("Likely questions from the audience — prepared answers", 1)
 QA = [
-    ("Why not GroupKFold?", "After removing the duplicated 2017–18 cycle there is exactly one row per woman, so StratifiedKFold on rows equals grouping by person. The fingerprint audit asserts this. GroupKFold on a fingerprint hash would be a cheap extra safeguard."),
-    ("Why median imputation rather than MICE or native NaN handling in LightGBM/XGBoost?", "Most variables are < 6% missing, and imputation is inside the fold so it does not leak. Using one pipeline for all models keeps comparisons fair. The weak spot is the 13–16% structural gaps (activity, alcohol); MICE or missing indicators are on the list for the statistician."),
+    ("Why not GroupKFold?", "With only the pooled 2017–2020 file loaded there is exactly one row per woman, so StratifiedKFold on rows equals grouping by person. The fingerprint audit asserts this. GroupKFold on a fingerprint hash would be a cheap extra safeguard."),
+    ("Why median imputation rather than MICE or native NaN handling in LightGBM/XGBoost?", "Most variables are < 6% missing, and imputation is inside the fold so it does not leak. Using one pipeline for all models keeps comparisons fair. The largest gap is alcohol (13.6%); activity, missing for a whole cycle, is kept out of the headline model. MICE or missing indicators are on the list for the statistician."),
     ("Why such heavily regularised boosters? Did you tune them?", "With ~1,100 rows and 76 rare events, boosters overfit easily (train AUC 0.93–0.98 at T ≤ −2.5 even when constrained). We chose to under-fit rather than report a tuned booster. The near-identical AUCs across all model families indicate a feature ceiling, so tuning is unlikely to close the gap to a meaningful level — but it has not been systematically searched."),
     ("Why AUC and not PR-AUC or log-loss?", "AUC is the clinical-literature convention and the comparator (OST) is a score without probabilities. Calibration is assessed separately (Brier, calibration curve). PR-AUC would be informative for the 6.8%-prevalence target."),
     ("Is the bootstrap CI valid?", "It is a paired, stratified bootstrap of out-of-fold scores; it captures test-sample variability but not model-refit variability, so intervals are somewhat narrow. That would only strengthen the null. Repeated CV is the planned upgrade."),
     ("Could deep learning or AutoML help?", "Unlikely: n ≈ 1,100, tabular, signal dominated by one variable. Linear models already match the forest. Gains would need new information."),
     ("Why ignore survey weights?", "Pooled weights cannot be constructed consistently across non-contiguous cycles with different weight bases (2-year vs 3.2-year P_). For prediction, unweighted fitting is common; the cost is that prevalence and PPV are not nationally representative."),
-    ("How do you know there are no other leaks?", "Allowlist + denylist assert, in-fold preprocessing, nested model selection, the |coef| > 2 leak alarm (largest is weight at −1.21), and the fact that OST — which cannot leak — scores within 0.012 of the model."),
-    ("How long does it take to run and can it be parallelised?", "≈ 25–40 minutes; dominated by bootstraps, permutation importance, the ablation grid (17 variables × 8 models) and nested CV. Folds and ablation variables are embarrassingly parallel."),
+    ("How do you know there are no other leaks?", "Allowlist + denylist assert, in-fold preprocessing, nested model selection, the |coef| > 2 leak alarm (largest is weight at −1.18), and the fact that OST — which cannot leak — scores within 0.012 of the model."),
+    ("How long does it take to run and can it be parallelised?", "≈ 25–40 minutes; dominated by bootstraps, permutation importance, the ablation grid (15 variables × 8 models) and nested CV. Folds and ablation variables are embarrassingly parallel."),
     ("Is the code production-ready?", "No; it is a reproducible research pipeline: deterministic, asserted, but without tests, packaging, lockfile or CI."),
 ]
 for q, a in QA:
@@ -1026,18 +1191,17 @@ for t in [
     "Menopause gate exclusions: 156 still cycling; 41 undeterminable (not premenopausal).",
     "By cycle: 2005–06 173; 2007–08 228; 2009–10 227; 2013–14 219; 2017–20 264.",
     "Events: T ≤ −1.0 645 (58.1%); T ≤ −2.5 76 (6.8%). Normal 466, low bone mass 569, osteoporosis 76.",
-    "Panel: 17 variables, 17 columns. Arms: intake n 930, serum n 974, RA n 988.",
-    "Nested AUC T ≤ −1.0: 0.751 vs OST 0.739 (Δ +0.012 [−0.005, +0.030]) vs weight 0.737 (Δ +0.014 [−0.004, +0.031]).",
-    "Nested AUC T ≤ −2.5: 0.794 vs OST 0.780 (Δ +0.014 [−0.013, +0.040]) vs weight 0.766 (Δ +0.028 [−0.001, +0.059]).",
-    "Block ablation: drop body size 0.606; keep only age + weight 0.739; full 0.757 (Ridge → T).",
-    "Decomposition: duplicates −0.077; menopause gate −0.006.",
-    "Significant ORs: weight 0.50/10 kg; estrogen 0.60; PIR 0.89; age 1.28/5 y; prior fracture 1.72; sedentary 1.06/h (marginal).",
-    "Calibration Brier 0.199 raw / 0.198 sigmoid. Top 30% flagged → 44% sensitivity, PPV 85%, 1.18 scans per case.",
+    "Panel: 15 variables, 15 columns. Arms: intake n 930, serum n 974, RA n 988, activity n 932.",
+    "Nested AUC T ≤ −1.0: 0.749 vs OST 0.739 (Δ +0.010 [−0.007, +0.027]) vs weight 0.737 (Δ +0.012 [−0.006, +0.030]).",
+    "Nested AUC T ≤ −2.5: 0.790 vs OST 0.780 (Δ +0.010 [−0.011, +0.033]) vs weight 0.766 (Δ +0.025 [+0.001, +0.051], just clears zero).",
+    "Block ablation: drop body size 0.605; keep only age + weight 0.739; full 0.754 (Ridge → T).",
+    "Significant ORs: weight 0.51/10 kg; estrogen 0.60; PIR 0.91; age 1.28/5 y; prior fracture 1.72.",
+    "Calibration Brier 0.200 raw / 0.198 sigmoid. Top 30% flagged → 43% sensitivity, PPV 83%, 1.21 scans per case.",
 ]:
     d.add_paragraph(t, style="List Bullet")
 
 d.add_heading("Source files", 1)
-for t in ["OsteoporosisML.py (pipeline, blocks A–G)", "outputs/*.csv, *.png (results, 2 Oct 2026 run)", "_run_no_menotype.log (counts and verdicts)",
+for t in ["OsteoporosisML.py (pipeline, blocks A–G)", "outputs/*.csv, *.png (results, 2 Oct 2026 run)", "run log of OsteoporosisML.py (counts and verdicts)",
           "Notes/specialist_answers_and_decisions.html, Specialist_Review_Questions/Answers.docx (clinical decisions)",
           "Notes/statistician_brief.html (methodological rulings and open questions)",
           "Notes/presentation_ml_engineer/make_charts.py and build_deck.py (regenerate this deck)"]:
