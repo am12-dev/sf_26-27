@@ -26,7 +26,6 @@ python OsteoporosisML.py            # no arguments; ~25-40 min
 
 ```
 OsteoporosisML.py      the entire pipeline (one file, blocks A–G, see below)
-_decompose.py          secondary analysis: why the AUC fell after the cohort fixes
 requirements.txt       pinned package versions
 data/raw/<cycle>/      NHANES source files, one folder per survey cycle (inputs)
 data/processed/        analysis_cohort_postmenopausal.csv = the cohort the models see
@@ -127,7 +126,7 @@ Each file is tagged when written (see `save_csv`):
 | `prespecified_arms.csv` | PRESENT | Does adding vitamin D, RA or activity help? |
 | `calibration_curve.png` | PRESENT | Do predicted probabilities match observed rates? |
 | `referral_table.csv`, `threshold_sweep.csv` | PRESENT | Screening cost: DXA scans ordered per case found, sensitivity/specificity by cutoff |
-| `power_gate.csv`, `rf_leaf_tuning.csv`, `auc_decomposition.csv` | METHODS | Events per predictor; forest tuning; why the AUC fell after the fixes |
+| `power_gate.csv`, `rf_leaf_tuning.csv`, `auc_decomposition.csv` | METHODS | Events per predictor; forest tuning; why the AUC fell after the fixes (written by `_decompose.py`, since removed; recover with `git show 239c2a7:_decompose.py`) |
 | `coefficient_diagnostics.csv` | DIAGNOSTIC | Leakage and sign-error check — **do not present** |
 | `run_log.txt`, `auc_decomposition_log.txt` | — | Console output of the run that produced these files |
 

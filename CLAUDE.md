@@ -10,8 +10,9 @@ The cohort is intentionally narrow — **postmenopausal** non-Hispanic White wom
 which are then structurally barred from the feature set (the DXA measurement is the thing being
 predicted away).
 
-`OsteoporosisML.py` is the pipeline. The only other analysis script at the root is `_decompose.py`,
-which writes `outputs/auc_decomposition.csv`. The build scripts in `extra_reading/` generate the
+`OsteoporosisML.py` is the pipeline and the only analysis script. `outputs/auc_decomposition.csv`
+was written by `_decompose.py`, which has been removed from the repo; recover it with
+`git show 239c2a7:_decompose.py` if the decomposition needs rerunning. The build scripts in `extra_reading/` generate the
 slides and notes; `archive/` holds superseded scratch scripts and logs and is not part of the
 pipeline. There is no package, no test suite and no build step; dependencies are pinned in
 `requirements.txt`, and `README.md` is the hand-off guide for collaborators. It was rewritten in full per
@@ -323,7 +324,6 @@ sf_26-27/
   OsteoporosisML.py                        # the entire pipeline, blocks A-G
   data/raw/<cycle>/<MODULE>_<suffix>.csv   # NHANES source, one folder per cycle
   data/processed/                          # option_b_v4_final.csv + legacy files
-  _decompose.py                            # writes outputs/auc_decomposition.csv
   outputs/                                 # regenerated every run; see tiering above
   extra_reading/                           # notes, slides, walkthrough, data dictionary
   extra_reading/project_walkthrough.html   # the project explainer
@@ -345,7 +345,7 @@ model scored on them is scored on the inflated cohort.**
 `outputs/run_log.txt` is a manual stdout capture of the run that produced the committed outputs
 (previously `_run_specialist.log`), not a script artifact — it will silently go stale and must be
 replaced whenever the pipeline is rerun. `outputs/auc_decomposition_log.txt` is the same for
-`_decompose.py`. The pre-rewrite capture is kept as `archive/old_run_logs/run_log_pre_rewrite.txt`.
+the removed `_decompose.py`. The pre-rewrite capture is kept as `archive/old_run_logs/run_log_pre_rewrite.txt`.
 
 **Git:** `.gitignore` lists `data/`, but `data/` was committed before that and stays tracked
 (~31 MB history) — deliberately, since several processed files cannot be regenerated and the repo is
