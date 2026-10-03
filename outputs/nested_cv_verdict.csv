@@ -1,5 +1,5 @@
 Target,Events,Comparator,Comparator AUC,Leaderboard AUC,Nested AUC,Optimism,Delta vs comparator,95% CI,p (one-sided),Verdict
-Osteopenia+ (T<=-1.0),645,OST  0.2x(weight-age),0.739,0.756,0.751,0.005,0.012,"[-0.005, +0.030]",0.083,Not separable
-Osteopenia+ (T<=-1.0),645,Weight alone,0.737,0.756,0.751,0.005,0.014,"[-0.004, +0.031]",0.066,Not separable
-Osteoporosis (T<=-2.5),76,OST  0.2x(weight-age),0.78,0.787,0.794,-0.007,0.014,"[-0.013, +0.040]",0.15,Not separable
-Osteoporosis (T<=-2.5),76,Weight alone,0.766,0.787,0.794,-0.007,0.028,"[-0.001, +0.059]",0.032,Not separable
+Osteopenia+ (T<=-1.0),645,OST  0.2x(weight-age),0.739,0.751,0.749,0.002,0.01,"[-0.007, +0.027]",0.136,Not separable
+Osteopenia+ (T<=-1.0),645,Weight alone,0.737,0.751,0.749,0.002,0.012,"[-0.006, +0.030]",0.094,Not separable
+Osteoporosis (T<=-2.5),76,OST  0.2x(weight-age),0.78,0.788,0.79,-0.002,0.01,"[-0.011, +0.033]",0.173,Not separable
+Osteoporosis (T<=-2.5),76,Weight alone,0.766,0.788,0.79,-0.002,0.025,"[+0.001, +0.051]",0.022,Beats comparator

@@ -156,7 +156,7 @@ CLINICAL_UNITS = {
     'serum_vitd_nmol': (25, 'per 25 nmol/L'), 'total_calcium_mg': (500, 'per 500 mg'),
     'total_vitd_mcg': (10, 'per 10 mcg'), 'poverty_income_ratio': (1, 'per 1 unit'),
     'alcohol_drinks_day': (1, 'per 1 drink/day'), 'phq9_score': (5, 'per 5 points'),
-    'sedentary_min_day': (60, 'per 1 hour/day'),
+    'sedentary_min_day': (60, 'per 1 hour/day'), 'log_met_min_week': (1, 'per 1 log unit'),
     'sleep_hrs': (1, 'per 1 hour'),
 }
 
@@ -220,6 +220,14 @@ SPEC = {
     # activity and behaviour
     'PAD680': {'kind': 'num', 'sentinels': [7777, 9999], 'valid': (0, 1440)},
     'PAQ650': {'kind': 'yesno'},
+    # GPAQ activity domains (2007 onward), for MET-min/week. Each domain is a yes/no gate,
+    # days per week and minutes per day. 10-960 min per day is the GPAQ validity range
+    # (10-minute bouts; 16 h/day cap). 2005_2006 used the pre-GPAQ instrument and has none.
+    **{g: {'kind': 'yesno'} for g in ['PAQ605', 'PAQ620', 'PAQ635', 'PAQ665']},
+    **{d: {'kind': 'num', 'sentinels': [77, 99], 'valid': (1, 7)}
+       for d in ['PAQ610', 'PAQ625', 'PAQ640', 'PAQ655', 'PAQ670']},
+    **{m: {'kind': 'num', 'sentinels': [7777, 9999], 'valid': (10, 960)}
+       for m in ['PAD615', 'PAD630', 'PAD645', 'PAD660', 'PAD675']},
     'ALQ130': {'kind': 'num', 'sentinels': [777, 999, 99], 'valid': (1, 30)},
     # Ever-drinker gate. ALQ130 (drinks per drinking day) is asked only of people who
     # drink, so its 328 blanks are structurally zero, not missing. ALQ101 is the gate in
@@ -288,7 +296,10 @@ MODULE_COLS = {
     'DXXFEM': ['DXXNKBMD', 'DXXOFBMD'],
     'DR1TOT': ['DR1TCALC', 'DR1TVD'],
     'VID':    ['LBXVIDMS', 'LBDVIDMS'],
-    'PAQ':    ['PAD680', 'PAQ650'],
+    'PAQ':    ['PAD680', 'PAQ650',
+               'PAQ605', 'PAQ610', 'PAD615', 'PAQ620', 'PAQ625', 'PAD630',
+               'PAQ635', 'PAQ640', 'PAD645', 'PAQ655', 'PAD660',
+               'PAQ665', 'PAQ670', 'PAD675'],
     'DPQ':    ['DPQ010', 'DPQ020', 'DPQ030', 'DPQ040', 'DPQ050',
                'DPQ060', 'DPQ070', 'DPQ080', 'DPQ090'],
     'SMQ':    ['SMQ020'],
@@ -856,6 +867,31 @@ def compute_derived_variables(df, supp, day2):
     df['vigorous_activity'] = df['PAQ650']
     df['steroid_use'] = df['OSQ130']
     df['sedentary_min_day'] = df['PAD680']
+
+    # Physical activity as MET-min/week, per the specialist's references (PMC9858810,
+    # PMC12851727; WHO GPAQ convention): 8 METs for vigorous work and recreation, 4 for
+    # moderate work, moderate recreation and walking/cycling for transport, times days per
+    # week times minutes per day, summed. A domain whose gate is No is a true zero; a
+    # blank gate, or a Yes with unusable days/minutes, leaves the total missing. 2005_2006
+    # has no GPAQ items, so every woman in that cycle is missing — and stays missing:
+    # activity is an arm, not a headline variable, so nothing is imputed for that cycle.
+    def _domain(gate, days, mins):
+        week = df.get(days) * df.get(mins) if days in df and mins in df else np.nan
+        g = df[gate] if gate in df else pd.Series(np.nan, index=df.index)
+        return pd.Series(np.where(g == 1.0, week, np.where(g == 0.0, 0.0, np.nan)),
+                         index=df.index)
+    met = (8 * _domain('PAQ605', 'PAQ610', 'PAD615')      # vigorous work
+           + 4 * _domain('PAQ620', 'PAQ625', 'PAD630')    # moderate work
+           + 4 * _domain('PAQ635', 'PAQ640', 'PAD645')    # walk / bicycle transport
+           + 8 * _domain('PAQ650', 'PAQ655', 'PAD660')    # vigorous recreation
+           + 4 * _domain('PAQ665', 'PAQ670', 'PAD675'))   # moderate recreation
+    df['met_min_week'] = met
+    df['met_hours_week'] = met / 60                       # the unit both papers report
+    df['log_met_min_week'] = np.log1p(met)                # skew ~+4; modelled on log scale
+    df['activity_arm_eligible'] = (met.notna() & df['sedentary_min_day'].notna()).astype(float)
+    print(f"  met_min_week coverage {int(met.notna().sum()):,}   median {met.median():.0f}   "
+          f"max {met.max():.0f}   (2005_2006 has no GPAQ items: "
+          f"{int(met[df['survey_cycle'] == '2005_2006'].notna().sum())} observed)")
     # Alcohol. Two different questions, and conflating them mislabels 62 women.
     #   ALQ101 (2005-2014) / ALQ111 (2017-2020): drank in the PAST 12 MONTHS.
     #   ALQ110: ever had 12+ drinks in a LIFETIME, asked only of those who said No above.
@@ -920,8 +956,6 @@ FEATURE_GROUPS = {
     'alcohol_drinks_day':     ['alcohol_drinks_day'],
     'any_prior_fracture':     ['any_prior_fracture'],
     'steroid_use':            ['steroid_use'],
-    'vigorous_activity':      ['vigorous_activity'],
-    'sedentary_min_day':      ['sedentary_min_day'],
     'poverty_income_ratio':   ['poverty_income_ratio'],
     'parental_hip_fracture':  ['parental_hip_fracture'],
     'family_hx_osteoporosis': ['family_hx_osteoporosis'],
@@ -937,6 +971,10 @@ ARM_GROUPS = {
     'vitd_serum':  {'serum_vitd_nmol':  ['serum_vitd_nmol']},
     'ra':          {'rheumatoid_arthritis': ['rheumatoid_arthritis']},
     'phq_binary':  {'phq9_ge10': ['phq9_ge10']},
+    # Activity is arm-only: both variables are absent for all of 2005_2006 (instrument
+    # change), so in the headline model they could only enter by imputing a whole cycle.
+    'activity':    {'met_min_week':      ['log_met_min_week'],
+                    'sedentary_min_day': ['sedentary_min_day']},
 }
 
 # Anything computed from the DXA scan. Never a feature, under any arm. This is the
@@ -952,7 +990,7 @@ def encode_features(df):
     out = pd.DataFrame(index=df.index)
     for col in ['age', 'bmi', 'weight_kg', 'years_since_menopause',
                 'ever_used_estrogen', 'diabetes', 'ever_smoked', 'alcohol_drinks_day',
-                'any_prior_fracture', 'steroid_use', 'vigorous_activity',
+                'any_prior_fracture', 'steroid_use', 'log_met_min_week',
                 'sedentary_min_day', 'poverty_income_ratio', 'parental_hip_fracture',
                 'family_hx_osteoporosis', 'phq9_score', 'sleep_hrs',
                 'total_calcium_mg', 'total_vitd_mcg', 'serum_vitd_nmol',
@@ -1007,6 +1045,8 @@ def build_cohorts(df, encoded):
                                 ['total_calcium_mg', 'total_vitd_mcg', 'serum_vitd_nmol']),
         'C4 + rheumatoid arthritis': ({**base, **ARM_GROUPS['ra']},
                                       ['rheumatoid_arthritis']),
+        'C5 + physical activity': ({**base, **ARM_GROUPS['activity']},
+                                   ['log_met_min_week', 'sedentary_min_day']),
     }
     cohorts, gate_rows = {}, []
     for name, (groups, required) in specs.items():
@@ -1399,7 +1439,7 @@ def ablation_grid(X, y, t_score, groups, label):
 
     No multiplicity correction is applied to the per-model columns. Holm-adjusted
     p-values are given for the primary model only, and the grid is exploratory: with
-    18 variables the smallest few deltas are not distinguishable from noise.
+    15 variables the smallest few deltas are not distinguishable from noise.
     """
     print_section(f'STEP 11: VARIABLE ABLATION GRID — {label}')
     y = np.asarray(y)
@@ -1463,7 +1503,7 @@ def block_ablation(X, y, t_score, groups, label):
         ('drop all menopause/hormone vars', 'drop',
          ['years_since_menopause', 'ever_used_estrogen']),
         ('drop all lifestyle vars', 'drop',
-         ['ever_smoked', 'alcohol_drinks_day', 'vigorous_activity', 'sedentary_min_day']),
+         ['ever_smoked', 'alcohol_drinks_day']),
         ('drop all history/family vars', 'drop',
          ['any_prior_fracture', 'steroid_use', 'parental_hip_fracture',
           'family_hx_osteoporosis']),
@@ -1490,7 +1530,7 @@ def block_ablation(X, y, t_score, groups, label):
     ost_row = next(r for r in rows if r['Test'].startswith('KEEP only age + weight'))
     if not ost_row['Full panel better']:
         print()
-        print("  The full 18-variable panel is NOT distinguishable from a two-variable")
+        print(f"  The full {len(groups)}-variable panel is NOT distinguishable from a two-variable")
         print("  model on age and weight. That is the same conclusion the OST comparison")
         print("  reaches, arrived at independently, and it is the finding — not a")
         print("  shortfall to be tuned away.")
@@ -1823,7 +1863,8 @@ def compare_arm(df, encoded, base_groups, arm_name, arm_groups, target, label):
 
 
 def run_arms(df, encoded, cohorts):
-    """Arms C-H, all prespecified. Nulls are reported, not buried.
+    """Arms C-I. Nulls are reported, not buried. C-H were prespecified; I (activity,
+    MET-min/week) was specified in the rewrite plan and added when it was implemented.
 
     Every one of these was written down before it was run, with the expected answer
     stated in advance. That is what makes a null here informative rather than a failed
@@ -1859,6 +1900,12 @@ def run_arms(df, encoded, cohorts):
     sub_groups = {k: v for k, v in base.items() if k != 'phq9_score'}
     rows.append(compare_arm(df, encoded, sub_groups, 'F: PHQ-9 >= 10 (substitution)',
                             ARM_GROUPS['phq_binary'], 'at_risk', 'T<=-1.0'))
+
+    print('\n  Arm I — physical activity: log MET-min/week (specialist references) plus')
+    print('  sedentary minutes. 2005_2006 has no GPAQ items and is excluded from this arm')
+    print('  rather than imputed; base and arm are refit on the same 2007+ women.')
+    rows.append(compare_arm(df, encoded, base, 'I: physical activity (MET + sedentary)',
+                            ARM_GROUPS['activity'], 'at_risk', 'T<=-1.0'))
 
     print('\n  Arm G — diabetes. The diabetic bone paradox means type 2 diabetes raises')
     print('  measured BMD while also raising fracture risk, so a protective coefficient')
