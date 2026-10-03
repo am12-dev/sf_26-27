@@ -1,0 +1,28 @@
+Variable,Category,Normal (T > -1.0),Low bone mass (-2.5 < T <= -1.0),Osteoporosis (T <= -2.5),All
+"BMI, kg/m2",<18.5,3 (1%),8 (1%),5 (7%),16 (1%)
+"BMI, kg/m2",18.5-24.9,62 (13%),215 (38%),44 (58%),321 (29%)
+"BMI, kg/m2",25.0-29.9,135 (29%),186 (33%),17 (22%),338 (30%)
+"BMI, kg/m2",30.0-34.9,133 (29%),103 (18%),6 (8%),242 (22%)
+"BMI, kg/m2",35.0-39.9,84 (18%),39 (7%),2 (3%),125 (11%)
+"BMI, kg/m2",>=40,48 (10%),18 (3%),2 (3%),68 (6%)
+"BMI, kg/m2",missing,1,0,0,1
+"Calcium intake, mg/day",<600,63 (17%),73 (15%),14 (21%),150 (16%)
+"Calcium intake, mg/day",600-999,119 (31%),150 (31%),18 (27%),287 (31%)
+"Calcium intake, mg/day","1,000-1,199",37 (10%),57 (12%),10 (15%),104 (11%)
+"Calcium intake, mg/day",">=1,200",162 (43%),202 (42%),25 (37%),389 (42%)
+"Calcium intake, mg/day",missing,85,87,9,181
+Poverty income ratio,<1,54 (12%),71 (13%),17 (24%),142 (13%)
+Poverty income ratio,1 to <3,123 (27%),167 (31%),34 (49%),324 (31%)
+Poverty income ratio,>=3,271 (60%),299 (56%),19 (27%),589 (56%)
+Poverty income ratio,missing,18,32,6,56
+"Sleep, hours/night",<=5 h,41 (9%),59 (10%),13 (17%),113 (10%)
+"Sleep, hours/night",6 h,86 (19%),109 (19%),18 (24%),213 (19%)
+"Sleep, hours/night",7-8 h (reference),292 (63%),345 (61%),35 (47%),672 (61%)
+"Sleep, hours/night",9 h,35 (8%),33 (6%),4 (5%),72 (7%)
+"Sleep, hours/night",>=10 h,10 (2%),22 (4%),5 (7%),37 (3%)
+"Sleep, hours/night",missing,2,1,1,4
+"Current alcohol, drinks/day",zero,77 (19%),81 (16%),19 (33%),177 (18%)
+"Current alcohol, drinks/day",<3,276 (67%),349 (71%),29 (51%),654 (68%)
+"Current alcohol, drinks/day",3 or more,57 (14%),63 (13%),9 (16%),129 (13%)
+"Current alcohol, drinks/day",missing,56,76,19,151
+"Vitamin D intake, IU/day",median (IQR),480 (148-1086),448 (142-1122),260 (77-1119),442 (140-1106)

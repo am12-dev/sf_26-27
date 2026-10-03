@@ -1,6 +1,6 @@
 Target,auc,train_auc,oob_auc,oob_note,sens,spec,tn,fp,fn,tp,Model
-Osteoporosis (T<=-2.5),0.7858735909822867,0.8307762466671946,,n/a (not a bagged ensemble),0.7105263157894737,0.7420289855072464,768,267,22,54,Logistic Regression (L2)
-Osteoporosis (T<=-2.5),0.7856119162640903,0.8308205960771892,,n/a (not a bagged ensemble),0.7105263157894737,0.7439613526570048,770,265,22,54,Elastic Net Logistic Regression
-Osteoporosis (T<=-2.5),0.7876670692431562,1.0,,withheld: only 28% of class 1 rows are ever out-of-bag (class_weight oversamples them),0.21052631578947367,0.9768115942028985,1011,24,60,16,Random Forest
-Osteoporosis (T<=-2.5),0.7765378421900161,0.9279480808320795,,n/a (not a bagged ensemble),0.6447368421052632,0.8309178743961353,860,175,27,49,LightGBM (Aggressive Reg)
-Osteoporosis (T<=-2.5),0.7373872785829307,0.9796828225231646,,n/a (not a bagged ensemble),0.47368421052631576,0.8792270531400966,910,125,40,36,XGBoost (Aggressive Reg)
+Osteoporosis (T<=-2.5),0.7900523349436392,0.8366966289168714,,n/a (not a bagged ensemble),0.75,0.7584541062801933,785,250,19,57,Logistic Regression (L2)
+Osteoporosis (T<=-2.5),0.7925523349436393,0.8339915128956468,,n/a (not a bagged ensemble),0.75,0.7497584541062802,776,259,19,57,Elastic Net Logistic Regression
+Osteoporosis (T<=-2.5),0.785054347826087,1.0,,withheld: only 28% of class 1 rows are ever out-of-bag (class_weight oversamples them),0.23684210526315788,0.9739130434782609,1008,27,58,18,Random Forest
+Osteoporosis (T<=-2.5),0.770426731078905,0.9241316557113063,,n/a (not a bagged ensemble),0.5789473684210527,0.8260869565217391,855,180,32,44,LightGBM (Aggressive Reg)
+Osteoporosis (T<=-2.5),0.733401771336554,0.9775716718143661,,n/a (not a bagged ensemble),0.4473684210526316,0.8724637681159421,903,132,42,34,XGBoost (Aggressive Reg)

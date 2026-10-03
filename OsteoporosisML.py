@@ -158,6 +158,7 @@ CLINICAL_UNITS = {
     'alcohol_drinks_day': (1, 'per 1 drink/day'), 'phq9_score': (5, 'per 5 points'),
     'sedentary_min_day': (60, 'per 1 hour/day'), 'log_met_min_week': (1, 'per 1 log unit'),
     'sleep_hrs': (1, 'per 1 hour'),
+    'alcohol_zero': (1, 'none vs <3/day'), 'alcohol_3plus': (1, '3+ vs <3/day'),
 }
 
 def print_section(title):
@@ -880,12 +881,19 @@ def compute_derived_variables(df, supp, day2):
         g = df[gate] if gate in df else pd.Series(np.nan, index=df.index)
         return pd.Series(np.where(g == 1.0, week, np.where(g == 0.0, 0.0, np.nan)),
                          index=df.index)
-    met = (8 * _domain('PAQ605', 'PAQ610', 'PAD615')      # vigorous work
-           + 4 * _domain('PAQ620', 'PAQ625', 'PAD630')    # moderate work
-           + 4 * _domain('PAQ635', 'PAQ640', 'PAD645')    # walk / bicycle transport
-           + 8 * _domain('PAQ650', 'PAQ655', 'PAD660')    # vigorous recreation
-           + 4 * _domain('PAQ665', 'PAQ670', 'PAD675'))   # moderate recreation
+    vw = _domain('PAQ605', 'PAQ610', 'PAD615')            # vigorous work
+    mw = _domain('PAQ620', 'PAQ625', 'PAD630')            # moderate work
+    tr = _domain('PAQ635', 'PAQ640', 'PAD645')            # walk / bicycle transport
+    vr = _domain('PAQ650', 'PAQ655', 'PAD660')            # vigorous recreation
+    mr = _domain('PAQ665', 'PAQ670', 'PAD675')            # moderate recreation
+    met = 8 * vw + 4 * mw + 4 * tr + 8 * vr + 4 * mr
     df['met_min_week'] = met
+    # The specialist's secondary activity measures (item 11), same domains, no MET weight.
+    df['moderate_min_wk'] = mw + tr + mr
+    df['vigorous_min_wk'] = vw + vr
+    df['log_moderate_min_wk'] = np.log1p(df['moderate_min_wk'])
+    df['log_vigorous_min_wk'] = np.log1p(df['vigorous_min_wk'])
+    df['sitting_hrs_day'] = df['sedentary_min_day'] / 60
     df['met_hours_week'] = met / 60                       # the unit both papers report
     df['log_met_min_week'] = np.log1p(met)                # skew ~+4; modelled on log scale
     df['activity_arm_eligible'] = (met.notna() & df['sedentary_min_day'].notna()).astype(float)
@@ -953,7 +961,10 @@ FEATURE_GROUPS = {
     'ever_used_estrogen':     ['ever_used_estrogen'],
     'diabetes':               ['diabetes'],
     'ever_smoked':            ['ever_smoked'],
-    'alcohol_drinks_day':     ['alcohol_drinks_day'],
+    # Specialist item 8: current alcohol as zero / <3 / 3+ drinks per day. Reference is
+    # <3 per day, the largest group; missing answers fall to the reference via in-fold
+    # median imputation of the two indicators.
+    'alcohol_cat':            ['alcohol_zero', 'alcohol_3plus'],
     'any_prior_fracture':     ['any_prior_fracture'],
     'steroid_use':            ['steroid_use'],
     'poverty_income_ratio':   ['poverty_income_ratio'],
@@ -975,6 +986,13 @@ ARM_GROUPS = {
     # change), so in the headline model they could only enter by imputing a whole cycle.
     'activity':    {'met_min_week':      ['log_met_min_week'],
                     'sedentary_min_day': ['sedentary_min_day']},
+    # Specialist item 11 secondaries: moderate and vigorous minutes per week, plus sitting.
+    'activity_secondary': {'moderate_min_wk':   ['log_moderate_min_wk'],
+                           'vigorous_min_wk':   ['log_vigorous_min_wk'],
+                           'sedentary_min_day': ['sedentary_min_day']},
+    # Specialist item 20 secondary: sleep in five bands, 7-8 h as reference. A SUBSTITUTION
+    # for continuous sleep_hrs, never an addition.
+    'sleep_bands': {'sleep_bands': ['sleep_le5', 'sleep_6', 'sleep_9', 'sleep_ge10']},
 }
 
 # Anything computed from the DXA scan. Never a feature, under any arm. This is the
@@ -994,8 +1012,18 @@ def encode_features(df):
                 'sedentary_min_day', 'poverty_income_ratio', 'parental_hip_fracture',
                 'family_hx_osteoporosis', 'phq9_score', 'sleep_hrs',
                 'total_calcium_mg', 'total_vitd_mcg', 'serum_vitd_nmol',
-                'rheumatoid_arthritis', 'phq9_ge10']:
+                'rheumatoid_arthritis', 'phq9_ge10',
+                'log_moderate_min_wk', 'log_vigorous_min_wk']:
         out[col] = pd.to_numeric(df[col], errors='coerce') if col in df.columns else np.nan
+    a = out['alcohol_drinks_day']
+    out['alcohol_zero'] = (a == 0).astype(float).where(a.notna())
+    out['alcohol_3plus'] = (a >= 3).astype(float).where(a.notna())
+    # Sleep bands. Half-hours (2017 onward) go to the band they fall in: 5.5 -> <=5 h,
+    # 6.5 -> 6 h, 8.5 -> 7-8 h.
+    h = out['sleep_hrs']
+    for name, mask in [('sleep_le5', h < 6), ('sleep_6', (h >= 6) & (h < 7)),
+                       ('sleep_9', (h >= 9) & (h < 10)), ('sleep_ge10', h >= 10)]:
+        out[name] = mask.astype(float).where(h.notna())
     return out
 
 
@@ -1095,6 +1123,58 @@ def table_one(df, X):
     print(table.to_string(index=False))
     print("  Continuous variables as mean (SD); binary variables as percent positive.")
     save_csv(table, 'table_one.csv', 'PRESENT')
+    return table
+
+def table_one_categories(df):
+    """Demographic table in the specialist's own bands (items 2, 8, 12, 15, 20).
+
+    These categories are descriptive only; the models use the continuous values, except
+    alcohol, which the specialist specified as categorical and which enters as such.
+    """
+    print_section('STEP 8c: TABLE 1 IN THE SPECIALIST\'S CATEGORIES')
+    groups = [('Normal (T > -1.0)', df['at_risk'] == 0),
+              ('Low bone mass (-2.5 < T <= -1.0)',
+               (df['at_risk'] == 1) & (df['osteoporosis'] == 0)),
+              ('Osteoporosis (T <= -2.5)', df['osteoporosis'] == 1),
+              ('All', pd.Series(True, index=df.index))]
+    num = lambda c: pd.to_numeric(df[c], errors='coerce')
+    bmi, cal, pir, slp, alc = (num('bmi'), num('total_calcium_mg'), num('poverty_income_ratio'),
+                               num('sleep_hrs'), num('alcohol_drinks_day'))
+    vitd_iu = num('total_vitd_mcg') * 40                  # item 13: 1 mcg = 40 IU
+    specs = [
+        ('BMI, kg/m2', bmi, [('<18.5', bmi < 18.5), ('18.5-24.9', (bmi >= 18.5) & (bmi < 25)),
+                             ('25.0-29.9', (bmi >= 25) & (bmi < 30)), ('30.0-34.9', (bmi >= 30) & (bmi < 35)),
+                             ('35.0-39.9', (bmi >= 35) & (bmi < 40)), ('>=40', bmi >= 40)]),
+        ('Calcium intake, mg/day', cal, [('<600', cal < 600), ('600-999', (cal >= 600) & (cal < 1000)),
+                                        ('1,000-1,199', (cal >= 1000) & (cal < 1200)), ('>=1,200', cal >= 1200)]),
+        ('Poverty income ratio', pir, [('<1', pir < 1), ('1 to <3', (pir >= 1) & (pir < 3)), ('>=3', pir >= 3)]),
+        ('Sleep, hours/night', slp, [('<=5 h', slp < 6), ('6 h', (slp >= 6) & (slp < 7)),
+                                     ('7-8 h (reference)', (slp >= 7) & (slp < 9)),
+                                     ('9 h', (slp >= 9) & (slp < 10)), ('>=10 h', slp >= 10)]),
+        ('Current alcohol, drinks/day', alc, [('zero', alc == 0), ('<3', (alc > 0) & (alc < 3)),
+                                             ('3 or more', alc >= 3)]),
+    ]
+    rows = []
+    for var, series, bands in specs:
+        for band, mask in bands:
+            row = {'Variable': var, 'Category': band}
+            for label, g in groups:
+                n_obs = int((g & series.notna()).sum())
+                k = int((g & mask).sum())
+                row[label] = f"{k:,} ({k / n_obs:.0%})" if n_obs else 'n/a'
+            rows.append(row)
+        row = {'Variable': var, 'Category': 'missing'}
+        for label, g in groups:
+            row[label] = f"{int((g & series.isna()).sum()):,}"
+        rows.append(row)
+    row = {'Variable': 'Vitamin D intake, IU/day', 'Category': 'median (IQR)'}
+    for label, g in groups:
+        v = vitd_iu[g].dropna()
+        row[label] = (f"{v.median():.0f} ({v.quantile(.25):.0f}-{v.quantile(.75):.0f})" if len(v) else 'n/a')
+    rows.append(row)
+    table = pd.DataFrame(rows)
+    print(table.to_string(index=False))
+    save_csv(table, 'table_one_categories.csv', 'PRESENT')
     return table
 
 # ================================================================================
@@ -1503,7 +1583,7 @@ def block_ablation(X, y, t_score, groups, label):
         ('drop all menopause/hormone vars', 'drop',
          ['years_since_menopause', 'ever_used_estrogen']),
         ('drop all lifestyle vars', 'drop',
-         ['ever_smoked', 'alcohol_drinks_day']),
+         ['ever_smoked', 'alcohol_cat']),
         ('drop all history/family vars', 'drop',
          ['any_prior_fracture', 'steroid_use', 'parental_hip_fracture',
           'family_hx_osteoporosis']),
@@ -1906,6 +1986,16 @@ def run_arms(df, encoded, cohorts):
     print('  rather than imputed; base and arm are refit on the same 2007+ women.')
     rows.append(compare_arm(df, encoded, base, 'I: physical activity (MET + sedentary)',
                             ARM_GROUPS['activity'], 'at_risk', 'T<=-1.0'))
+    print('  Arm I2 — the specialist\'s secondary activity measures: moderate and vigorous')
+    print('  minutes per week (log scale) plus sitting time, on the same 2007+ women.')
+    rows.append(compare_arm(df, encoded, base, 'I2: moderate + vigorous min/week + sitting',
+                            ARM_GROUPS['activity_secondary'], 'at_risk', 'T<=-1.0'))
+
+    print('\n  Arm J — sleep in the specialist\'s five bands (<=5, 6, 7-8 ref, 9, >=10 h).')
+    print('  A SUBSTITUTION for continuous sleep hours, never an addition.')
+    no_sleep = {k: v for k, v in base.items() if k != 'sleep_hrs'}
+    rows.append(compare_arm(df, encoded, no_sleep, 'J: sleep in five bands (substitution)',
+                            ARM_GROUPS['sleep_bands'], 'at_risk', 'T<=-1.0'))
 
     print('\n  Arm G — diabetes. The diabetic bone paradox means type 2 diabetes raises')
     print('  measured BMD while also raising fracture risk, so a protective coefficient')
@@ -2014,6 +2104,7 @@ def main():
     cohorts = build_cohorts(df, encoded)
     X = cohorts['C0 base']['X']
     table_one(df, X)
+    table_one_categories(df)
 
     coefficient_diagnostics(X, df['at_risk'], 'T<=-1.0')
 

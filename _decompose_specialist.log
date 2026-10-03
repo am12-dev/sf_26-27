@@ -1,0 +1,127 @@
+
+==============================================================================
+  STEP 5: DIETARY SUPPLEMENT TOTALS (DSQTOT)
+==============================================================================
+  2007_2008: 10,149 respondents in a supplement file
+  2009_2010: 10,537 respondents in a supplement file
+  2013_2014: 10,175 respondents in a supplement file
+  2017_2020: 15,560 respondents in a supplement file
+  NOTE: 2005_2006 has no DSQTOT release, so supplement intake is unobserved — not zero — for that cycle.
+
+==============================================================================
+  STEP 5b: DAY-2 DIETARY RECALL (DR2TOT)
+==============================================================================
+  2005_2006: 9,950 day-2 recalls  (no DR2TVD in this release)
+  2007_2008: 9,762 day-2 recalls
+  2009_2010: 10,253 day-2 recalls
+  2013_2014: 9,813 day-2 recalls
+  2017_2020: 14,300 day-2 recalls
+
+==============================================================================
+  DECOMPOSITION: WHERE THE AUC WENT
+==============================================================================
+
+==============================================================================
+  STEP 1: LOAD AND DECODE NHANES CYCLES
+==============================================================================
+  2005_2006: 10,348 respondents, 52 decoded columns
+  2007_2008: 10,149 respondents, 70 decoded columns
+  2009_2010: 10,537 respondents, 70 decoded columns
+  2013_2014: 10,175 respondents, 71 decoded columns
+  2017_2020: 15,560 respondents, 63 decoded columns
+  2017_2018:  9,254 respondents, 70 decoded columns
+  TOTAL   : 66,023 respondents across 6 cycles
+
+==============================================================================
+  STEP 2: COHORT FILTERS
+==============================================================================
+  respondents                   66,023
+  female                        33,341
+  non-Hispanic White            12,239
+  aged 50-65                     1,863
+  femoral-neck DXA result        1,484
+
+==============================================================================
+  STEP 3: T-SCORES AND OUTCOME LABELS
+==============================================================================
+  mean T-score -1.085   median age 58
+  T <= -1.0: 836   T <= -2.5: 94
+
+==============================================================================
+  STEP 6: MENOPAUSE VARIABLES
+==============================================================================
+  years_since_menopause coverage 1,249
+  NOTE age = age_at_menopause + years_since_menopause exactly, so age_at_menopause is descriptive only and never enters the feature set.
+  oestrogen ever-use 556 / never 885 / unknown 43
+  duration recorded for 388 of 556 ever-users (70%), median 3.0 y. 2017_2020 records no duration quantity at all.
+
+==============================================================================
+  STEP 7: DERIVED VARIABLES
+==============================================================================
+  phq9_score coverage 1,443 of 1,484   median 2   mean 3.90   >= 10: 147 (9.9%)
+  sleep_hrs coverage 1,478   median 7.0
+  fingerprint matches 2017_2020 <-> 2017_2018 : 176
+  of those carrying a serum value             : 174
+  serum 25(OH)D coverage 1143 -> 1317  (missing 341 -> 167)
+  total_calcium_mg coverage 1,081   total_vitd_mcg 1,081
+  met_min_week coverage 1,274   median 720   max 43680   (2005_2006 has no GPAQ items: 0 observed)
+  alcohol_drinks_day coverage 1,227 (non-drinkers set to 0, not imputed)
+  A. 6 cycles, all DXA (as published)          n 1,484  events  836   best 0.836 (Random Forest)   OST 0.747   delta +0.089 [+0.070, +0.107]
+  B. 6 cycles, postmenopausal only             n 1,272  events  751   best 0.831 (Random Forest)   OST 0.733   delta +0.098 [+0.077, +0.120]
+
+==============================================================================
+  STEP 1: LOAD AND DECODE NHANES CYCLES
+==============================================================================
+  2005_2006: 10,348 respondents, 52 decoded columns
+  2007_2008: 10,149 respondents, 70 decoded columns
+  2009_2010: 10,537 respondents, 70 decoded columns
+  2013_2014: 10,175 respondents, 71 decoded columns
+  2017_2020: 15,560 respondents, 63 decoded columns
+  TOTAL   : 56,769 respondents across 5 cycles
+
+==============================================================================
+  STEP 2: COHORT FILTERS
+==============================================================================
+  respondents                   56,769
+  female                        28,644
+  non-Hispanic White            10,672
+  aged 50-65                     1,639
+  femoral-neck DXA result        1,308
+
+==============================================================================
+  STEP 3: T-SCORES AND OUTCOME LABELS
+==============================================================================
+  mean T-score -1.061   median age 58
+  T <= -1.0: 724   T <= -2.5: 79
+
+==============================================================================
+  STEP 6: MENOPAUSE VARIABLES
+==============================================================================
+  years_since_menopause coverage 1,090
+  NOTE age = age_at_menopause + years_since_menopause exactly, so age_at_menopause is descriptive only and never enters the feature set.
+  oestrogen ever-use 507 / never 759 / unknown 42
+  duration recorded for 354 of 507 ever-users (70%), median 3.0 y. 2017_2020 records no duration quantity at all.
+
+==============================================================================
+  STEP 7: DERIVED VARIABLES
+==============================================================================
+  phq9_score coverage 1,268 of 1,308   median 2   mean 3.83   >= 10: 132 (10.1%)
+  sleep_hrs coverage 1,303   median 7.0
+  fingerprint matches 2017_2020 <-> 2017_2018 : 176
+  of those carrying a serum value             : 174
+  serum 25(OH)D coverage 969 -> 1143  (missing 339 -> 165)
+  total_calcium_mg coverage 1,081   total_vitd_mcg 1,081
+  met_min_week coverage 1,099   median 720   max 43680   (2005_2006 has no GPAQ items: 0 observed)
+  alcohol_drinks_day coverage 1,092 (non-drinkers set to 0, not imputed)
+  C. 5 cycles, all DXA                         n 1,308  events  724   best 0.763 (RF -> t_score)   OST 0.753   delta +0.010 [-0.005, +0.024]
+  D. 5 cycles, postmenopausal (shipped)        n 1,111  events  645   best 0.755 (Ridge -> t_score)   OST 0.739   delta +0.016 [-0.001, +0.030]
+
+  duplicate fix alone      (A -> C): -0.073
+  menopause gate alone     (A -> B): -0.005
+  both, as shipped         (A -> D): -0.081
+
+  The duplicate component is a bug fix: that discrimination was never real.
+  The menopause component is a deliberate narrowing — removing younger,
+  denser, still-cycling women takes away easy negatives, so a lower AUC on a
+  harder and more clinically relevant cohort is the expected cost, not a loss.
+  [METHODS   ] auc_decomposition.csv

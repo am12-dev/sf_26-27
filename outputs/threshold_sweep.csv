@@ -1,7 +1,7 @@
 Model,AUC,Probability Cutoff,Sensitivity,DXAs ordered,Cases found,Missed,PPV,Scans per case
-"Random forest, sigmoid-calibrated",0.752,0.50,76.0%,690,490,155,71.0%,1.41
-"Random forest, sigmoid-calibrated",0.752,0.40,90.4%,888,583,62,65.7%,1.52
-"Random forest, sigmoid-calibrated",0.752,0.35,93.3%,960,602,43,62.7%,1.59
-"Random forest, sigmoid-calibrated",0.752,0.30,97.5%,1022,629,16,61.5%,1.62
-"Random forest, sigmoid-calibrated",0.752,0.25,99.1%,1084,639,6,58.9%,1.70
-"Random forest, sigmoid-calibrated",0.752,scan all,100.0%,1111,645,0,58.1%,1.72
+"Random forest, sigmoid-calibrated",0.749,0.50,74.7%,692,482,163,69.7%,1.44
+"Random forest, sigmoid-calibrated",0.749,0.40,89.8%,895,579,66,64.7%,1.55
+"Random forest, sigmoid-calibrated",0.749,0.35,93.5%,965,603,42,62.5%,1.60
+"Random forest, sigmoid-calibrated",0.749,0.30,97.8%,1030,631,14,61.3%,1.63
+"Random forest, sigmoid-calibrated",0.749,0.25,99.1%,1083,639,6,59.0%,1.69
+"Random forest, sigmoid-calibrated",0.749,scan all,100.0%,1111,645,0,58.1%,1.72

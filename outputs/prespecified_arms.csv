@@ -1,10 +1,12 @@
 Arm,Target,n,Events,Variables added,Primary model,Base AUC,Arm AUC,Delta AUC,95% CI,p (one-sided),Verdict
-C: vitamin D + calcium intake,T<=-1.0,930,549,"total_calcium_mg, total_vitd_mcg",Ridge -> t_score,0.755,0.753,-0.002,"[-0.006, +0.001]",0.916,No detectable gain
-D: serum 25(OH)D,T<=-1.0,974,566,serum_vitd_nmol,Random Forest,0.749,0.732,-0.016,"[-0.024, -0.007]",0.998,No detectable gain
-E: rheumatoid arthritis,T<=-1.0,988,584,rheumatoid_arthritis,RF -> t_score,0.749,0.75,0.0,"[-0.000, +0.001]",0.232,No detectable gain
-F: PHQ-9 >= 10 (substitution),T<=-1.0,1110,644,phq9_ge10,RF -> t_score,0.759,0.758,-0.001,"[-0.002, +0.000]",0.962,No detectable gain
-I: physical activity (MET + sedentary),T<=-1.0,932,550,"met_min_week, sedentary_min_day",RF -> t_score,0.754,0.753,-0.001,"[-0.010, +0.007]",0.62,No detectable gain
-G1: borderline coded as diabetic,T<=-1.0,1111,645,diabetes recoded,Ridge -> t_score,0.754,0.755,0.001,n/a,,Sensitivity only
-G2: diabetes dropped entirely,T<=-1.0,1111,645,diabetes recoded,Ridge -> t_score,0.754,0.754,0.0,n/a,,Sensitivity only
-H1: femoral neck only,T<=-1.0 at this site,1111,618,none (outcome respecified),Ridge -> t_score,0.754,0.745,,"n/a (different outcome, not comparable)",,Sensitivity only
-H2: total hip only,T<=-1.0 at this site,1111,424,none (outcome respecified),RF -> t_score,0.754,0.777,,"n/a (different outcome, not comparable)",,Sensitivity only
+C: vitamin D + calcium intake,T<=-1.0,930,549,"total_calcium_mg, total_vitd_mcg",Ridge -> t_score,0.755,0.752,-0.002,"[-0.006, +0.001]",0.944,No detectable gain
+D: serum 25(OH)D,T<=-1.0,974,566,serum_vitd_nmol,RF -> t_score,0.744,0.742,-0.001,"[-0.008, +0.005]",0.636,No detectable gain
+E: rheumatoid arthritis,T<=-1.0,988,584,rheumatoid_arthritis,RF -> t_score,0.748,0.748,0.0,"[-0.001, +0.001]",0.334,No detectable gain
+F: PHQ-9 >= 10 (substitution),T<=-1.0,1110,644,phq9_ge10,RF -> t_score,0.757,0.756,-0.001,"[-0.002, +0.000]",0.972,No detectable gain
+I: physical activity (MET + sedentary),T<=-1.0,932,550,"met_min_week, sedentary_min_day",Ridge -> t_score,0.754,0.757,0.004,"[-0.002, +0.009]",0.124,No detectable gain
+I2: moderate + vigorous min/week + sitting,T<=-1.0,932,550,"moderate_min_wk, vigorous_min_wk, sedentary_min_day",Ridge -> t_score,0.754,0.757,0.003,"[-0.002, +0.009]",0.13,No detectable gain
+J: sleep in five bands (substitution),T<=-1.0,1107,643,sleep_bands,Ridge -> t_score,0.75,0.749,-0.001,"[-0.007, +0.006]",0.58,No detectable gain
+G1: borderline coded as diabetic,T<=-1.0,1111,645,diabetes recoded,Ridge -> t_score,0.755,0.755,0.001,n/a,,Sensitivity only
+G2: diabetes dropped entirely,T<=-1.0,1111,645,diabetes recoded,Ridge -> t_score,0.755,0.755,-0.0,n/a,,Sensitivity only
+H1: femoral neck only,T<=-1.0 at this site,1111,618,none (outcome respecified),Ridge -> t_score,0.755,0.747,,"n/a (different outcome, not comparable)",,Sensitivity only
+H2: total hip only,T<=-1.0 at this site,1111,424,none (outcome respecified),Ridge -> t_score,0.755,0.776,,"n/a (different outcome, not comparable)",,Sensitivity only
