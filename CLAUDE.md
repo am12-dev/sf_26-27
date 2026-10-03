@@ -10,16 +10,19 @@ The cohort is intentionally narrow — **postmenopausal** non-Hispanic White wom
 which are then structurally barred from the feature set (the DXA measurement is the thing being
 predicted away).
 
-`OsteoporosisML.py` is the **only** Python file in the repo. There is no package, no test suite, no
-build step, and no dependency manifest. It was rewritten in full per
-`Notes/rewrite_implementation_plan.html`; the file is internally organised into blocks A–G and the
+`OsteoporosisML.py` is the pipeline. The only other analysis script at the root is `_decompose.py`,
+which writes `outputs/auc_decomposition.csv`. The build scripts in `extra_reading/` generate the
+slides and notes; `archive/` holds superseded scratch scripts and logs and is not part of the
+pipeline. There is no package, no test suite and no build step; dependencies are pinned in
+`requirements.txt`, and `README.md` is the hand-off guide for collaborators. It was rewritten in full per
+`extra_reading/rewrite_implementation_plan.html`; the file is internally organised into blocks A–G and the
 module docstring lists the five structural changes. Two earlier scripts (`SF_new1.py`,
 `NHANES_PipelineModel.py`) were removed in commit `0d87b3e` and can be recovered with
 `git show 94bec2f:SF_new1.py`.
 
-`Notes/project_walkthrough.html` is a full plain-language walkthrough of the study. Read it before
-explaining this project to anyone; update it when results change. `Notes/statistician_brief.html` and
-`Notes/specialist_answers_and_decisions.html` record the methodological rulings and why each was made.
+`extra_reading/project_walkthrough.html` is a full plain-language walkthrough of the study. Read it before
+explaining this project to anyone; update it when results change. `extra_reading/statistician_brief.html` and
+`extra_reading/specialist_answers_and_decisions.html` record the methodological rulings and why each was made.
 
 ## The five things that changed in the rewrite
 
@@ -189,7 +192,7 @@ categories) — is not statistically separable from OST, and not from **weight a
 gate) and no activity variable (arm-only, see below). The pre-rewrite claim of +0.063 [+0.046, +0.082]
 over OST was an artifact of the duplicated respondents.
 
-**The panel follows the specialist's written variable list (`Notes/SpecialistUpdate.docx`).** Items are
+**The panel follows the specialist's written variable list (`extra_reading/SpecialistUpdate.docx`).** Items are
 continuous unless the specialist specified otherwise. Alcohol (item 8) is zero / < 3 / 3+ drinks per
 day, with < 3 as reference (`alcohol_zero`, `alcohol_3plus`; missing answers fall to the reference via
 in-fold median imputation). Sleep (item 20) is continuous in the headline and in five bands in arm J.
@@ -320,9 +323,12 @@ sf_26-27/
   OsteoporosisML.py                        # the entire pipeline, blocks A-G
   data/raw/<cycle>/<MODULE>_<suffix>.csv   # NHANES source, one folder per cycle
   data/processed/                          # option_b_v4_final.csv + legacy files
+  _decompose.py                            # writes outputs/auc_decomposition.csv
   outputs/                                 # regenerated every run; see tiering above
-  Notes/project_walkthrough.html           # the project explainer
-  Notes/statistician_brief.html            # methodological rulings and rationale
+  extra_reading/                           # notes, slides, walkthrough, data dictionary
+  extra_reading/project_walkthrough.html   # the project explainer
+  extra_reading/statistician_brief.html    # methodological rulings and rationale
+  archive/                                 # superseded scratch scripts and run logs
 ```
 
 `data/processed/analysis_cohort_postmenopausal.csv` (1,111 × 119) is the only file the script writes
@@ -336,15 +342,17 @@ columns and duplicate one-hot education columns differing only in capitalization
 label-vs-code inconsistency across cycles. **They also predate the duplicate-respondent fix, so any
 model scored on them is scored on the inflated cohort.**
 
-`outputs/run_log.txt`, if present, is a manual stdout capture by the user, not a script artifact — it
-will silently go stale.
+`outputs/run_log.txt` is a manual stdout capture of the run that produced the committed outputs
+(previously `_run_specialist.log`), not a script artifact — it will silently go stale and must be
+replaced whenever the pipeline is rerun. `outputs/auc_decomposition_log.txt` is the same for
+`_decompose.py`. The pre-rewrite capture is kept as `archive/old_run_logs/run_log_pre_rewrite.txt`.
 
-**Git:** `.gitignore` lists `data/` and `outputs/`, but `data/` was committed before that and stays
-tracked (~31 MB history) — deliberately, since several processed files cannot be regenerated and the
-repo is their only copy. Nothing in `outputs/` is tracked, so a fresh clone has no results until the
-pipeline runs. Do not `git rm --cached` the data directory.
+**Git:** `.gitignore` lists `data/`, but `data/` was committed before that and stays tracked
+(~31 MB history) — deliberately, since several processed files cannot be regenerated and the repo is
+their only copy. New files under `data/` need `git add -f`. `outputs/` is tracked, so a fresh clone
+has the results of the last committed run. Do not `git rm --cached` the data directory.
 
 Reference document (not code, but authoritative for variable definitions):
-`nhanes_data_dictionary _allCycles.doc` at the repo root. `Notes/osteoporosis project.docx` holds
+`extra_reading/nhanes_data_dictionary _allCycles.doc`. `extra_reading/osteoporosis project.docx` holds
 study write-up material. Earlier versions of this file cited a research-paper PDF and three ER-diagram
 PDFs — **no PDFs exist in the repo**; ask the user for them if the study design spec is needed.

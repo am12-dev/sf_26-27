@@ -22,7 +22,7 @@ spec.loader.exec_module(m)
 d = pd.read_csv(os.path.join(ROOT, 'data', 'processed', 'option_b_v4_final.csv'), low_memory=False)
 _, X, y = m.define_features(d)
 IN_MODEL = set(X.columns)
-ex = pd.read_csv(os.path.join(ROOT, 'Notes', 'specialist_data_extract.csv'), low_memory=False)
+ex = pd.read_csv(os.path.join(ROOT, 'extra_reading', 'specialist_data_extract.csv'), low_memory=False)
 
 # group, readable, model column (or None), NHANES source, question, unit, caution
 V = [
@@ -223,7 +223,7 @@ for grp, name, col, src, question, unit, caution in V:
         'Specialist comments': '',
     })
 sheet = pd.DataFrame(rows)
-p1 = os.path.join(ROOT, 'Notes', 'specialist_decision_sheet.csv')
+p1 = os.path.join(ROOT, 'extra_reading', 'specialist_decision_sheet.csv')
 sheet.to_csv(p1, index=False)
 print(f'  specialist_decision_sheet.csv: {len(sheet)} variables '
       f'({int((sheet["Currently used for modelling"] == "YES - in the model now").sum())} '
@@ -249,7 +249,7 @@ for i, var in enumerate(order.index):
     if len(kept) < 6:
         break
 cc = pd.DataFrame(rows2)
-p2 = os.path.join(ROOT, 'Notes', 'specialist_completecase_tradeoff.csv')
+p2 = os.path.join(ROOT, 'extra_reading', 'specialist_completecase_tradeoff.csv')
 cc.to_csv(p2, index=False)
 print(f'  specialist_completecase_tradeoff.csv: {len(cc)} rows')
 print()

@@ -2,7 +2,7 @@
 
 Runs the existing pipeline but MONKEYPATCHES recode_refused with a range-based
 version, because the global [7,9,77,99,...] replace destroys real sleep/weight/
-intake values. Writes Notes/specialist_variable_decisions.csv.
+intake values. Writes extra_reading/specialist_variable_decisions.csv.
 """
 import sys, importlib.util, os
 import pandas as pd, numpy as np
@@ -205,7 +205,7 @@ for k, s in V.items():
                          core='yes' if k in CORE else 'no'))
 
 t = pd.DataFrame(rows).sort_values(['core', 'pct_missing'], ascending=[False, True])
-out = 'Notes/specialist_variable_decisions.csv'
+out = 'extra_reading/specialist_variable_decisions.csv'
 t.to_csv(out, index=False)
 
 pd.set_option('display.width', 250, 'display.max_colwidth', 46)

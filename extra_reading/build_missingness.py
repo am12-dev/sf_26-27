@@ -23,7 +23,7 @@ from scipy import stats
 
 sys.stdout.reconfigure(encoding='utf-8')
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, 'Notes', 'figures')
+OUT = os.path.join(ROOT, 'extra_reading', 'figures')
 os.makedirs(OUT, exist_ok=True)
 spec = importlib.util.spec_from_file_location('m', os.path.join(ROOT, 'OsteoporosisML.py'))
 m = importlib.util.module_from_spec(spec)
@@ -92,7 +92,7 @@ for c in X.columns:
         'Missingness informative?': assoc[2],
     })
 tab = pd.DataFrame(rows).sort_values('Missing %', ascending=False)
-p_tab = os.path.join(ROOT, 'Notes', 'missingness_by_variable.csv')
+p_tab = os.path.join(ROOT, 'extra_reading', 'missingness_by_variable.csv')
 tab.to_csv(p_tab, index=False)
 print(f'  missingness_by_variable.csv: {len(tab)} variables')
 print()

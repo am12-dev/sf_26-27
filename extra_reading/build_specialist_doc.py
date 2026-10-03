@@ -4,7 +4,7 @@ Mirrors SpecialistUpdate.docx item by item: quotes the specialist's own wording,
 answers each of his inline questions, and lists every clarification we need before
 coding. Written for a clinical reader - no machine-learning vocabulary.
 
-    python Notes/build_specialist_doc.py
+    python extra_reading/build_specialist_doc.py
 
 Dependency: python-docx (installed separately; not used by OsteoporosisML.py).
 All counts verified against the raw NHANES files on the 1,272 postmenopausal cohort.

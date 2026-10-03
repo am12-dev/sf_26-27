@@ -192,7 +192,7 @@ for col in ('INDHHIN2', 'INDFMINC'):
 out['Annual family income (band)'] = inc
 out['Education level'] = X['DMDEDUC2'] if 'DMDEDUC2' in X else np.nan
 
-p1 = os.path.join(ROOT, 'Notes', 'specialist_data_extract.csv')
+p1 = os.path.join(ROOT, 'extra_reading', 'specialist_data_extract.csv')
 out.to_csv(p1, index=False)
 print(f'  {os.path.basename(p1)}: {len(out)} rows x {out.shape[1]} columns')
 
@@ -371,7 +371,7 @@ for label, code, question, unit, note in DESC:
         'Status / caution': note,
     })
 ref = pd.DataFrame(rows)
-p2 = os.path.join(ROOT, 'Notes', 'specialist_variable_reference.csv')
+p2 = os.path.join(ROOT, 'extra_reading', 'specialist_variable_reference.csv')
 ref.to_csv(p2, index=False)
 print(f'  {os.path.basename(p2)}: {len(ref)} variables documented')
 

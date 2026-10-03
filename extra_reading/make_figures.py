@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(BASE, 'Notes', 'figures')
+OUT = os.path.join(BASE, 'extra_reading', 'figures')
 os.makedirs(OUT, exist_ok=True)
 
 # --- palette (dataviz reference instance, light surface) --------------------

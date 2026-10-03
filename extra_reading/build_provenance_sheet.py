@@ -203,7 +203,7 @@ for cat, name, src, deriv, unit, note in ROWS:
         'Specialist comments': '',
     })
 sheet = pd.DataFrame(rows)
-p = os.path.join(ROOT, 'Notes', 'specialist_variable_provenance.csv')
+p = os.path.join(ROOT, 'extra_reading', 'specialist_variable_provenance.csv')
 sheet.to_csv(p, index=False)
 
 print(f'  specialist_variable_provenance.csv: {len(sheet)} variables\n')

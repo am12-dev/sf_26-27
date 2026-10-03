@@ -450,7 +450,7 @@ table(s, [
     ["Q6", "Keep PHQ-9 depression score? Continuous or ≥10?", "Yes and yes", "Continuous phq9_score in panel; phq9 ≥ 10 as substitution arm F"],
 ], 0.6, 1.4, 12.1, col_w=[0.55, 3.4, 3.1, 5.05], size=12, row_h=0.72)
 notes(s, "Specialist decisions 1", """
-Two rounds of questions went to the clinical specialist (documented in Notes/Specialist_Review_Questions.docx, Specialist_Review_Answers.docx and specialist_answers_and_decisions.html).
+Two rounds of questions went to the clinical specialist (documented in extra_reading/Specialist_Review_Questions.docx, Specialist_Review_Answers.docx and specialist_answers_and_decisions.html).
 
 Q1 Outcome. The specialist preferred the continuous T-score. We kept binary T ≤ −1.0 as primary because the use case is a yes/no referral, and we model continuous T with regressors; the regressors actually win the nested CV in several folds, so the specialist's preference is reflected in the modelling. This override has to be re-confirmed with the specialist.
 
@@ -1323,9 +1323,9 @@ for t in [
 
 d.add_heading("Source files", 1)
 for t in ["OsteoporosisML.py (pipeline, blocks A–G)", "outputs/*.csv, *.png (results, 2 Oct 2026 run)", "_run_specialist.log (counts and verdicts)",
-          "Notes/specialist_answers_and_decisions.html, Specialist_Review_Questions/Answers.docx (clinical decisions)",
-          "Notes/statistician_brief.html (methodological rulings and open questions)",
-          "Notes/presentation_ml_engineer/make_charts.py and build_deck.py (regenerate this deck)"]:
+          "extra_reading/specialist_answers_and_decisions.html, Specialist_Review_Questions/Answers.docx (clinical decisions)",
+          "extra_reading/statistician_brief.html (methodological rulings and open questions)",
+          "extra_reading/presentation_ml_engineer/make_charts.py and build_deck.py (regenerate this deck)"]:
     d.add_paragraph(t, style="List Bullet")
 
 notes_path = os.path.join(HERE, "Presenter_Notes_Osteoporosis_ML_Briefing.docx")

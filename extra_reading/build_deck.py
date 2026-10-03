@@ -4,8 +4,8 @@ Numbers come from outputs/ where possible so the deck cannot drift from the
 pipeline. Palette is the dataviz reference instance (light surface).
 
 Dependency: python-pptx (pip install python-pptx) - NOT used by the pipeline
-itself, only by this script. Run Notes/make_figures.py first; this reads the
-PNGs it writes into Notes/figures/.
+itself, only by this script. Run extra_reading/make_figures.py first; this reads the
+PNGs it writes into extra_reading/figures/.
 """
 import os
 import pandas as pd
@@ -15,8 +15,8 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FIG = os.path.join(BASE, 'Notes', 'figures')
-OUTP = os.path.join(BASE, 'Notes', 'Osteoporosis_ML_Specialist_Briefing.pptx')
+FIG = os.path.join(BASE, 'extra_reading', 'figures')
+OUTP = os.path.join(BASE, 'extra_reading', 'Osteoporosis_ML_Specialist_Briefing.pptx')
 
 # palette
 NAVY   = RGBColor(0x10, 0x42, 0x81)
@@ -827,7 +827,7 @@ rows = [['', 'Reference', 'Relevance here'],
               'Examination Survey, cycles 2005-06 through 2017-20',
          'The data source. Fourteen modules per cycle, merged on SEQN']]
 table(s, rows, 0.62, 2.35, 12.1, col_w=[0.42, 5.28, 6.4], size=9.5, head_size=10.5, h=4.0)
-takeaway(s, 'Full URLs are in Notes/project_walkthrough.html. NHANES is public domain; '
+takeaway(s, 'Full URLs are in extra_reading/project_walkthrough.html. NHANES is public domain; '
             'all analysis code is in OsteoporosisML.py under one fixed seed.', y=6.5)
 
 
